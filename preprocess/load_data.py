@@ -66,3 +66,6 @@ def initiate_subject(subj):
 def main():
     for i in range(8):
         initiate_subject(i)
+
+
+main()
