@@ -20,8 +20,9 @@ import json
 
 # from util.util import *
 
-bpath = os.environ["BOLD5000"]
-out_dir = "/media/tarrlab/NSD_cortical"
+out_dir = "/media/tarrlab/NSDdata"
+freesurfer_path = "/home/tarrlab/NSD_data/freesurfer"
+
 
 db = cortex.database.default_filestore
 def initiate_subject(subj):
@@ -32,8 +33,8 @@ def initiate_subject(subj):
             )
         )
         # initiate subjects
-        # if this returns Key Error, manually enter the following lines in ipython works
-        cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir='/home/tarrlab/NSD_data/freesurfer')
+        cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=freesurfer_path)
+        cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
 
     # transform_name = "full"
     # transform_path = "{}/subj0{}/transforms/{}".format(db, subj, transform_name)
@@ -66,6 +67,6 @@ def initiate_subject(subj):
 def main():
     for i in range(8):
         initiate_subject(i+1)
-
+        # mask = cortex.utils.get_cortical_mask("subj0{}".format(subj), "full")
 
 main()
