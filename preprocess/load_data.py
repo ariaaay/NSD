@@ -36,37 +36,23 @@ def initiate_subject(subj):
         cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=freesurfer_path)
     cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
 
-    # transform_name = "full"
-    # transform_path = "{}/subj0{}/transforms/{}".format(db, subj, transform_name)
-    #
-    # if not os.path.isdir(transform_path):  # no transform generated yet
-    #     print("No transform found. Auto aligning...")
-    #
-    #     # load a reference slice for alignment'/data2/tarrlab/common/datasets/pycortex_db/sub-CSI{}/func_examples/
-    #     slice_dir = "{}/sub-CSI{}/func_examples/".format(db, subj)
-    #     if not os.path.isdir(slice_dir):
-    #         os.makedirs(slice_dir)
-    #     slice_path = slice_dir + "slice.nii.gz"
-    #
-    #     try:
-    #         nib.load(slice_path)
-    #     except FileNotFoundError:
-    #         sample_run = (
-    #             "{}/derivatives/fmriprep/sub-CSI{}/ses-01/func/sub-CSI{}_ses-01_task-5000scenes_"
-    #             "run-01_bold_space-T1w_preproc.nii.gz".format(bpath, subj, subj)
-    #         )
-    #         img = nib.load(sample_run)
-    #         d = img.get_data()
-    #         dmean = np.mean(d, axis=3)
-    #         sample_slice = nib.Nifti1Image(dmean, img.affine)
-    #         nib.save(sample_slice, slice_path)
-    #     # run automatic alignment
-    #     cortex.align.automatic("sub-CSI" + str(subj), transform_name, slice_path)
-    #     # creates a reference transform matrix for this functional run in filestore/db/<subject>/transforms
+def align(subj):
+    transform_name = "full"
+    transform_path = "{}/sub-CSI{}/transforms/{}".format(db, subj, transform_name)
+    if not os.path.isdir(transform_path):  # no transform generated yet
+        print("No transform found. Auto aligning...")
+
+        # load a reference slice for alignment'/data2/tarrlab/common/datasets/pycortex_db/sub-CSI{}/func_examples/
+        slice_dir = "/home/tarrlab/NSD_data/reference_volumes/subj0{}/".format(subj)
+        slice_path = slice_dir + "meanFIRST5.nii.gz"
+        # run automatic alignment
+        cortex.align.automatic("subj0" + str(subj), transform_name, slice_path)
+        # creates a reference transform matrix for this functional run in filestore/db/<subject>/transforms
 
 def main():
     for i in range(8):
         initiate_subject(i+1)
+        align(i+1)
         # mask = cortex.utils.get_cortical_mask("subj0{}".format(subj), "full")
 
 main()
