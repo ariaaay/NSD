@@ -34,11 +34,11 @@ def initiate_subject(subj):
         )
         # initiate subjects
         cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=freesurfer_path)
-    cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
+        cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
 
 def align(subj):
     transform_name = "full"
-    transform_path = "{}/sub-CSI{}/transforms/{}".format(db, subj, transform_name)
+    transform_path = "{}/subj0{}/transforms/{}".format(db, subj, transform_name)
     if not os.path.isdir(transform_path):  # no transform generated yet
         print("No transform found. Auto aligning...")
 
