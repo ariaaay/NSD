@@ -33,7 +33,7 @@ def initiate_subject(subj):
         )
         # initiate subjects
         # if this returns Key Error, manually enter the following lines in ipython works
-        cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=None)
+        cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir='/home/tarrlab/NSD_data/freesurfer')
 
     # transform_name = "full"
     # transform_path = "{}/subj0{}/transforms/{}".format(db, subj, transform_name)
