@@ -34,7 +34,7 @@ def initiate_subject(subj):
         )
         # initiate subjects
         cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=freesurfer_path)
-        cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
+    cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
 
     # transform_name = "full"
     # transform_path = "{}/subj0{}/transforms/{}".format(db, subj, transform_name)
