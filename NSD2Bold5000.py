@@ -4,7 +4,7 @@ import pandas as pd
 
 
 stim_info = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
-NSD_subset = stim_info[[stim_info['BOLD5000']==True]]
+NSD_subset = stim_info[stim_info['BOLD5000']==True]
 overlap = pd.DataFrame({'cocoId': NSD_subset['cocoId'],
                         'nsdId': NSD_subset['nsdId']})
 
