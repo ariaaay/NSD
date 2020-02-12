@@ -12,11 +12,11 @@ def extract_cortical_mask(subj, roi_only):
     anat_mat = anat.get_data()
     if roi_only:
         mask = anat_mat > -1
-        np.save("output/cortical_mask_subj%02d_roi_only.npy" % subj, mask)
+        np.save("output/cortical_mask_subj%02d_roi_only.npy" % (subj, mask))
         return mask
     else:
         mask = anat_mat > 0
-        np.save("output/cortical_mask_subj%02d.npy" % subj, mask)
+        np.save("output/cortical_mask_subj%02d.npy" % (subj, mask))
         return mask
 
 def extract_voxels(subj, roi_only):
@@ -33,7 +33,7 @@ def extract_voxels(subj, roi_only):
 
     cortical_beta_mat = None
     for ses in tqdm(range(1,41)):
-        beta_file = nib.load("%s/betas_session%02d.nii.gz" % beta_subj_dir, ses)
+        beta_file = nib.load("%s/betas_session%02d.nii.gz" % (beta_subj_dir, ses))
         beta = beta_file.get_data()
         cortical_beta = (beta[mask]).T #verify the mask with array
 
