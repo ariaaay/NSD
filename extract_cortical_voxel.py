@@ -38,6 +38,8 @@ def extract_voxels(subj, roi_only):
         cortical_beta = (beta[mask]).T #verify the mask with array
 
         if cortical_beta_mat is None:
+            cortical_beta_mat = cortical_beta
+        else:
             cortical_beta_mat.append(cortical_beta)
 
     np.save(
