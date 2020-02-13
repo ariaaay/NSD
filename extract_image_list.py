@@ -16,7 +16,7 @@ def extract_first_repeat_trials_list(stim, subj, rep=0):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", type=int)
-    parser.add_argument("--type", type="str")
+    parser.add_argument("--type", type=str)
     parser.add_argument("--rep", type=int, default="0", help="Choose which repeats (0-2)")
 
     args = parser.parse_args()
