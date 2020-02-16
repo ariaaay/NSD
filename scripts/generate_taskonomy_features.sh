@@ -46,7 +46,7 @@ for imgfile in $STIMULI_DIR/*; do
       tmp="$(cut -d'.' -f1 <<<"$imgfile")"
       id="$(cut -d'/' -f7 <<<"$tmp")"
       echo $id
-      printf -v old_name "COCO_train2014_%12d.jpg" $id
+      printf -v old_name "COCO_train2014_%012d.jpg" $id
       echo $old_name
 
       if [ ! -e $target_DIR/$store_name ] && [ ! -e $target_DIR/$old_name ]; then
