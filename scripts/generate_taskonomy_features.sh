@@ -2,10 +2,13 @@
 
 #SBATCH --job-name=taskf
 #SBATCH -p gpu
-#SBATCH --ntasks=8
+#SBATCH --ntasks=8squeu
 #SBATCH --mem=10G
 #SBATCH --time=10-00:00:00
 #SBATCH --output=/home/yuanw3/error_log/error.log
+
+cd /home/yuanw3/taskonomy/taskbank
+source taskvenv/bin/activate
 
 STIMULI_DIR="/lab_data/tarrlab/common/datasets/NSD_images"
 OUT_DIR="/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/"

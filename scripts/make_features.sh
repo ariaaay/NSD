@@ -21,8 +21,6 @@ TASKS="autoencoder \
  inpainting_whole"
 
 for task in $TASKS; do
-  cd /home/yuanw3/taskonomy/taskbank
-  source taskvenv/bin/activate
   set -eu
   sbatch ~/NSD/generate_taskonomy_feature.sh $task
 done
