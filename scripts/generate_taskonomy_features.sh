@@ -3,66 +3,53 @@ cd /home/yuanw3/taskonomy/taskbank
 source ~/taskonomy/venv/bin/activate
 set -eu
 
-STIMULI_DIR="/home/yuanw3/ObjectEmbeddingSpace/BOLD5000_Stimuli/Scene_Stimuli/Presented_Stimuli/"
-OUT_DIR="/home/yuanw3/ObjectEmbeddingSpace/genStimuli/"
+STIMULI_DIR="lab_data/tarrlab/common/datasets/NSD_images"
+OUT_DIR="/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/"
 
-# IMAGE_DATASET="COCO \
-# 	ImageNet \
-# 	Scene"
+TASKS="class_1000 \
+ class_places \
+ autoencoder \
+ denoise \
+ segment25d \
+ segment2d \
+ curvature \
+ edge2d \
+ edge3d \
+ keypoint2d \
+ keypoint3d \
+ reshade \
+ rgb2depth \
+ rgb2mist \
+ rgb2sfnorm \
+ colorization \
+ room_layout \
+ segmentsemantic \
+ vanishing_point \
+ jigsaw \
+ inpainting_whole"
 
-IMAGE_DATASET="ImageNet"
 
-# TASKS="class_1000 \
-# class_places \
-# autoencoder \
-# denoise \
-# segment25d \
-# segment2d \
-# curvature \
-# edge2d \
-# edge3d \
-# keypoint2d \
-# keypoint3d \
-# reshade \
-# rgb2depth \
-# rgb2mist \
-# rgb2sfnorm \
-# colorization \
-# room_layout \
-# segmentsemantic \
-# vanishing_point"
+#n=0
 
-TASKS="jigsaw \
-inpainting_whole
-"
+#for imgfile in $(ls -1 $STIMULI_DIR$DIR/* | sort -r); do
+for imgfile in $STIMULI_DIR$DIR/*; do
+#	n=$((n + 1))
+	for task in $TASKS; do
+		  store_name=$(basename $imgfile)
+		  target_DIR=${OUT_DIR}${task}
 
-# TASKS="ego_motion \
-# fix_pose"
+		  if ! [ -e $target_DIR ]; then
+		    mkdir $target_DIR
+		  fi
 
-# TASKS="non_fixated_pose \
-# point_match"
+      echo "processing $imgfile for task $task"
+      id="$(cut -d'.' -f1 <<<"$imgfile")"
+      old_name="COCO_train2014_%12d.jpg" $id
 
-n=0
-for DIR in $IMAGE_DATASET; do
-	# imgtype=jpg
-	# if [ $DIR == "ImageNet" ] ; then
-	#	imgtype=JPEG
-	# fi
-	echo "$DIR"
-	for imgfile in $(ls -1 $STIMULI_DIR$DIR/* | sort -r); do
-	# for imgfile in $STIMULI_DIR$DIR/*; do
-		n=$((n + 1))
-		for task in $TASKS; do
-		    store_name=$(basename $imgfile)
-		    target_DIR=${OUT_DIR}${task}
-		    if ! [ -e $target_DIR ]; then
-			mkdir $target_DIR
-		    fi
-        	# echo "processing $imgfile for task $task"
-        	if [ ! -e $target_DIR/$store_name ]; then
-			python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-rep
-		fi
-		done
+      if [ ! -e $target_DIR/$store_name ] && [! -e $target_DIR/$old_name]; then
+			  python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-rep
+		  fi
 	done
 done
-echo $n
+
+#echo $n
