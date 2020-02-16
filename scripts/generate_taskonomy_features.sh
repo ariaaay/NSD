@@ -44,7 +44,7 @@ for imgfile in $STIMULI_DIR/*; do
 
       echo "processing $imgfile for task $task"
       tmp="$(cut -d'.' -f1 <<<"$imgfile")"
-      id="$(cut -d'/' -f6 <<<"$tmp")"
+      id="$(cut -d'/' -f7 <<<"$tmp")"
       echo $id
       printf -v old_name "COCO_train2014_%12d.jpg" $id
       echo $old_name
