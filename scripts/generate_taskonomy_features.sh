@@ -6,13 +6,13 @@ set -eu
 STIMULI_DIR="lab_data/tarrlab/common/datasets/NSD_images"
 OUT_DIR="/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/"
 
-TASKS="class_1000 \
- class_places \
- autoencoder \
+TASKS="autoencoder \
  denoise \
  segment25d \
  segment2d \
  curvature \
+ class_1000 \
+ class_places \
  edge2d \
  edge3d \
  keypoint2d \
