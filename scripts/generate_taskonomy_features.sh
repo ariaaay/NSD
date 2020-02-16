@@ -31,8 +31,8 @@ TASKS="autoencoder \
 
 #n=0
 
-#for imgfile in $(ls -1 $STIMULI_DIR$DIR/* | sort -r); do
-for imgfile in $STIMULI_DIR/*; do
+for imgfile in $(ls -1 $STIMULI_DIR/* | sort -r); do
+#for imgfile in $STIMULI_DIR/*; do
 #	n=$((n + 1))
 	for task in $TASKS; do
 		  store_name=$(basename $imgfile)
