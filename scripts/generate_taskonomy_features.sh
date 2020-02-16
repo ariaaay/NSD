@@ -1,6 +1,6 @@
 #!/bin/sh
 cd /home/yuanw3/taskonomy/taskbank
-source ~/taskonomy/venv/bin/activate
+source taskvenv/bin/activate
 set -eu
 
 STIMULI_DIR="/lab_data/tarrlab/common/datasets/NSD_images"
@@ -15,7 +15,7 @@ TASKS="autoencoder \
  class_places \
  edge2d \
  edge3d \
- keypoint2d \
+ keypoin
  keypoint3d \
  reshade \
  rgb2depth \
@@ -45,9 +45,9 @@ for imgfile in $STIMULI_DIR/*; do
       echo "processing $imgfile for task $task"
       tmp="$(cut -d'.' -f1 <<<"$imgfile")"
       id="$(cut -d'/' -f7 <<<"$tmp")"
-      echo $id
+#      echo $id
       printf -v old_name "COCO_train2014_%012d.jpg" $id
-      echo $old_name
+#      echo $old_name
 
       if [ ! -e $target_DIR/$store_name ] && [ ! -e $target_DIR/$old_name ]; then
 			  python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-rep
