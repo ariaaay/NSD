@@ -15,7 +15,7 @@ TASKS="autoencoder \
  class_places \
  edge2d \
  edge3d \
- keypoin
+ keypoint2d \
  keypoint3d \
  reshade \
  rgb2depth \
