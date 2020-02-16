@@ -3,7 +3,7 @@ cd /home/yuanw3/taskonomy/taskbank
 source ~/taskonomy/venv/bin/activate
 set -eu
 
-STIMULI_DIR="lab_data/tarrlab/common/datasets/NSD_images"
+STIMULI_DIR="/lab_data/tarrlab/common/datasets/NSD_images"
 OUT_DIR="/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/"
 
 TASKS="autoencoder \
