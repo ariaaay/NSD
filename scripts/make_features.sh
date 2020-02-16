@@ -22,5 +22,5 @@ TASKS="autoencoder \
 
 for task in $TASKS; do
   set -eu
-  sbatch ~/NSD/generate_taskonomy_feature.sh $task
+  ~/NSD/generate_taskonomy_feature.sh $task
 done
