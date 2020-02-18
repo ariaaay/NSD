@@ -22,5 +22,5 @@ TASKS="
 # inpainting_whole"
 
 for task in $TASKS; do
- sbatch ~/NSD/scripts/generate_taskonomy_feature.sh $task
+ sbatch ~/NSD/scripts/generate_taskonomy_features.sh $task
 done
