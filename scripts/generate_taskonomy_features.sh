@@ -2,11 +2,13 @@
 
 #SBATCH --job-name=taskf
 #SBATCH -p gpu
-#SBATCH --ntasks=8squeu
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=2
 #SBATCH --mem=10G
 #SBATCH --time=10-00:00:00
-#SBATCH --output=/home/yuanw3/error_log/error.log
+#SBATCH --output=/home/yuanw3/error_log/$1_error.log
 
+set -eu
 cd /home/yuanw3/taskonomy/taskbank
 source taskvenv/bin/activate
 
