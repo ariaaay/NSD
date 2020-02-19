@@ -12,7 +12,7 @@
 set -eu
 cd /home/yuanw3/taskonomy/taskbank
 source taskvenv/bin/activate
-module load cuda-10.0
+module load cuda-10.1
 module load cudnn-10.1-v7.6.5.32
 
 STIMULI_DIR="/lab_data/tarrlab/common/datasets/NSD_images"
