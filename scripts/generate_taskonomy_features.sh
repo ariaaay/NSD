@@ -6,7 +6,8 @@
 #SBATCH --ntasks=2
 #SBATCH --mem=10G
 #SBATCH --time=10-00:00:00
-#SBATCH --output=/home/yuanw3/error_log/$1_error.log
+#SBATCH --error=/home/yuanw3/error_log/job.%J.err
+#SBATCH --output=/home/yuanw3/error_log/job.%J.out
 
 set -eu
 cd /home/yuanw3/taskonomy/taskbank
