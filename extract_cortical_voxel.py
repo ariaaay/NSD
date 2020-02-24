@@ -11,11 +11,11 @@ def extract_cortical_mask(subj, roi_only):
     anat = nib.load(roi_subj_path)
     anat_mat = anat.get_data()
     if roi_only:
-        mask = anat_mat > -1
+        mask = anat_mat > 0
         np.save("output/cortical_mask_subj%02d_roi_only.npy" % subj, mask)
         return mask
     else:
-        mask = anat_mat > 0
+        mask = anat_mat > -1
         np.save("output/cortical_mask_subj%02d.npy" % subj, mask)
         return mask
 
