@@ -38,9 +38,9 @@ def extract_voxels(subj, roi_only):
         cortical_beta = (beta[mask]).T #verify the mask with array
 
         if cortical_beta_mat is None:
-            cortical_beta_mat = cortical_beta
+            cortical_beta_mat = cortical_beta/300
         else:
-            cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta))
+            cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta/300))
 
     np.save(
         "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, mask_tag), cortical_beta_mat
