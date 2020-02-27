@@ -28,7 +28,7 @@ def compute_ev(stim, subj, roi=""):
         except AssertionError:
             print(repeat.shape)
         ev_list.append(ev(repeat))
-    return ev_list
+    return np.array(ev_list)
 
 
 if __name__ == "__main__":
