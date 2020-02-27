@@ -18,6 +18,8 @@ def extract_subject_trials_index_common(subj):
 def extract_common_data_into_matrix(subj, roi_only=False):
     if roi_only:
         roi = "_roi_only"
+    else:
+        roi = ""
     l = extract_subject_trials_index_common(subj)
     data = np.load("../output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
     repeat = np.hstack((data[np.array(l[0])], data[np.array(l[1])], data[np.array(l[2])]))
