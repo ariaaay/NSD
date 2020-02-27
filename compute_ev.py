@@ -43,9 +43,13 @@ if __name__ == "__main__":
         roi = ""
 
     stim = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
+    try:
+        all_ev = np.load("output/evs_subj%02d%s.npy" % (args.subj, roi))
+    except FileNotFoundError:
+        all_evs = compute_ev(stim, args.subj, roi)
+        np.save("output/evs_subj%02d%s.npy" % (args.subj, roi), all_evs)
 
-    all_evs = compute_ev(stim, args.subj, roi)
-    np.save("output/evs_subj%02d%s.npy" % (args.subj, roi), all_evs)
+    plt.figure()
     plt.hist(all_evs)
     plt.title("Explainable Variance across voxels (subj%02d %s)" % (args.subj, roi))
-    plt.savefig("figures/evs_subj%02d%s.npy")
+    plt.savefig("figures/evs_subj%02d%s.png")
