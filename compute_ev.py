@@ -23,7 +23,10 @@ def compute_ev(stim, subj, roi=""):
     ev_list = []
     for v in tqdm(range(data.shape[1])):
         repeat = np.array([data[np.array(l[i]),v] for i in range(3)])
-        assert repeat.shape == (1000,3)
+        try:
+            assert repeat.shape == (1000,3)
+        except AssertionError:
+            print(repeat.shape)
         ev_list.append(ev(repeat))
 
     return ev_list
