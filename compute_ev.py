@@ -19,7 +19,7 @@ def extract_common_data_into_matrix(subj, roi_only=False):
     if roi_only:
         roi = "_roi_only"
     l = extract_subject_trials_index_common(subj)
-    data = np.load("../output/cortical_voxel_across_sessions_subj%02d%s.npy" % subj, roi)
+    data = np.load("../output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
     repeat = np.hstack((data[np.array(l[0])], data[np.array(l[1])], data[np.array(l[2])]))
 
     assert repeat.shape == (1000,3)
