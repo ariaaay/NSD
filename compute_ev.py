@@ -22,13 +22,11 @@ def compute_ev(stim, subj, roi=""):
     data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
     ev_list = []
     for v in tqdm(range(data.shape[1])):
-        repeat = np.hstack((data[np.array(l[0]),v], data[np.array(l[1]),v], data[np.array(l[2]),v]))
-        print(repeat.shape)
+        repeat = np.array([data[np.array(l[i]),v] for i in range(3)])
         assert repeat.shape == (1000,3)
         ev_list.append(ev(repeat))
 
     return ev_list
-
 
 
 if __name__ == "__main__":
