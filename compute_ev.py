@@ -22,7 +22,7 @@ def compute_ev(stim, subj, roi=""):
     data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
     ev_list = []
     for v in tqdm(range(data.shape[1])):
-        repeat = np.array([data[np.array(l[i]),v] for i in range(3)])
+        repeat = np.array([data[np.array(l[i]),v] for i in range(3)]).T
         try:
             assert repeat.shape == (1000,3)
         except AssertionError:
