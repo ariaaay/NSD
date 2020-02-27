@@ -47,4 +47,5 @@ if __name__ == "__main__":
     all_evs = compute_ev(stim, args.subj, roi)
     np.save("output/evs_subj%02d%s.npy" % (args.subj, roi), all_evs)
     plt.hist(all_evs)
+    plt.title("Explainable Variance across voxels (subj%02d %s)" % (args.subj, roi))
     plt.savefig("figures/evs_subj%02d%s.npy")
