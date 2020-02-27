@@ -51,5 +51,5 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.hist(all_evs)
-    plt.title("Explainable Variance across voxels (subj%02d %s)" % (args.subj, roi))
-    plt.savefig("figures/evs_subj%02d%s.png")
+    plt.title("Explainable Variance across Voxels (subj%02d %s)" % (args.subj, roi))
+    plt.savefig("figures/evs_subj%02d%s.png" % (args.subj, roi))
