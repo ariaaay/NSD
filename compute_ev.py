@@ -17,9 +17,12 @@ def extract_subject_trials_index_common(stim, subj):
     return index
 
 
-def compute_ev(stim, subj, roi="", biascorr=False):
+def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     l = extract_subject_trials_index_common(stim, subj)
-    data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
+    if zscored_input:
+        data = np.load("output/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
+    else:
+        data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
     ev_list = []
     for v in tqdm(range(data.shape[1])):
         repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T
@@ -36,6 +39,7 @@ if __name__ == "__main__":
     parser.add_argument("--roi_only", action="store_true")
     parser.add_argument("--subj", type=int)
     parser.add_argument("--biascorr", action="store_true")
+    parser.add_argument("--zscored_input", action="store_true")
 
     args = parser.parse_args()
     if args.roi_only:
@@ -48,14 +52,19 @@ if __name__ == "__main__":
     else:
         bs = ""
 
+    if args.zscored_input:
+        zs = "zscored"
+    else:
+        zs = ""
+
     stim = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
     try:
-        all_evs = np.load("output/evs_subj%02d%s%s.npy" % (args.subj, roi, bs))
+        all_evs = np.load("output/evs_subj%02d%s%s%s.npy" % (args.subj, roi, bs, zs))
     except FileNotFoundError:
-        all_evs = compute_ev(stim, args.subj, roi, args.biascorr)
-        np.save("output/evs_subj%02d%s%s.npy" % (args.subj, roi, bs), all_evs)
+        all_evs = compute_ev(stim, args.subj, roi, args.biascorr, args.zscored_input)
+        np.save("output/evs_subj%02d%s%s%s.npy" % (args.subj, roi, bs, zs), all_evs)
 
     plt.figure()
     plt.hist(all_evs)
-    plt.title("Explainable Variance across Voxels (subj%02d%s%s)" % (args.subj, roi, bs))
-    plt.savefig("figures/evs_subj%02d%s%s.png" % (args.subj, roi, bs))
+    plt.title("Explainable Variance across Voxels (subj%02d%s%s%s)" % (args.subj, roi, bs, zs))
+    plt.savefig("figures/evs_subj%02d%s%s%s.png" % (args.subj, roi, bs, zs))
