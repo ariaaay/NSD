@@ -53,7 +53,7 @@ if __name__ == "__main__":
         bs = ""
 
     if args.zscored_input:
-        zs = "zscored"
+        zs = "_zscored"
     else:
         zs = ""
 
@@ -61,6 +61,7 @@ if __name__ == "__main__":
     try:
         all_evs = np.load("output/evs_subj%02d%s%s%s.npy" % (args.subj, roi, bs, zs))
     except FileNotFoundError:
+        print("computing EVs")
         all_evs = compute_ev(stim, args.subj, roi, args.biascorr, args.zscored_input)
         np.save("output/evs_subj%02d%s%s%s.npy" % (args.subj, roi, bs, zs), all_evs)
 
