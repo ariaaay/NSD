@@ -1,15 +1,15 @@
-TASKS="class_1000 \
- class_places \
- edge2d \
- edge3d"
+#TASKS="class_1000 \
+# class_places \
+# edge2d \
+# edge3d"
 
-#TASKS="segment25d \
-# segment2d \
-# reshade \
-# rgb2mist \
-# rgb2sfnorm \
-# colorization \
-# jigsaw"
+TASKS="segment25d \
+ segment2d \
+ reshade \
+ rgb2mist \
+ rgb2sfnorm \
+ colorization \
+ jigsaw"
 
 #TASKS="curvature \
 #autoencoder \
