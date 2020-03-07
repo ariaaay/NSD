@@ -6,6 +6,26 @@ from tqdm import tqdm
 roi_path = "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/"
 beta_path = "/lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/"
 
+def zscore_by_run(mat, run_n=480):
+    try:
+        assert mat.shape[0] / run_n == 62.5
+    except AssertionError:
+        print("data has the wrong shape or run_number is wrong for zscoring by run.")
+
+    from scipy.stats import zscore
+    zscored_mat = np.zeros(mat.shape)
+    index_so_far = 0
+    for i in tqdm(range(run_n)):
+        if i%2==0:
+            zscored_mat[index_so_far:index_so_far + 62,:] = zscore(mat[index_so_far:index_so_far + 62,:])
+            index_so_far += 62
+        else:
+            zscored_mat[index_so_far:index_so_far + 63,:] = zscore(mat[index_so_far:index_so_far + 63,:])
+            index_so_far += 63
+
+    return zscored_mat
+
+
 def extract_cortical_mask(subj, roi_only):
     roi_subj_path = "%s/subj%02d/func1pt8mm/roi/nsdgeneral.nii.gz" % (roi_path, subj)
     anat = nib.load(roi_subj_path)
@@ -19,12 +39,15 @@ def extract_cortical_mask(subj, roi_only):
         np.save("output/cortical_mask_subj%02d.npy" % subj, mask)
         return mask
 
-def extract_voxels(subj, roi_only):
+def extract_voxels(subj, roi_only, zscore_by_run):
     beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (beta_path, subj)
+    mask_tag = ""
+
     if roi_only:
-        mask_tag = "_roi_only"
-    else:
-        mask_tag = ""
+        mask_tag += "_roi_only"
+
+    if zscore_by_run:
+        mask_tag += "_zscore"
 
     try:
         mask = np.load("output/cortical_mask_subj%02d%s" % (subj, mask_tag))
@@ -42,6 +65,9 @@ def extract_voxels(subj, roi_only):
         else:
             cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta/300))
 
+    if zscore_by_run:
+        cortical_beta_mat = zscore_by_run(cortical_beta_mat)
+
     np.save(
         "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, mask_tag), cortical_beta_mat
     )
@@ -52,7 +78,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", type=int, help="Subject number (from 1 to 8)")
     parser.add_argument("--all_subj", type=bool, help="extract cortical voxel for all subjects")
-    parser.add_argument("--use_roi_only", type=bool, help="only extract voxels related to rois")
+    parser.add_argument("--use_roi_only", action="store_true", help="only extract voxels related to rois")
+    parser.add_argument("--zscore_by_run", action="store_true", help="zscore brain data by runs")
 
     args = parser.parse_args()
     if args.all_subj:
@@ -61,5 +88,5 @@ if __name__ == "__main__":
         subj = [args.subj]
 
     for s in subj:
-        extract_voxels(s, args.use_roi_only)
+        extract_voxels(s, args.use_roi_only, args.zscore_by_run)
 
