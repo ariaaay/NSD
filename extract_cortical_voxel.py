@@ -39,14 +39,14 @@ def extract_cortical_mask(subj, roi_only):
         np.save("output/cortical_mask_subj%02d.npy" % subj, mask)
         return mask
 
-def extract_voxels(subj, roi_only, zscore_by_run):
+def extract_voxels(subj, roi_only, zscore):
     beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (beta_path, subj)
     mask_tag = ""
 
     if roi_only:
         mask_tag += "_roi_only"
 
-    if zscore_by_run:
+    if zscore:
         mask_tag += "_zscore"
 
     try:
