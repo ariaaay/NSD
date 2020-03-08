@@ -42,7 +42,7 @@ if __name__ == '__main__':
             pickle.dump(image_list, f)
 
     elif args.type == "cocoId":
-        image_list = extract_repeat_img_list(stim, args.subj, args.rep)
+        image_list = extract_repeat_img_list(stim, args.subj)
         with open('output/coco_ID_subj%02d.pkl' % args.subj , 'wb') as f:
             pickle.dump(image_list, f)
 
