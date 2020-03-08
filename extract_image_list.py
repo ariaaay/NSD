@@ -4,14 +4,20 @@ import pandas as pd
 import argparse
 
 
-def extract_first_repeat_img_list(stim, subj, rep=0):
-    column = 'subject%1d_rep01d' % (subj, rep)
-    image_id_list = list(stim.cocoId[stim[column]!=0])
-    return image_id_list
+def extract_repeat_img_list(stim, subj):
+    all_rep_img_list = list()
+    for rep in range(3):
+        column = 'subject%1d_rep01d' % (subj, rep)
+        image_id_list = list(stim.cocoId[stim[column]!=0])
+    all_rep_img_list.append(image_id_list)
+    return all_rep_img_list
 
-def extract_first_repeat_trials_list(stim, subj, rep=0):
-    column = 'subject%1d_rep01d' % (subj, rep)
-    trial_id_list = list(stim.subject1_rep0[stim[column]!=0])
+def extract_repeat_trials_list(stim, subj):
+    all_rep_trials_list = list()
+    for rep in range(3):
+        column = 'subject%1d_rep01d' % (subj, rep)
+        trial_id_list = list(stim.subject1_rep0[stim[column]!=0])
+    all_rep_trials_list.append(trial_id_list)
     return trial_id_list
 
 def extract_img_list(stim, subj):
@@ -36,12 +42,12 @@ if __name__ == '__main__':
             pickle.dump(image_list, f)
 
     elif args.type == "cocoId":
-        image_list = extract_first_repeat_img_list(stim, args.subj, args.rep)
+        image_list = extract_repeat_img_list(stim, args.subj, args.rep)
         with open('output/coco_ID_subj%02drep%01d.pkl' % (args.subj, args.rep) , 'wb') as f:
             pickle.dump(image_list, f)
 
     elif args.type == "trial":
-        trial_list = extract_first_repeat_trials_list(stim, args.subj)
+        trial_list = extract_repeat_trials_list(stim, args.subj)
         with open("output/trials_subj%02drep%01d.pkl" % (args.subj, args.rep), 'wb') as f:
             pickle.dump(trial_list, f)
 
