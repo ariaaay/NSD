@@ -30,7 +30,7 @@ if __name__ == '__main__':
     parser.add_argument("--subj", type=int)
     parser.add_argument("--type", type=str)
     parser.add_argument("--all_images", type=bool, help="Return all images a subject see")
-    parser.add_argument("--rep", type=int, default="0", help="Choose which repeats (0-2)")
+    # parser.add_argument("--rep", type=int, default="0", help="Choose which repeats (0-2)")
 
     args = parser.parse_args()
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
 
     elif args.type == "cocoId":
         image_list = extract_repeat_img_list(stim, args.subj, args.rep)
-        with open('output/coco_ID_subj%02drep%01d.pkl' % (args.subj, args.rep) , 'wb') as f:
+        with open('output/coco_ID_subj%02d.pkl' % args.subj , 'wb') as f:
             pickle.dump(image_list, f)
 
     elif args.type == "trial":
         trial_list = extract_repeat_trials_list(stim, args.subj)
-        with open("output/trials_subj%02drep%01d.pkl" % (args.subj, args.rep), 'wb') as f:
+        with open("output/trials_subj%02d.pkl" % args.subj, 'wb') as f:
             pickle.dump(trial_list, f)
 
