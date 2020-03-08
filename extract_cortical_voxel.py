@@ -40,37 +40,43 @@ def extract_cortical_mask(subj, roi_only):
         return mask
 
 def extract_voxels(subj, roi_only, zscore):
-    beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (beta_path, subj)
     mask_tag = ""
-
     if roi_only:
         mask_tag += "_roi_only"
 
     if zscore:
         mask_tag += "_zscore"
 
+    output_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, mask_tag)
+
     try:
-        mask = np.load("output/cortical_mask_subj%02d%s" % (subj, mask_tag))
+        cortical_beta_mat = np.load(output_path)
+        print("Cortical voxels file already existed...")
     except FileNotFoundError:
-        mask = extract_cortical_mask(subj, roi_only)
+        beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (beta_path, subj)
 
-    cortical_beta_mat = None
-    for ses in tqdm(range(1,41)):
-        beta_file = nib.load("%s/betas_session%02d.nii.gz" % (beta_subj_dir, ses))
-        beta = beta_file.get_data()
-        cortical_beta = (beta[mask]).T #verify the mask with array
+        try:
+            mask = np.load("output/cortical_mask_subj%02d%s" % (subj, mask_tag))
+        except FileNotFoundError:
+            mask = extract_cortical_mask(subj, roi_only)
 
-        if cortical_beta_mat is None:
-            cortical_beta_mat = cortical_beta/300
-        else:
-            cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta/300))
+        cortical_beta_mat = None
+        for ses in tqdm(range(1,41)):
+            beta_file = nib.load("%s/betas_session%02d.nii.gz" % (beta_subj_dir, ses))
+            beta = beta_file.get_data()
+            cortical_beta = (beta[mask]).T #verify the mask with array
 
-    if zscore_by_run:
-        cortical_beta_mat = zscore_by_run(cortical_beta_mat)
+            if cortical_beta_mat is None:
+                cortical_beta_mat = cortical_beta/300
+            else:
+                cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta/300))
 
-    np.save(
-        "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, mask_tag), cortical_beta_mat
-    )
+        if zscore_by_run:
+            cortical_beta_mat = zscore_by_run(cortical_beta_mat)
+
+        np.save(
+            output_path, cortical_beta_mat
+        )
     return cortical_beta_mat
 
 
