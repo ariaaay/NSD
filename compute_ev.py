@@ -21,7 +21,7 @@ def extract_subject_trials_index_shared1000(stim, subj):
 def extract_subject_trials_index(stim, subj):
     # load trial index
     trial_index_path = "output/trials_subj%02d.pkl" % args.subj
-    trial_lists = pickle.load(open(trial_index_path))
+    trial_lists = pickle.load(open(trial_index_path, "rb"))
     return trial_lists,
 
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
