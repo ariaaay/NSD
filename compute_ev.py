@@ -57,6 +57,8 @@ if __name__ == "__main__":
     if args.roi_only:
         roi = "_roi_only"
         tag += roi
+    else:
+        roi = ""
 
     if args.biascorr:
         tag += "_biascorr"
