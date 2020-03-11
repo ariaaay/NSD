@@ -1,0 +1,160 @@
+"""
+This scripts takes an features space and runs encoding models (ridge regression) to
+predict NSD brain data.
+"""
+from scipy.io import loadmat
+import argparse
+import numpy as np
+import torch
+import pickle
+from glob import glob
+from encodingmodel.encoding_model import fit_encoding_model, permutation_test
+from featureprep.feature_prep import get_features
+
+
+# from data_consistency import *
+
+# from util.util import *
+
+def run(
+        fm,
+        br,
+        model_name,
+        test,
+        notest,
+        whole_brain,
+        br_subset_idx,
+        # stacking,
+        # split_by_runs,
+        # pca,
+        fix_testing,
+        cv,
+        # model_list,
+):
+    print("Features are {}. Using whole brain data: {}".format(model_name, whole_brain))
+
+    if not test:
+        print("Fitting Encoding Models")
+        fit_encoding_model(
+            fm,
+            br,
+            model_name=model_name,
+            byROI=not whole_brain,
+            subset_idx=br_subset_idx,
+            subj=args.subj,
+            # split_by_runs=split_by_runs,
+            # pca=pca,
+            # stacking=stacking,
+            fix_testing=fix_testing,
+            cv=cv,
+            saving=True,
+            # model_list=model_list
+        )
+    if not notest:
+        print("Running Permutation Test")
+        permutation_test(
+            fm,
+            br,
+            model_name=model_name,
+            byROI=not whole_brain,
+            subset_idx=br_subset_idx,
+            subj=args.subj,
+            # split_by_runs=split_by_runs,
+            permute_y=args.permute_y,
+        )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="please specify features to model from"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="convnet",
+        help="input the name of the features."
+             "Options are: convnet, scenenet, response,surface_normal_latent, surface_normal_subsample, RT, etc",
+    )
+    parser.add_argument(
+        "--layer", type=str, default="", help="input name of the convolutional layer or task"
+    )
+    parser.add_argument(
+        "--notest", action="store_true", help="run encoding model with permutation test"
+    )
+    parser.add_argument(
+        "--test", action="store_true", help="running permutation testing only"
+    )
+    parser.add_argument(
+        "--whole_brain", action="store_true", help="use whole brain data for modeling"
+    )
+    parser.add_argument(
+        "--subj", type=str, default="1", help="specify which subject to build model on"
+    )
+
+    parser.add_argument(
+        "--zscored", action="store_true", help="load zscored data"
+    )
+
+    parser.add_argument(
+        "--fix_testing",
+        action="store_true",
+        help="used fixed sampling for training and testing",
+    )
+    parser.add_argument(
+        "--cv", action="store_true", default=False, help="run cross-validation"
+    )
+    parser.add_argument(
+        "--permute_y",
+        action="store_true",
+        default=False,
+        help="permute test label but not training label",
+    )
+    args = parser.parse_args()
+
+    mask_tag = ""
+    if args.roi:
+        mask_tag += "_roi_only"
+
+    if args.zscored:
+        mask_tag += "_zscore"
+
+    brain_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (args.subj, mask_tag)
+
+    # Load brain data
+    br_data = np.load(brain_path)
+    print("Brain response size is: " + str(br_data.shape))
+
+
+    # Load feature spaces
+    print("Running ridge on " + args.model)
+
+    stimulus_path = "output/coco_ID_subj%02d.pkl" % args.subj
+    stimulus_list = pickle.load(open(stimulus_path, "rb"))[0]
+
+    feature_mat, br_subset_idx = get_features(
+        args.subj,
+        stimulus_list,
+        args.model,
+        layer=args.layer,
+        dim=args.dim,
+    )
+
+    model_name_to_save = (
+            args.model
+            + "_"
+            + args.layer
+            + args.dim
+            + mask_tag
+    )
+
+    run(
+        feature_mat,
+        br_data,
+        model_name=model_name_to_save,
+        test=args.test,
+        notest=args.notest,
+        whole_brain=args.whole_brain,
+        br_subset_idx=br_subset_idx,
+        fix_testing=args.fix_testing,
+        cv=args.cv,
+    )
