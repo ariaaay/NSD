@@ -12,10 +12,6 @@ from encodingmodel.encoding_model import fit_encoding_model, permutation_test
 from featureprep.feature_prep import get_features
 
 
-# from data_consistency import *
-
-# from util.util import *
-
 def run(
         fm,
         br,
@@ -39,7 +35,7 @@ def run(
             fm,
             br,
             model_name=model_name,
-            byROI=not whole_brain,
+            ROI=not whole_brain,
             subset_idx=br_subset_idx,
             subj=args.subj,
             # split_by_runs=split_by_runs,
@@ -56,7 +52,7 @@ def run(
             fm,
             br,
             model_name=model_name,
-            byROI=not whole_brain,
+            ROI=not whole_brain,
             subset_idx=br_subset_idx,
             subj=args.subj,
             # split_by_runs=split_by_runs,
