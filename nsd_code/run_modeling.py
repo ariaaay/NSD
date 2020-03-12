@@ -78,7 +78,7 @@ if __name__ == "__main__":
         "--test", action="store_true", help="running permutation testing only"
     )
     parser.add_argument(
-        "--whole_brain", action="store_true", help="use whole brain data for modeling"
+        "--roi", action="store_true", help="use roi data for modeling"
     )
     parser.add_argument(
         "--subj", type=str, default="1", help="specify which subject to build model on"
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         model_name=model_name_to_save,
         test=args.test,
         notest=args.notest,
-        whole_brain=args.whole_brain,
+        whole_brain=not args.roi,
         br_subset_idx=br_subset_idx,
         fix_testing=args.fix_testing,
         cv=args.cv,
