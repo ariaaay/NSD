@@ -16,7 +16,7 @@ module load cudnn-10.1-v7.6.5.32
 
 task=$1
 
-cd code
+cd nsd_code
 sub=1
 
 echo "running taskonomy $task task on subject $sub"
