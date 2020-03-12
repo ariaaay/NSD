@@ -81,7 +81,7 @@ if __name__ == "__main__":
         "--roi", default=False, action="store_true", help="use roi data for modeling"
     )
     parser.add_argument(
-        "--subj", type=str, default="1", help="specify which subject to build model on"
+        "--subj", type=int, default=1, help="specify which subject to build model on"
     )
 
     parser.add_argument(
