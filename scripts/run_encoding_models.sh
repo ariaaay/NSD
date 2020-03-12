@@ -10,7 +10,7 @@
 #SBATCH --output=/home/yuanw3/error_log/job.%J.out
 
 set -eu
-VIRTUAL_ENV_DISABLE_PROMPT=true source ~/ObjectEmbeddingSpace/venv/bin/activate
+PS=${PS:-} source ~/ObjectEmbeddingSpace/venv/bin/activate
 module load cuda-10.1
 module load cudnn-10.1-v7.6.5.32
 
