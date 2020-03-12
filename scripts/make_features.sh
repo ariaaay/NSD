@@ -3,15 +3,15 @@
 # edge2d \
 # edge3d"
 
-TASKS="segment25d \
- segment2d \
- reshade \
- rgb2mist \
- rgb2sfnorm \
+TASKS="rgb2mist \
  colorization \
  jigsaw"
 
-#TASKS="curvature \
+#TASKS="rgb2sfnorm \
+#segment25d \
+#segment2d \
+#reshade \
+#curvature \
 #autoencoder \
 #denoise \
 #inpainting_whole
