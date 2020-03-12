@@ -39,6 +39,8 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
             assert repeat.shape == (repeat_n,3)
         except AssertionError:
             print(repeat.shape)
+
+        np.save("output/cortical_responses_by_repeat_zscored_by_run_subj%02d%s" %(subj, roi))
         ev_list.append(ev(repeat, biascorr=biascorr))
     return np.array(ev_list)
 
