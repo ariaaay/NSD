@@ -16,8 +16,7 @@ module load cudnn-10.1-v7.6.5.32
 
 task=$1
 
-cd nsd_code
 sub=1
 
 echo "running taskonomy $task task on subject $sub"
-python run_modeling.py --model taskrepr_$task --subj $sub --fix_testing --notest
+python nsd_code/run_modeling.py --model taskrepr_$task --subj $sub --fix_testing --notest
