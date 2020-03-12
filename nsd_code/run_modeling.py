@@ -2,12 +2,9 @@
 This scripts takes an features space and runs encoding models (ridge regression) to
 predict NSD brain data.
 """
-from scipy.io import loadmat
 import argparse
 import numpy as np
-import torch
 import pickle
-from glob import glob
 from encodingmodel.encoding_model import fit_encoding_model, permutation_test
 from featureprep.feature_prep import get_features
 

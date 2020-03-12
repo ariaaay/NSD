@@ -1,6 +1,4 @@
 # Author: Aria Wang
-import os
-import numpy as np
 import pickle
 import json
 import re

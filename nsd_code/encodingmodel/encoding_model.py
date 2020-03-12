@@ -1,26 +1,21 @@
 import os
 import torch
-import json
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.model_selection import (
     KFold,
-    GroupKFold,
     PredefinedSplit,
     train_test_split,
     GroupShuffleSplit,
     ShuffleSplit,
 )
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.metrics import r2_score
 from sklearn.decomposition import PCA
 from scipy.stats import pearsonr
 
-from util.util import *
-from util.model_config import *
+from util.util import pearson_corr, empirical_p
 from encodingmodel.ridge import RidgeCVEstimator
-from encodingmodel.stacking import stack
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
