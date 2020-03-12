@@ -78,7 +78,7 @@ if __name__ == "__main__":
         "--test", action="store_true", help="running permutation testing only"
     )
     parser.add_argument(
-        "--roi", action="store_true", help="use roi data for modeling"
+        "--roi", default=False, action="store_true", help="use roi data for modeling"
     )
     parser.add_argument(
         "--subj", type=str, default="1", help="specify which subject to build model on"
