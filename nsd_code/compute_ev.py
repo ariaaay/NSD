@@ -27,7 +27,7 @@ def extract_subject_trials_index(stim, subj):
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     l = extract_subject_trials_index(stim, subj) # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
 
-    repeat_n = len(l[-1])
+    repeat_n = l.shape[0]
     print("The number of images with 3 repetitions are: " + str(repeat_n))
 
     try:
