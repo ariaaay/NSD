@@ -135,14 +135,12 @@ if __name__ == "__main__":
         stimulus_list,
         args.model,
         layer=args.layer,
-        dim=args.dim,
     )
 
     model_name_to_save = (
             args.model
             + "_"
             + args.layer
-            + args.dim
             + mask_tag
     )
 
