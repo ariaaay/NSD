@@ -121,7 +121,7 @@ if __name__ == "__main__":
     # Load feature spaces
     print("Running ridge on " + args.model)
 
-    stimulus_path = "output/coco_ID_subj%02d.npy" % args.subj
+    stimulus_path = "output/coco_ID_of_repeats_subj%02d.npy" % args.subj
     stimulus_list = np.load(stimulus_path)[0] #TODO: All subjects should have same orders
     try:
         assert stimulus_list.shape == (len(stimulus_list[-1]), 3)
