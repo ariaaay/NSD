@@ -16,7 +16,6 @@ def run(
         test,
         notest,
         whole_brain,
-        br_subset_idx,
         # stacking,
         # split_by_runs,
         # pca,
@@ -33,7 +32,6 @@ def run(
             br,
             model_name=model_name,
             ROI=not whole_brain,
-            subset_idx=br_subset_idx,
             subj=args.subj,
             # split_by_runs=split_by_runs,
             # pca=pca,
@@ -50,7 +48,6 @@ def run(
             br,
             model_name=model_name,
             ROI=not whole_brain,
-            subset_idx=br_subset_idx,
             subj=args.subj,
             # split_by_runs=split_by_runs,
             permute_y=args.permute_y,
@@ -130,7 +127,7 @@ if __name__ == "__main__":
     stimulus_list = stimulus_with_repeat[0] #All subjects should have same orders
 
 
-    feature_mat, br_subset_idx = get_features(
+    feature_mat = get_features(
         args.subj,
         stimulus_list,
         args.model,
@@ -151,7 +148,6 @@ if __name__ == "__main__":
         test=args.test,
         notest=args.notest,
         whole_brain=not args.roi,
-        br_subset_idx=br_subset_idx,
         fix_testing=args.fix_testing,
         cv=args.cv,
     )

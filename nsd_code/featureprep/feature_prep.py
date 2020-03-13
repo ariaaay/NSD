@@ -13,7 +13,7 @@ from torch.autograd import Variable
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-def get_features(subj, stim_list, model, layer=None, br_subset_idx=None):
+def get_features(subj, stim_list, model, layer=None):
     print("Getting features for {}{}, for subject {}".format(model, layer, subj))
     # events also has a stim list, it is same as the "stim_lists.txt"; but repetition is not indicated in the file name.
 
@@ -34,8 +34,6 @@ def get_features(subj, stim_list, model, layer=None, br_subset_idx=None):
         featmat = np.array(featmat)
 
 
-        print(featmat.shape[0])
-        print(len(br_subset_idx))
-        assert featmat.shape[0] == len(br_subset_idx)
+        print("feature shape is " + str(featmat.shape[0]))
 
-    return featmat, br_subset_idx
+    return featmat
