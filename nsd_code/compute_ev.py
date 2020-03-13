@@ -26,6 +26,7 @@ def extract_subject_trials_index(stim, subj):
 
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     l = extract_subject_trials_index(stim, subj)
+    print(l)
     repeat_n = len(l[-1])
     print("The number of images with 3 repetitions are: " + str(repeat_n))
 
@@ -38,6 +39,9 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
 
     for v in tqdm(range(data.shape[1])): #loop over voxels
+        print("***")
+        print(l[i])
+        print(data.shape[0])
         repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T # all repeated trials for each voxels
         try:
             assert repeat.shape == (repeat_n,3)
