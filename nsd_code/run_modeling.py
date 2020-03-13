@@ -111,7 +111,7 @@ if __name__ == "__main__":
     if args.zscored:
         mask_tag += "_zscore"
 
-    brain_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (args.subj, mask_tag)
+    brain_path = "output/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (args.subj, mask_tag)
 
     # Load brain data
     br_data = np.load(brain_path)
