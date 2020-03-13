@@ -121,12 +121,14 @@ if __name__ == "__main__":
     # Load feature spaces
     print("Running ridge on " + args.model)
 
-    stimulus_path = "output/coco_ID_of_repeats_subj%02d.npy" % args.subj
-    stimulus_list = np.load(stimulus_path)[0] #TODO: All subjects should have same orders
+    stimulus_with_repeat = np.load("output/coco_ID_of_repeats_subj%02d.npy" % args.subj)
     try:
-        assert stimulus_list.shape[1] == 3
+        assert stimulus_with_repeat.shape[1] ==3
     except AssertionError:
-        print(stimulus_list.shape)
+        print(stimulus_with_repeat.shape)
+
+    stimulus_list = stimulus_with_repeat[0] #All subjects should have same orders
+
 
     feature_mat, br_subset_idx = get_features(
         args.subj,
