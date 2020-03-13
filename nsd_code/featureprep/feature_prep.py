@@ -29,7 +29,7 @@ def get_features(subj, stim_list, model, layer=None):
                 repr = np.load(fpath).flatten()
             except FileNotFoundError:
                 print(img_id)
-                fpath = "%s/COCO_train2014%012d.npy" % (repr_dir, img_id)
+                fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
                 repr = np.load(fpath).flatten()
             featmat.append(repr)
         featmat = np.array(featmat)
