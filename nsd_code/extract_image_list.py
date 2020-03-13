@@ -10,7 +10,7 @@ def extract_repeat_img_list(stim, subj):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
         image_id_list = list(stim.cocoId[stim[col_name]!=0])
         all_rep_img_list.append(image_id_list)
-    return all_rep_img_list
+    return np.array(all_rep_img_list)
 
 def extract_repeat_trials_list(stim, subj):
     all_rep_trials_list = list()
@@ -18,7 +18,7 @@ def extract_repeat_trials_list(stim, subj):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
         trial_id_list = list(stim[col_name][stim[col_name]!=0])
         all_rep_trials_list.append(trial_id_list)
-    return all_rep_trials_list
+    return np.array(all_rep_trials_list)
 
 def extract_img_list(stim, subj):
     col_name = 'subject%1d' % (subj)
@@ -43,11 +43,9 @@ if __name__ == '__main__':
 
     elif args.type == "cocoId":
         image_list = extract_repeat_img_list(stim, args.subj)
-        with open('output/coco_ID_with_repeat_subj%02d.pkl' % args.subj , 'wb') as f:
-            pickle.dump(image_list, f)
+        np.save('output/coco_ID_of_repeats_subj%02d.npy' % args.subj, image_list)
 
     elif args.type == "trial":
         trial_list = extract_repeat_trials_list(stim, args.subj)
-        with open("output/trials_subj%02d.pkl" % args.subj, 'wb') as f:
-            pickle.dump(trial_list, f)
+        np.save("output/trials_subj%02d.npy" % args.subj, trial_list)
 

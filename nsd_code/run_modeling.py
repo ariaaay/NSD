@@ -121,8 +121,8 @@ if __name__ == "__main__":
     # Load feature spaces
     print("Running ridge on " + args.model)
 
-    stimulus_path = "output/coco_ID_subj%02d.pkl" % args.subj
-    stimulus_list = pickle.load(open(stimulus_path, "rb"))[0]
+    stimulus_path = "output/coco_ID_subj%02d.npy" % args.subj
+    stimulus_list = np.load(stimulus_path)[0] #TODO: All subjects should have same orders
 
     feature_mat, br_subset_idx = get_features(
         args.subj,

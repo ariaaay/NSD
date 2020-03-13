@@ -20,12 +20,13 @@ def extract_subject_trials_index_shared1000(stim, subj):
 
 def extract_subject_trials_index(stim, subj):
     # load trial index
-    trial_index_path = "output/trials_subj%02d.pkl" % args.subj
-    trial_lists = pickle.load(open(trial_index_path, "rb"))
+    trial_index_path = "output/trials_subj%02d.npy" % args.subj
+    trial_lists = np.load(trial_index_path)
     return trial_lists
 
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
-    l = extract_subject_trials_index(stim, subj)
+    l = extract_subject_trials_index(stim, subj) # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
+
     repeat_n = len(l[-1])
     print("The number of images with 3 repetitions are: " + str(repeat_n))
 
@@ -43,10 +44,9 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
 
     for v in tqdm(range(data.shape[1])): #loop over voxels
-
-        repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T # all repeated trials for each voxels
+        repeat = np.array([data[l[:,i], v] for i in range(3)]).T # all repeated trials for each voxels
         try:
-            assert repeat.shape == (repeat_n,3)
+            assert repeat.shape == (repeat_n, 3)
             avg_mat[:, v] = np.mean(repeat, axis=1)
         except AssertionError:
             print(repeat.shape)
