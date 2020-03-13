@@ -22,13 +22,14 @@ def extract_subject_trials_index(stim, subj):
     # load trial index
     trial_index_path = "output/trials_subj%02d.pkl" % args.subj
     trial_lists = pickle.load(open(trial_index_path, "rb"))
-    return trial_lists,
+    return trial_lists
 
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     l = extract_subject_trials_index(stim, subj)
-    print(l)
     repeat_n = len(l[-1])
     print("The number of images with 3 repetitions are: " + str(repeat_n))
+
+    assert np.array(l).shape == (repeat_n, 3)
 
     if zscored_input:
         data = np.load("output/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
@@ -39,9 +40,7 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
 
     for v in tqdm(range(data.shape[1])): #loop over voxels
-        print("***")
-        print(l[i])
-        print(data.shape[0])
+
         repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T # all repeated trials for each voxels
         try:
             assert repeat.shape == (repeat_n,3)
