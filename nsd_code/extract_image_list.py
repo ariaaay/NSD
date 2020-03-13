@@ -9,7 +9,7 @@ def extract_repeat_img_list(stim, subj):
     for rep in range(3):
         column = 'subject%1d_rep%01d' % (subj, rep)
         image_id_list = list(stim.cocoId[stim[column]!=0])
-    all_rep_img_list.append(image_id_list)
+        all_rep_img_list.append(image_id_list)
     return all_rep_img_list
 
 def extract_repeat_trials_list(stim, subj):
@@ -17,7 +17,7 @@ def extract_repeat_trials_list(stim, subj):
     for rep in range(3):
         column = 'subject%1d_rep%01d' % (subj, rep)
         trial_id_list = list(stim[column][stim[column]!=0])
-    all_rep_trials_list.append(trial_id_list)
+        all_rep_trials_list.append(trial_id_list)
     return all_rep_trials_list
 
 def extract_img_list(stim, subj):
