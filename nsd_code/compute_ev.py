@@ -27,21 +27,26 @@ def extract_subject_trials_index(stim, subj):
 def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     l = extract_subject_trials_index(stim, subj)
     repeat_n = len(l[-1])
+    print("The number of images with 3 repetitions are: " + str(repeat_n))
+
     if zscored_input:
         data = np.load("output/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
     else:
         data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
 
     ev_list = []
+    avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
+
     for v in tqdm(range(data.shape[1])): #loop over voxels
-        repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T
+        repeat = np.array([data[np.array(l[i]), v] for i in range(3)]).T # all repeated trials for each voxels
         try:
             assert repeat.shape == (repeat_n,3)
+            avg_mat[:, v] = np.mean(repeat, axis=1)
         except AssertionError:
             print(repeat.shape)
 
-        np.save("output/cortical_responses_by_repeat_zscored_by_run_subj%02d%s" %(subj, roi))
         ev_list.append(ev(repeat, biascorr=biascorr))
+    np.save("output/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (subj, roi), avg_mat)
     return np.array(ev_list)
 
 
