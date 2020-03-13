@@ -10,7 +10,7 @@ def extract_repeat_img_list(stim, subj):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
         image_id_list = list(stim.cocoId[stim[col_name]!=0])
         all_rep_img_list.append(image_id_list)
-    return np.array(all_rep_img_list)
+    return np.array(all_rep_img_list).T
 
 def extract_repeat_trials_list(stim, subj):
     all_rep_trials_list = list()
@@ -18,7 +18,7 @@ def extract_repeat_trials_list(stim, subj):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
         trial_id_list = list(stim[col_name][stim[col_name]!=0])
         all_rep_trials_list.append(trial_id_list)
-    return np.array(all_rep_trials_list)
+    return np.array(all_rep_trials_list).T
 
 def extract_img_list(stim, subj):
     col_name = 'subject%1d' % (subj)
