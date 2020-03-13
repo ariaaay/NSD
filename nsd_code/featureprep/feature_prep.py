@@ -23,6 +23,7 @@ def get_features(subj, stim_list, model, layer=None):
         repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
 
         featmat = []
+        print("stimulus length is: " + str(len(stim_list)))
         for img_id in tqdm(stim_list):
             try:
                 fpath = "%s/%d.npy" % (repr_dir, img_id)
