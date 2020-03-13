@@ -124,7 +124,7 @@ if __name__ == "__main__":
     except AssertionError:
         print(stimulus_with_repeat.shape)
 
-    stimulus_list = stimulus_with_repeat[0] #All subjects should have same orders
+    stimulus_list = stimulus_with_repeat[:,0] #All subjects should have same orders
 
 
     feature_mat = get_features(
