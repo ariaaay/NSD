@@ -29,7 +29,10 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     repeat_n = len(l[-1])
     print("The number of images with 3 repetitions are: " + str(repeat_n))
 
-    assert np.array(l).shape == (repeat_n, 3)
+    try:
+        assert np.array(l).shape == (repeat_n, 3)
+    except AssertionError:
+        print(np.array(l).shape)
 
     if zscored_input:
         data = np.load("output/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
