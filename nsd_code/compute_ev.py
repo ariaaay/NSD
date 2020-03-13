@@ -18,14 +18,8 @@ def extract_subject_trials_index_shared1000(stim, subj):
     return index
 
 
-def extract_subject_trials_index(stim, subj):
-    # load trial index
-    trial_index_path = "output/trials_subj%02d.npy" % args.subj
-    trial_lists = np.load(trial_index_path)
-    return trial_lists
-
-def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
-    l = extract_subject_trials_index(stim, subj) # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
+def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
+    l = np.load("output/trials_subj%02d.npy" % subj) # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
 
     repeat_n = l.shape[0]
     print("The number of images with 3 repetitions are: " + str(repeat_n))
@@ -43,7 +37,7 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     ev_list = []
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
 
-    print("Brian data shape is:")
+    print("Brain data shape is:")
     print(data.shape)
 
     for v in tqdm(range(data.shape[1])): #loop over voxels
