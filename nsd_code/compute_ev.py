@@ -84,12 +84,12 @@ if __name__ == "__main__":
     if args.zscored_input:
         tag += "_zscored"
 
-    stim = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
+    # stim = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
     try:
         all_evs = np.load("output/evs_subj%02d%s.npy" % (args.subj, tag))
     except FileNotFoundError:
         print("computing EVs")
-        all_evs = compute_ev(stim, args.subj, roi, args.biascorr, args.zscored_input)
+        all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
         np.save("output/evs_subj%02d%s.npy" % (args.subj, tag), all_evs)
 
     plt.figure()
