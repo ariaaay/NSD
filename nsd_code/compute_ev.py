@@ -43,8 +43,19 @@ def compute_ev(stim, subj, roi="", biascorr=False, zscored_input=False):
     ev_list = []
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
 
+    print("Brian data shape is:")
+    print(data.shape)
+
     for v in tqdm(range(data.shape[1])): #loop over voxels
-        repeat = np.array([data[l[:,i], v] for i in range(3)]).T # all repeated trials for each voxels
+        repeat = list()
+        for r in range(3):
+            try:
+                repeat.append(data[l[:,r], v]) # all repeated trials for each voxels
+            except IndexError:
+                print("Index Error")
+                print(r,v)
+
+        repeat = np.array(repeat).T
         try:
             assert repeat.shape == (repeat_n, 3)
             avg_mat[:, v] = np.mean(repeat, axis=1)
