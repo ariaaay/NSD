@@ -18,7 +18,7 @@ def extract_repeat_trials_list(stim, subj):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
         trial_id_list = list(stim[col_name][stim[col_name]!=0])
         all_rep_trials_list.append(trial_id_list)
-        all_rep_trials_list = np.array(all_rep_trials_list).T - 1 #change from 1 based to 0 based
+    all_rep_trials_list = np.array(all_rep_trials_list).T - 1 #change from 1 based to 0 based
     return all_rep_trials_list
 
 def extract_img_list(stim, subj):
