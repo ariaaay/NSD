@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #SBATCH --job-name=taskf
-#SBATCH -p gpu
+#SBATCH -p tarrq
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=2
 #SBATCH --mem=10G
