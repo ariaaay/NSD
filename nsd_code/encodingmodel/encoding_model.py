@@ -24,7 +24,6 @@ print(device)
 def ridge_cv(
         X,
         y,
-        split_by_runs,
         run_group=None,
         pca=False,
         tol=8,
@@ -48,17 +47,9 @@ def ridge_cv(
     )
 
     # split train and test set
-    if split_by_runs:
-        train_index, test_index = next(
-            GroupShuffleSplit(test_size=0.15, random_state=fix_testing_state).split(X, y, run_group)
-        )
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-        run_group_train = np.array(run_group)[train_index]
-    else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.15, random_state=fix_testing_state
-        )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.15, random_state=fix_testing_state
+    )
 
     if pca:
         print("Running PCA...")
@@ -230,7 +221,6 @@ def permutation_test(
         ROI=True,
         subset_idx=None,
         subj=1,
-        split_by_runs=False,
         pca=False,
         permute_y=True,  # rather than permute training
 ):

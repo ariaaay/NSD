@@ -20,7 +20,7 @@ def get_features(subj, stim_list, model, layer=None):
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrep_X", e.g. taskrep_curvature
         task = "_".join(model.split("_")[1:])
-        repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
+        repr_dir = "/lab_data/tarrlab/yuanw3/tasko:qnomy_features/genStimuli/{}".format(task)
 
         featmat = []
         print("stimulus length is: " + str(len(stim_list)))
@@ -29,7 +29,6 @@ def get_features(subj, stim_list, model, layer=None):
                 fpath = "%s/%d.npy" % (repr_dir, img_id)
                 repr = np.load(fpath).flatten()
             except FileNotFoundError:
-                print(img_id)
                 fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
                 repr = np.load(fpath).flatten()
             featmat.append(repr)
