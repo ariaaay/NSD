@@ -4,7 +4,7 @@
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=2
-#SBATCH --mem=10G
+#SBATCH --mem=30G
 #SBATCH --time=10-00:00:00
 #SBATCH --error=/home/yuanw3/error_log/job.%J.err
 #SBATCH --output=/home/yuanw3/error_log/job.%J.out
