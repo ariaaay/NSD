@@ -1,12 +1,12 @@
-#TASKS="class_1000 \
-# class_places \
-# edge2d \
-# edge3d"
+TASKS="class_1000 \
+ class_places \
+ edge2d \
+ edge3d"
 
-TASKS="rgb2mist \
- colorization \
- jigsaw"
-
+#TASKS="rgb2mist \
+# colorization \
+# jigsaw"
+#
 #TASKS="rgb2sfnorm \
 #segment25d \
 #segment2d \
