@@ -3,25 +3,29 @@
 source venv/bin/activate
 
 
-TASKS="class_1000 \
-class_places \
-edge2d \
-edge3d \
-rgb2sfnorm \
-segment25d \
-segment2d \
-reshade \
-curvature \
-autoencoder \
-denoise \
-inpainting_whole
-keypoint2d \
-keypoint3d \
-rgb2depth \
-room_layout \
+#TASKS="class_1000 \
+#class_places \
+#edge2d \
+#edge3d \
+#rgb2sfnorm \
+#segment25d \
+#segment2d \
+#reshade \
+#curvature \
+#autoencoder \
+#denoise \
+#inpainting_whole
+#keypoint2d \
+#keypoint3d \
+#rgb2depth \
+#room_layout \
+
+TASKS="
 segmentsemantic \
 vanishing_point \
 "
+
+#jigsaw
 
 sub=1
 
