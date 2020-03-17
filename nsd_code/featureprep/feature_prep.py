@@ -17,32 +17,33 @@ def get_features(subj, stim_list, model, same_order_for_subjects=True):
     print("Getting features for {}, for subject {}".format(model, subj))
     # events also has a stim list, it is same as the "stim_lists.txt"; but repetition is not indicated in the file name.
 
-    if same_order_for_subjects:
-        featmat = np.load("features/%s.npy" % model)
-    else:
-        featmat = np.load("features/*s_subj%02d.npy" % (model, subj))
+    try:
+        if same_order_for_subjects:
+            featmat = np.load("features/%s.npy" % model)
+        else:
+            featmat = np.load("features/*s_subj%02d.npy" % (model, subj))
+    except FileNotFoundError:
+        if "taskrepr" in model:
+            # latent space in taskonomy, model should be in the format of "taskrep_X", e.g. taskrep_curvature
+            task = "_".join(model.split("_")[1:])
+            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
 
-    if "taskrepr" in model:
-        # latent space in taskonomy, model should be in the format of "taskrep_X", e.g. taskrep_curvature
-        task = "_".join(model.split("_")[1:])
-        repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
+            featmat = []
+            print("stimulus length is: " + str(len(stim_list)))
+            for img_id in tqdm(stim_list):
+                try:
+                    fpath = "%s/%d.npy" % (repr_dir, img_id)
+                    repr = np.load(fpath).flatten()
+                except FileNotFoundError:
+                    fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
+                    repr = np.load(fpath).flatten()
+                featmat.append(repr)
+            featmat = np.array(featmat)
 
-        featmat = []
-        print("stimulus length is: " + str(len(stim_list)))
-        for img_id in tqdm(stim_list):
-            try:
-                fpath = "%s/%d.npy" % (repr_dir, img_id)
-                repr = np.load(fpath).flatten()
-            except FileNotFoundError:
-                fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
-                repr = np.load(fpath).flatten()
-            featmat.append(repr)
-        featmat = np.array(featmat)
-
-    if same_order_for_subjects:
-        np.save("features/%s.npy" % model, featmat)
-    else:
-        np.save("features/*s_subj%02d.npy" % (model, subj), featmat)
+        if same_order_for_subjects:
+            np.save("features/%s.npy" % model, featmat)
+        else:
+            np.save("features/*s_subj%02d.npy" % (model, subj), featmat)
 
         print("feature shape is " + str(featmat.shape[0]))
 
