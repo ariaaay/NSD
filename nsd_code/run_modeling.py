@@ -59,9 +59,9 @@ if __name__ == "__main__":
         help="input the name of the features."
              "Options are: convnet, scenenet, response,surface_normal_latent, surface_normal_subsample, RT, etc",
     )
-    parser.add_argument(
-        "--layer", type=str, default="", help="input name of the convolutional layer or task"
-    )
+    # parser.add_argument(
+    #     "--layer", type=str, default="", help="input name of the convolutional layer or task"
+    # )
     parser.add_argument(
         "--notest", action="store_true", help="run encoding model with permutation test"
     )
@@ -125,13 +125,13 @@ if __name__ == "__main__":
         args.subj,
         stimulus_list,
         args.model,
-        layer=args.layer,
+        # layer=args.layer,
     )
 
     model_name_to_save = (
             args.model
-            + "_"
-            + args.layer
+            # + "_"
+            # + args.layer
             + mask_tag
     )
 

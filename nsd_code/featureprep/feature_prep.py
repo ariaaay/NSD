@@ -13,9 +13,14 @@ from torch.autograd import Variable
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-def get_features(subj, stim_list, model, layer=None):
-    print("Getting features for {}{}, for subject {}".format(model, layer, subj))
+def get_features(subj, stim_list, model, same_order_for_subjects=True):
+    print("Getting features for {}, for subject {}".format(model, subj))
     # events also has a stim list, it is same as the "stim_lists.txt"; but repetition is not indicated in the file name.
+
+    if same_order_for_subjects:
+        featmat = np.load("features/%s.npy" % model)
+    else:
+        featmat = np.load("features/*s_subj%02d.npy" % (model, subj))
 
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrep_X", e.g. taskrep_curvature
@@ -34,6 +39,10 @@ def get_features(subj, stim_list, model, layer=None):
             featmat.append(repr)
         featmat = np.array(featmat)
 
+    if same_order_for_subjects:
+        np.save("features/%s.npy" % model, featmat)
+    else:
+        np.save("features/*s_subj%02d.npy" % (model, subj), featmat)
 
         print("feature shape is " + str(featmat.shape[0]))
 
