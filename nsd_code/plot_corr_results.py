@@ -11,8 +11,9 @@ parser.add_argument("--subj", type=int, default=1)
 
 args = parser.parse_args()
 
-for task in tqdm(taskrepr_features):
+for task in tqdm(taskrepr_features[5:]):
     corrs = pickle.load(open("output/encoding_results/subj%d/corr_taskrepr_%s_whole_brain.p" % (args.subj, task), "rb"))
     plt.figure()
     plt.hist(corrs, bins=50)
     plt.savefig("figures/encoding_results/subj%d/corr_taskrepr_%s_whole_brain.png" % (args.subj, task))
+    del corrs
