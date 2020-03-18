@@ -19,11 +19,14 @@ source venv/bin/activate
 #keypoint3d \
 #rgb2depth \
 #room_layout \
+#segmentsemantic \
+#vanishing_point \
+#"
 
-TASKS="
-segmentsemantic \
-vanishing_point \
-"
+TASKS="inpainting_whole \
+jigsaw \
+colorization \
+jigsaw"
 
 #jigsaw
 
