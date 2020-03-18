@@ -133,7 +133,7 @@ def fit_encoding_model(
     else:
         model_name += "_whole_brain"
 
-    outpath = "outputs/encoding_results/subj{}/".format(subj)
+    outpath = "output/encoding_results/subj{}/".format(subj)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
@@ -165,7 +165,7 @@ def fit_encoding_model(
     if permute_y:  # if running permutation just return subsets of the output
         # save correaltions
         np.save(
-            "../outputs/permutation_results/subj{}/permutation_test_on_test_data_corr_%s.npy" % (
+            "../output/permutation_results/subj{}/permutation_test_on_test_data_corr_%s.npy" % (
                 subj, model_name
             ),
             np.array(corrs_array),
@@ -174,7 +174,7 @@ def fit_encoding_model(
         pickle.dump(
             cv_outputs[0],
             open(
-                "../outputs/permutation_results/subj{}/permutation_test_on_test_data_pvalue_%s.p" % (
+                "../output/permutation_results/subj{}/permutation_test_on_test_data_pvalue_%s.p" % (
                     subj, model_name
                 ),
                 "wb",
@@ -254,7 +254,7 @@ def permutation_test(
         )
         # if not byROI:  # ROIS results are already saved before this line is run #TODO： test permutation again
         # np.save(
-        #     "../outputs/permutation_results/subj{}/permutation_test_on_test_data_corr{}_{}.npy".format(
+        #     "../output/permutation_results/subj{}/permutation_test_on_test_data_corr{}_{}.npy".format(
         #         subj, wb, model_name
         #     ),
         #     np.array(corr_dists),
@@ -262,7 +262,7 @@ def permutation_test(
         # pickle.dump(
         #     ps,
         #     open(
-        #         "../outputs/permutation_results/subj{}/permutation_test_on_test_data_pvalue{}_{}.p".format(
+        #         "../output/permutation_results/subj{}/permutation_test_on_test_data_pvalue{}_{}.p".format(
         #             subj, wb, model_name
         #         ),
         #         "wb",
