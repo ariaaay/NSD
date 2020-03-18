@@ -18,9 +18,8 @@ room_layout \
 segmentsemantic \
 vanishing_point \
 rgb2mist \
-colorization"
-
-# jigsaw
+colorization \
+jigsaw"
 
 for task in $TASKS; do
  sbatch ~/NSD/scripts/run_encoding_models.sh $task
