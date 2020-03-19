@@ -24,9 +24,8 @@ source venv/bin/activate
 #"
 
 TASKS="inpainting_whole \
-jigsaw \
 colorization \
-jigsaw"
+rgb2mist"
 
 #jigsaw
 
