@@ -25,5 +25,5 @@ jigsaw"
 
 
 for task in $TASKS; do
- sbatch ~/NSD/scripts/run_encoding_models.sh $task
+ sbatch ~/NSD/scripts/run_encoding_models_on_taskonomy.sh $task
 done
