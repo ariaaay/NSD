@@ -1,11 +1,8 @@
 "This scripts load feature spaces and prepares it for encoding model"
 import numpy as np
 from tqdm import tqdm
-import pickle
 import torch
-import torch.nn as nn
-from PIL import Image
-from torch.autograd import Variable
+import pandas as pd
 
 # from util.util import *
 # from featureprep.conv_autoencoder import Autoencoder, preprocess
@@ -24,7 +21,7 @@ def get_features(subj, stim_list, model, same_order_for_subjects=True):
             featmat = np.load("features/*s_subj%02d.npy" % (model, subj))
     except FileNotFoundError:
         if "taskrepr" in model:
-            # latent space in taskonomy, model should be in the format of "taskrep_X", e.g. taskrep_curvature
+            # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
             task = "_".join(model.split("_")[1:])
             repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
 
@@ -38,6 +35,23 @@ def get_features(subj, stim_list, model, same_order_for_subjects=True):
                     fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
                     repr = np.load(fpath).flatten()
                 featmat.append(repr)
+            featmat = np.array(featmat)
+
+        if "convnet" in model: # model should be "convnet_vgg16" to load "feat_vgg19.npy"
+            model_id = model.split("_")[1:]
+            feat_name = "_".join(model_id)
+
+            all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD2/feat_%s.npy" % feat_name)
+            stim = pd.read_pickle(
+                "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
+
+            featmat = []
+            for img_id in tqdm(stim_list):
+                try:
+                    stim_ind = stim['nsdId'][stim['cocoId'] == img_id]
+                    featmat.append(all_feat[stim_ind,:])
+                except IndexError:
+                    print("COCO Id Not Found: " + str(img_id))
             featmat = np.array(featmat)
 
         if same_order_for_subjects:
