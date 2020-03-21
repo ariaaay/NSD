@@ -126,6 +126,7 @@ if __name__ == "__main__":
         stimulus_list,
         args.model,
     )
+    print("Feature size is: " + str(feature_mat.shape))
 
     model_name_to_save = (
             args.model
