@@ -126,6 +126,10 @@ if __name__ == "__main__":
         stimulus_list,
         args.model,
     )
+
+    if len(feature_mat.shape) > 2:
+        feature_mat = np.squeeze(feature_mat)
+
     print("Feature size is: " + str(feature_mat.shape))
 
     model_name_to_save = (
