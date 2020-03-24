@@ -21,17 +21,13 @@ taskrepr_features = [
     "jigsaw",
     "inpainting_whole",
 ]
-#
-# conv_layers = ["conv1", "conv2", "conv3", "conv4", "conv5", "fc6", "fc7"]
-# scenenet_layers = ["conv1", "block1", "block2", "block3", "block4", "avgpool", "fc"]
-# sf_methods = ["latent", "subsample"]
+
+convnet_structures = ["res50", "vgg16"]
 
 model_features = dict()
 model_features["taskrepr"] = taskrepr_features
-# model_features["convnet"] = conv_layers
-# model_features["scenenet"] = scenenet_layers
-# model_features["surfaceNormal"] = sf_methods
-# model_features["pic2vec"] = ["8", "50", "200"]
+model_features["convnet"] = convnet_structures
+
 
 task_label = {
     "class_1000": "Object Class",
@@ -55,11 +51,4 @@ task_label = {
     "segment2d": "2D Segm.",
     "jigsaw": "Jigsaw",
     "inpainting_whole" :"Inpainting",
-    # "conv1": "Conv1",
-    # "conv2": "Conv2",
-    # "conv3": "Conv3",
-    # "conv4": "Conv4",
-    # "conv5": "Conv5",
-    # "fc6": "FC6",
-    # "fc7": "FC7",
 }
