@@ -165,7 +165,7 @@ def fit_encoding_model(
     if permute_y:  # if running permutation just return subsets of the output
         # save correaltions
         np.save(
-            "../output/permutation_results/subj{}/permutation_test_on_test_data_corr_%s.npy" % (
+            "../output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy" % (
                 subj, model_name
             ),
             np.array(corrs_array),
@@ -174,7 +174,7 @@ def fit_encoding_model(
         pickle.dump(
             cv_outputs[0],
             open(
-                "../output/permutation_results/subj{}/permutation_test_on_test_data_pvalue_%s.p" % (
+                "../output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p" % (
                     subj, model_name
                 ),
                 "wb",
