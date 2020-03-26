@@ -165,7 +165,7 @@ def fit_encoding_model(
     if permute_y:  # if running permutation just return subsets of the output
         # save correaltions
         np.save(
-            "../output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy" % (
+            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy" % (
                 subj, model_name
             ),
             np.array(corrs_array),
@@ -174,7 +174,7 @@ def fit_encoding_model(
         pickle.dump(
             cv_outputs[0],
             open(
-                "../output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p" % (
+                "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p" % (
                     subj, model_name
                 ),
                 "wb",
@@ -252,22 +252,6 @@ def permutation_test(
             permute_y=True,
             fix_testing=False,
         )
-        # if not byROI:  # ROIS results are already saved before this line is run #TODO： test permutation again
-        # np.save(
-        #     "../output/permutation_results/subj{}/permutation_test_on_test_data_corr{}_{}.npy".format(
-        #         subj, wb, model_name
-        #     ),
-        #     np.array(corr_dists),
-        # )
-        # pickle.dump(
-        #     ps,
-        #     open(
-        #         "../output/permutation_results/subj{}/permutation_test_on_test_data_pvalue{}_{}.p".format(
-        #             subj, wb, model_name
-        #         ),
-        #         "wb",
-        #     ),
-        # )
     else:
         label_idx = np.arange(X.shape[0])
         for _ in tqdm(range(repeat)):
