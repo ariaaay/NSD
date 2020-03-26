@@ -1,7 +1,7 @@
 source venv/bin/activate
 
  MODELS="vgg16
- resnet50"
+ res50"
 
 for model in $MODELS; do
   echo "running convnet $model on subject 1"
