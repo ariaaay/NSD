@@ -108,6 +108,9 @@ if __name__ == "__main__":
     br_data = np.load(brain_path)
     print("Brain response size is: " + str(br_data.shape))
 
+    # take the responses to the first 4916 trials
+    br_data = br_data[:4916, :]
+
 
     # Load feature spaces
     print("Running ridge on " + args.model)
@@ -120,6 +123,8 @@ if __name__ == "__main__":
 
     stimulus_list = stimulus_with_repeat[:,0] #All subjects should have same orders
 
+    # take the first 4916 stimuli
+    stimulus_list = stimulus_list[:4916]
 
     feature_mat = get_features(
         args.subj,
