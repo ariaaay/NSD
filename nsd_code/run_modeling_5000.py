@@ -106,10 +106,11 @@ if __name__ == "__main__":
 
     # Load brain data
     br_data = np.load(brain_path)
-    print("Brain response size is: " + str(br_data.shape))
 
     # take the responses to the first 4916 trials
     br_data = br_data[:4916, :]
+
+    print("Brain response size is: " + str(br_data.shape))
 
 
     # Load feature spaces
@@ -123,9 +124,6 @@ if __name__ == "__main__":
 
     stimulus_list = stimulus_with_repeat[:,0] #All subjects should have same orders
 
-    # take the first 4916 stimuli
-    stimulus_list = stimulus_list[:4916]
-
     feature_mat = get_features(
         args.subj,
         stimulus_list,
@@ -134,6 +132,9 @@ if __name__ == "__main__":
 
     if len(feature_mat.shape) > 2:
         feature_mat = np.squeeze(feature_mat)
+
+    # take the first 4916 stimuli
+    feature_mat = feature_mat[:4916,:]
 
     print("Feature size is: " + str(feature_mat.shape))
 
