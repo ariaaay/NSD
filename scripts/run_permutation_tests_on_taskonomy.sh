@@ -1,10 +1,11 @@
 source venv/bin/activate
 
- TASKS="autoencoder \
- class_1000 \
- class_places \
- colorization \
- curvature \
+# TASKS="autoencoder \
+# class_1000 \
+# class_places \
+# colorization \
+# curvature \
+TASKS="
  denoise \
  edge2d \
  edge3d \
