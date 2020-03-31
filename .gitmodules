@@ -1,0 +1,3 @@
+[submodule "nsdcode"]
+	path = nsdcode
+	url = https://github.com/kendrickkay/nsdcode.git
