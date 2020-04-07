@@ -40,7 +40,7 @@ def get_sig_mask(model_list, correction, alpha, subj):
     maskmat = list()
     for l in model_list:
         mask = np.load(
-            "output/voxels_masks/subj%d/taskrepr_%s_%s_%s_whole_brain.npy"
+            "output/voxels_masks/subj%d/taskrepr_%s_%s_%s.npy"
             % (subj, l, correction, alpha)
         )
         maskmat.append(mask)
