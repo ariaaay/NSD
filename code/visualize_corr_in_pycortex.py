@@ -2,7 +2,6 @@
 
 import pickle
 import numpy as np
-import cortex
 
 import argparse
 from util.model_config import model_features
@@ -24,7 +23,7 @@ def load_data(model, task, subj=1, measure="corr"):
 
 
 def make_volume(subj, model, task, mask_with_significance=False):
-
+    import cortex
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
