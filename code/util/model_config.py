@@ -18,7 +18,7 @@ taskrepr_features = [
     "vanishing_point",
     "class_1000",
     "class_places",
-    "jigsaw",
+    # "jigsaw",
     "inpainting_whole",
 ]
 
@@ -49,6 +49,6 @@ task_label = {
     "vanishing_point": "Vanishing Pts.",
     "segmentsemantic": "Semantic Segm.",
     "segment2d": "2D Segm.",
-    "jigsaw": "Jigsaw",
+    # "jigsaw": "Jigsaw",
     "inpainting_whole" :"Inpainting",
 }
