@@ -112,7 +112,7 @@ if __name__ == "__main__":
         sim = cosine_similarity(voxel_mat, dense_output=False)
 
     np.save(
-        "../outputs/task_matrix/task_matrix_subj%d_%s.npy" % (args.subj, args.method),
+        "output/task_matrix/task_matrix_subj%d_%s.npy" % (args.subj, args.method),
         sim,
     )
 
