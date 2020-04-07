@@ -145,5 +145,5 @@ if __name__ == "__main__":
     plt.subplots_adjust(bottom=0.3)
 
     plt.savefig(
-        "figures/taskmatrix/task_matrix_subj%d_%s_%s.pdf" % (args.subj, args.method, p_method)
+        "figures/task_matrix/task_matrix_subj%d_%s_%s.pdf" % (args.subj, args.method, p_method)
     )
