@@ -138,7 +138,7 @@ def fit_encoding_model(
     else:
         model_name += "_whole_brain"
 
-    outpath = "output/encoding_results/subj{}/" % subj
+    outpath = "output/encoding_results/subj%d/" % subj
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
