@@ -22,15 +22,15 @@ print(device)
 
 
 def ridge_cv(
-        X,
-        y,
-        run_group=None,
-        pca=False,
-        tol=8,
-        nfold=7,
-        cv=False,
-        fix_testing=False,
-        permute_y=False,
+    X,
+    y,
+    run_group=None,
+    pca=False,
+    tol=8,
+    nfold=7,
+    cv=False,
+    fix_testing=False,
+    permute_y=False,
 ):
     # fix_tsesting can be True (42), False, and a seed
     if fix_testing is True:
@@ -68,7 +68,9 @@ def ridge_cv(
         kfold = KFold(n_splits=nfold)
     else:
         tr_index, _ = next(
-            ShuffleSplit(test_size=0.15).split(X_train, y_train)  # split training and testing
+            ShuffleSplit(test_size=0.15).split(
+                X_train, y_train
+            )  # split training and testing
         )
         # set predefined train and validation split
         test_fold = np.zeros(X_train.shape[0])
@@ -81,6 +83,8 @@ def ridge_cv(
     print("Fitting ridge models...")
 
     clf.fit(X_train, y_train)
+
+    weights = clf.get_model_weight()
 
     print("Making predictions using ridge models...")
     yhat = clf.predict(X_test).cpu().numpy()
@@ -95,6 +99,7 @@ def ridge_cv(
             clf.best_l_scores.cpu().numpy(),
             clf.best_l_idxs.cpu().numpy(),
             [yhat, y_test],
+            weights.cpu().numpy(),
         )
 
     else:  # permutation testings
@@ -114,16 +119,16 @@ def ridge_cv(
 
 
 def fit_encoding_model(
-        X,
-        br,
-        model_name=None,
-        ROI=True,
-        subset_idx=None,
-        subj=1,
-        fix_testing=False,
-        cv=False,
-        saving=True,
-        permute_y=False,
+    X,
+    br,
+    model_name=None,
+    ROI=True,
+    subset_idx=None,
+    subj=1,
+    fix_testing=False,
+    cv=False,
+    saving=True,
+    permute_y=False,
 ):
     if cv:
         print("Running cross validation")
@@ -133,11 +138,18 @@ def fit_encoding_model(
     else:
         model_name += "_whole_brain"
 
-    outpath = "output/encoding_results/subj{}/".format(subj)
+    outpath = "output/encoding_results/subj{}/" % subj
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
-    corrs_array, rsqs_array, cv_array, l_score_array, best_l_array, predictions_array = (
+    (
+        corrs_array,
+        rsqs_array,
+        cv_array,
+        l_score_array,
+        best_l_array,
+        predictions_array,
+    ) = (
         [],
         [],
         [],
@@ -151,78 +163,66 @@ def fit_encoding_model(
         y = br[subset_idx, :]  # subset to get rid of the repetition trials
 
     assert (
-            y.shape[0] == X.shape[0]
+        y.shape[0] == X.shape[0]
     )  # test that shape of features spaces and the brain are the same
 
     corrs_array, *cv_outputs = ridge_cv(
-        X,
-        y,
-        cv=False,
-        fix_testing=fix_testing,
-        permute_y=permute_y,
+        X, y, cv=False, fix_testing=fix_testing, permute_y=permute_y,
     )
 
     if permute_y:  # if running permutation just return subsets of the output
         # save correaltions
         np.save(
-            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy" % (
-                subj, model_name
-            ),
+            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy"
+            % (subj, model_name),
             np.array(corrs_array),
         )
         # save p-values
         pickle.dump(
             cv_outputs[0],
             open(
-                "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p" % (
-                    subj, model_name
-                ),
+                "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p"
+                % (subj, model_name),
                 "wb",
             ),
         )
         # return np.array(corrs_array), cv_outputs[0]
 
     if saving:
-        pickle.dump(
-            corrs_array, open(outpath + "corr_%s.p" % model_name, "wb")
-        )
+        pickle.dump(corrs_array, open(outpath + "corr_%s.p" % model_name, "wb"))
 
         if len(cv_outputs) > 0:
+            pickle.dump(cv_outputs[0], open(outpath + "rsq_%s.p" % model_name, "wb"))
             pickle.dump(
-                cv_outputs[0], open(outpath + "rsq_%s.pkl" % model_name, "wb")
+                cv_outputs[1], open(outpath + "cv_score_%s.p" % model_name, "wb"),
             )
             pickle.dump(
-                cv_outputs[1],
-                open(outpath + "cv_score_%s.pkl" % model_name, "wb"),
+                cv_outputs[2], open(outpath + "l_score_%s.p" % model_name, "wb"),
             )
             pickle.dump(
-                cv_outputs[2],
-                open(outpath + "l_score_%s.pkl" % model_name, "wb"),
-            )
-            pickle.dump(
-                cv_outputs[3],
-                open(outpath + "best_l_%s.pkl" % model_name, "wb"),
+                cv_outputs[3], open(outpath + "best_l_%s.p" % model_name, "wb"),
             )
 
             if fix_testing:
                 pickle.dump(
-                    cv_outputs[4],
-                    open(outpath + "pred_%s.pkl" % model_name, "wb"),
+                    cv_outputs[4], open(outpath + "pred_%s.p" % model_name, "wb"),
                 )
+
+            np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])
 
     return np.array(corrs_array), None
 
 
 def permutation_test(
-        X,
-        y,
-        model_name,
-        repeat=5000,
-        ROI=True,
-        subset_idx=None,
-        subj=1,
-        pca=False,
-        permute_y=True,  # rather than permute training
+    X,
+    y,
+    model_name,
+    repeat=5000,
+    ROI=True,
+    subset_idx=None,
+    subj=1,
+    pca=False,
+    permute_y=True,  # rather than permute training
 ):
     """
 	Running permutation test (permute the label 5000 times).
@@ -274,9 +274,8 @@ def permutation_test(
         pickle.dump(
             corr_dists,
             open(
-                "output/permutation_results/subj%s/permutation_test_on_training_data_corr_%s.p" % (
-                    subj, model_name
-                ),
+                "output/permutation_results/subj%s/permutation_test_on_training_data_corr_%s.p"
+                % (subj, model_name),
                 "wb",
             ),
         )

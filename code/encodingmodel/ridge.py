@@ -95,6 +95,7 @@ class MultiRidge:
 
         self.Y = Y
         self.Ym = Y.mean(dim=0)
+
         return self
 
     def _compute_pred_interms(self, y_idx, X_te_p):
@@ -107,6 +108,18 @@ class MultiRidge:
     def _predict_single(self, l, M_te, Ym_j, r_j, N_te_j):
         Yhat_te_j = (1 / l) * (N_te_j - M_te @ (r_j / (self.e + l))) + Ym_j
         return Yhat_te_j
+
+    def _compute_single_beta(self, l, y_idx):
+        Y_j, Ym_j = self.Y[:, y_idx], self.Ym[y_idx]
+        beta = (1 / l) * (self.X_t @ (self.Y_j - Ym_j) - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (self.Y_j - self.Ym_j))
+        return beta
+
+    def get_model_weights(self, l_idxs):
+        betas = torch.zeros((self.X_t.shape[0], len(l_idxs)))
+        for j, l_idx in enumerate(l_idxs):
+            l = self.ls[l_idx]
+            betas[:,j] = self._compute_single_beta(l, j)
+        return betas
 
     def get_prediction_scores(self, X_te, Y_te, scoring):
         """Compute predictions for each (regulariztion, output) pair and return
@@ -232,3 +245,8 @@ class RidgeCVEstimator:
         if self.best_l_idxs is None:
             raise RuntimeError("cannot predict without fitting")
         return self.base_ridge.predict_single(X, self.best_l_idxs)
+
+    def get_model_weight(self):
+        if self.best_l_idxs is None:
+            raise RuntimeError("cannot return weight without fitting")
+        return self.base_ridge.get_model_weights(self.best_l_idxs)
