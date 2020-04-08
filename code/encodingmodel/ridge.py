@@ -111,7 +111,7 @@ class MultiRidge:
 
     def _compute_single_beta(self, l, y_idx):
         Y_j, Ym_j = self.Y[:, y_idx], self.Ym[y_idx]
-        beta = (1 / l) * (self.X_t @ (self.Y_j - Ym_j) - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (self.Y_j - self.Ym_j))
+        beta = (1 / l) * (self.X_t @ (Y_j - Ym_j) - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (Y_j - Ym_j))
         return beta
 
     def get_model_weights(self, l_idxs):
