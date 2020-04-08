@@ -24,29 +24,29 @@ def load_data(model, task, subj=1, measure="corr"):
 
 def make_volume(subj, model, task, mask_with_significance=False):
     import cortex
+
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
     vals = load_data(model, task, subj=subj)
 
-    # if mask_with_significance:
-    # correction = "emp_fdr"
-    # alpha = 0.05
-    # sig_mask = np.load(
-    #     "../outputs/voxels_masks/subj{}/{}_{}{}_{}_{}_whole_brain.npy".format(
-    #         subj, model, model_subtype, correction, alpha
-    #     )
-    # )
-    # print(sig_mask.shape)
-    # print(np.sum(sig_mask))
-    # if np.sum(sig_mask) > 0:
-    #     mask[mask == True] = sig_mask
-    #     vals = vals[sig_mask]
+    if mask_with_significance:
+        correction = "emp_fdr"
+        alpha = 0.05
+        sig_mask = np.load(
+            "output/voxels_masks/subj%d/%s_%s_%s_%s_%s.npy"
+            % (subj, model, task, correction, str(alpha))
+        )
+        # print(sig_mask.shape)
+        # print(np.sum(sig_mask))
+        if np.sum(sig_mask) > 0:
+            mask[mask == True] = sig_mask
+            vals = vals[sig_mask]
 
     cortical_mask = np.load("output/cortical_mask_subj%02d.npy" % subj)
     all_vals = np.zeros(cortical_mask.shape)
     all_vals[cortical_mask] = vals
-    all_vals = np.swapaxes(all_vals,0,2)
+    all_vals = np.swapaxes(all_vals, 0, 2)
 
     vol_data = cortex.Volume(
         all_vals,

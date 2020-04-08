@@ -54,8 +54,6 @@ def make_volume(subj, model, task, mask_with_significance=False):
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
         cmap="hot",
-        vmin=0,
-        vmax=0.335,
     )
     return vol_data
 
@@ -90,135 +88,18 @@ if __name__ == "__main__":
     # subjport = int("1111{}".format(args.subj))
 
     volumes = {
-        "Curvature": make_volume(
+        "vgg16": make_volume(
             subj=args.subj,
-            model="taskrepr",
-            task="curvature",
+            model="convnet",
+            task="vgg16",
             mask_with_significance=args.mask_sig,
         ),
-        "2D Edges": make_volume(
+        "resnet50": make_volume(
             subj=args.subj,
-            model="taskrepr",
-            task="edge2d",
+            model="convnet",
+            task="res50",
             mask_with_significance=args.mask_sig,
         ),
-        "3D Edges": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="edge3d",
-            mask_with_significance=args.mask_sig,
-        ),
-        "2D Keypoint": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="keypoint2d",
-            mask_with_significance=args.mask_sig,
-        ),
-        "3D Keypoint": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="keypoint3d",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Depth": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="rgb2depth",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Reshade": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="reshade",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Distance": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="rgb2mist",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Surface Normal": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="rgb2sfnorm",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Object Class": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="class_1000",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Scene Class": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="class_places",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Autoencoder": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="autoencoder",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Denoising": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="denoise",
-            mask_with_significance=args.mask_sig,
-        ),
-        "2.5D Segm.": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="segment25d",
-            mask_with_significance=args.mask_sig,
-        ),
-        "2D Segm.": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="segment2d",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Semantic Segm": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="segmentsemantic",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Vanishing Point": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="vanishing_point",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Room Layout": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="room_layout",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Color": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="colorization",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Inpainting Whole": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="inpainting_whole",
-            mask_with_significance=args.mask_sig,
-        ),
-        # "Jigsaw": make_volume(
-        #     subj=args.subj,
-        #     model="taskrepr",
-        #     task="jigsaw",
-        #     mask_with_significance=args.mask_sig,
-        # ),
-        # "Taskrepr model comparison": model_selection(
-        #     subj=args.subj, model_dict=model_features
-        # ),
     }
     import cortex
 
