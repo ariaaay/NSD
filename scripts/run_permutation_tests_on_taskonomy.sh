@@ -27,5 +27,5 @@ TASKS="
 
 for task in $TASKS; do
   echo "running taskonomy $task task on subject 1"
-  python nsd_code/run_modeling.py --model taskrepr_$task --subj 1  --test --permute_y
+  python code/run_modeling.py --model taskrepr_$task --subj 1  --test --permute_y
 done

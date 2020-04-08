@@ -19,4 +19,4 @@ task=$1
 sub=1
 
 echo "running taskonomy $task task on subject $sub"
-python nsd_code/run_modeling.py --model taskrepr_$task --subj $sub --fix_testing --notest
+python code/run_modeling.py --model taskrepr_$task --subj $sub --fix_testing --notest
