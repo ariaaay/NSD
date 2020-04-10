@@ -14,7 +14,7 @@ import torch.autograd as autograd
 import torchvision.models as models
 import torchvision.transforms as transforms
 import pytorch_fft.fft.autograd as fft
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 
 
