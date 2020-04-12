@@ -13,7 +13,6 @@ import torch.optim as optim
 import torch.autograd as autograd
 import torchvision.models as models
 import torchvision.transforms as transforms
-import pytorch_fft.fft.autograd as fft
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -74,15 +73,19 @@ for LR in learning_rates:
             OPT_CHANNEL = i
             OUTPUT_FILE = OUTPUT_DIR + "/" + str(datetime.date.today())+ ("voxel_#%s_%f_%f.jpg" % (voxel_inds[i], LR, LR_GAMMA))
 
-            xr = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
-            xi = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
+            xf = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(), requires_grad=True)
+
+            # xr = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
+            # xi = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
 
             # Optimizer and learning rate schedule
-            opt = optim.Adam([xr, xi], lr=LR)
+            # opt = optim.Adam([xr, xi], lr=LR)
+            opt = optim.Adam([xf], lr=LR)
+
             lr_sched = optim.lr_scheduler.StepLR(opt, step_size=STEP_SIZE, gamma=LR_GAMMA)
 
             # Inverse Fourier transform
-            invf = fft.Ifft2d()
+            # invf = fft.Ifft2d()
 
             # Progress bar
             # pbar = tqdm.trange(ITERS, desc="Optimizing", ncols=80)
@@ -90,7 +93,16 @@ for LR in learning_rates:
             # Main optimization loop
             # for k in pbar:
             for k in range(ITERS):
-                x, _ = invf(xr, xi)  # Transform to image space
+
+                # x, _ = invf(xr, xi)  # Transform to image space
+                x = torch.irfft(
+                    xf,
+                    signal_ndim=2,
+                    normalized=True,
+                    onesided=True,
+                    signal_sizes=(INPUT_IMSIZE, INPUT_IMSIZE),
+                )
+
                 x = (x - x.min()) / (x.max() - x.min())  # Scale values to [0, 1]
 
                 # Take random crop of the image
@@ -115,17 +127,24 @@ for LR in learning_rates:
 
                 # Normalize the Fourier transforms
                 ## Mean norm
-                xnorm = (((xr**2)+(xi**2)).sum(dim=-1).sum(dim=-1)/(xr.shape[2]*xr.shape[3])).sqrt()
-                xnorm = xnorm.unsqueeze(-1).unsqueeze(-1).data
-                xr.data /= xnorm
-                xi.data /= xnorm
+                # xnorm = (((xr**2)+(xi**2)).sum(dim=-1).sum(dim=-1)/(xr.shape[2]*xr.shape[3])).sqrt()
+                # xnorm = xnorm.unsqueeze(-1).unsqueeze(-1).data
+                # xr.data /= xnorm
+                # xi.data /= xnorm
+                xf.data /= torch.norm(xf, dim=-1)
 
                 # Update progress bar
                 # pbar.set_description("Optimizing (loss={:.3g})".format(float(loss)))
             # pbar.close()
 
             # Save final result
-            x, _ = invf(xr, xi)
+            x = torch.irfft(
+                xf,
+                signal_ndim=2,
+                normalized=True,
+                onesided=True,
+                signal_sizes=(1, 3, INPUT_IMSIZE, INPUT_IMSIZE),
+            )
             x = (x - x.min()) / (x.max() - x.min())
             img = transforms.ToPILImage()(x.data.cpu()[0])
             img.save(OUTPUT_FILE)
