@@ -132,8 +132,8 @@ for LR in learning_rates:
                 # xr.data /= xnorm
                 # xi.data /= xnorm
                 xnorm = torch.norm(xf, dim=-1).unsqueeze(-1).data
-                print(xf.data.shape)
-                print(xnorm.shape)
+                # print(xf.data.shape)
+                # print(xnorm.shape)
                 xf.data /= xnorm
 
                 # Update progress bar
