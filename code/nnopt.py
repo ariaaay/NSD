@@ -120,10 +120,10 @@ for LR in learning_rates:
                 writer.add_scalar(("loss/ voxel #%s"% voxel_inds[i]), loss, k)
 
                 # Optimization step
-                lr_sched.step()
                 opt.zero_grad()
                 loss.backward()
                 opt.step()
+                lr_sched.step()
 
                 # Normalize the Fourier transforms
                 ## Mean norm
