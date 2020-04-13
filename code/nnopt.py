@@ -66,7 +66,7 @@ for LR in learning_rates:
     print("Learning rate is %f" % LR)
     for LR_GAMMA in gammas: 
         print("Learning gamma is %f" % LR_GAMMA)
-        writer = SummaryWriter("viz_runs/%f_%f" % (LR, LR_GAMMA))
+        writer = SummaryWriter("tb_logs/%f_%f" % (LR, LR_GAMMA))
 
         # for i in tqdm.trange(NUM_CAT):
         for i in range(NUM_VOXEL):
@@ -146,7 +146,7 @@ for LR in learning_rates:
                 signal_ndim=2,
                 normalized=True,
                 onesided=True,
-                signal_sizes=(1, 3, INPUT_IMSIZE, INPUT_IMSIZE),
+                signal_sizes=(INPUT_IMSIZE, INPUT_IMSIZE),
             )
             x = (x - x.min()) / (x.max() - x.min())
             img = transforms.ToPILImage()(x.data.cpu()[0])
