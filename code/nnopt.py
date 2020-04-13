@@ -131,7 +131,10 @@ for LR in learning_rates:
                 # xnorm = xnorm.unsqueeze(-1).unsqueeze(-1).data
                 # xr.data /= xnorm
                 # xi.data /= xnorm
-                xf.data /= torch.norm(xf, dim=-1)
+                xnorm = torch.norm(xf, dim=-1).unsqueeze(-1).data
+                print(xf.data.shape)
+                print(xnorm.shape)
+                xf.data /= xnorm
 
                 # Update progress bar
                 # pbar.set_description("Optimizing (loss={:.3g})".format(float(loss)))
