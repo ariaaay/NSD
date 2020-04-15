@@ -59,10 +59,7 @@ def extract_voxels(subj, roi, zscore):
     if zscore:
         tag += "_zscore"
 
-    output_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (
-        subj,
-        tag,
-    )
+    output_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, tag,)
 
     try:
         cortical_beta_mat = np.load(output_path)
@@ -114,7 +111,9 @@ if __name__ == "__main__":
         "--zscore_by_run", action="store_true", help="zscore brain data by runs"
     )
     parser.add_argument(
-        "--mask_only", actions="store_true", help="only extract roi mask but not voxel response"
+        "--mask_only",
+        actions="store_true",
+        help="only extract roi mask but not voxel response",
     )
 
     args = parser.parse_args()
