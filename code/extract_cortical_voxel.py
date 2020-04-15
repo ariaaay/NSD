@@ -49,7 +49,7 @@ def extract_cortical_mask(subj, roi=""):
     else:
         mask = anat_mat > 0
 
-    np.save("output/cortical_mask_subj%02d_%s.npy" % (subj, roi), mask)
+    np.save("output/voxels_masks/cortical_mask_subj%02d_%s.npy" % (subj, roi), mask)
     return mask
 
 
@@ -71,7 +71,7 @@ def extract_voxels(subj, roi, zscore):
         )
 
         try:
-            mask = np.load("output/cortical_mask_subj%02d%s" % (subj, tag))
+            mask = np.load("output/voxels_masks/cortical_mask_subj%02d%s" % (subj, tag))
         except FileNotFoundError:
             mask = extract_cortical_mask(subj, roi)
 
