@@ -101,7 +101,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--roi",
-        action=str,
+        type=str,
         default="",
         help="extract voxels related to rois. Choices: general, face, words, kastner2015. "
         "Input arguments are files names of ROIs in "
