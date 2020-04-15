@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     for s in subj:
         if args.mask_only:
-            print("Extracting ROI %s" % args.roi)
-            extract_cortical_mask(subj, roi=args.roi)
+            print("Extracting ROI %s for subj%d" % args.roi)
+            extract_cortical_mask(s, roi=args.roi)
         else:
             extract_voxels(s, args.roi, args.zscore_by_run)
