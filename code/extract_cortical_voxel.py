@@ -112,7 +112,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--mask_only",
-        actions="store_true",
+        action="store_true",
         help="only extract roi mask but not voxel response",
     )
 
