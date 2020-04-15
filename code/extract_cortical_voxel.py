@@ -59,7 +59,7 @@ def extract_voxels(subj, roi, zscore):
     if zscore:
         tag += "_zscore"
 
-    output_path = "output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, tag,)
+    output_path = "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, tag,)
 
     try:
         cortical_beta_mat = np.load(output_path)
