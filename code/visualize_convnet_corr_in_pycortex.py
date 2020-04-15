@@ -54,6 +54,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
         cmap="hot",
+        vmax=np.max(all_vals)
     )
     return vol_data
 
