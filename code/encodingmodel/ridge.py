@@ -114,12 +114,12 @@ class MultiRidge:
         beta = (1 / l) * (self.X_t @ (Y_j - Ym_j) - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (Y_j - Ym_j))
         return beta
 
-    def get_model_weights(self, l_idxs):
+    def get_model_weights_and_bias(self, l_idxs):
         betas = torch.zeros((self.X_t.shape[0], len(l_idxs)))
         for j, l_idx in enumerate(l_idxs):
             l = self.ls[l_idx]
             betas[:,j] = self._compute_single_beta(l, j)
-        return betas
+        return betas, self.Ym
 
     def get_prediction_scores(self, X_te, Y_te, scoring):
         """Compute predictions for each (regulariztion, output) pair and return
@@ -249,4 +249,4 @@ class RidgeCVEstimator:
     def get_model_weight(self):
         if self.best_l_idxs is None:
             raise RuntimeError("cannot return weight without fitting")
-        return self.base_ridge.get_model_weights(self.best_l_idxs)
+        return self.base_ridge.get_model_weights_and_bias(self.best_l_idxs)

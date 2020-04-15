@@ -84,7 +84,7 @@ def ridge_cv(
 
     clf.fit(X_train, y_train)
 
-    weights = clf.get_model_weight()
+    weights, bias = clf.get_model_weight_and_bias()
 
     print("Making predictions using ridge models...")
     yhat = clf.predict(X_test).cpu().numpy()
@@ -100,6 +100,7 @@ def ridge_cv(
             clf.best_l_idxs.cpu().numpy(),
             [yhat, y_test],
             weights.cpu().numpy(),
+            bias.cpu().numpy()
         )
 
     else:  # permutation testings
@@ -209,6 +210,7 @@ def fit_encoding_model(
                 )
 
             np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])
+            np.save("%bias_%s.npy" % (outpath, model_name), cv_outputs[6])
 
     return np.array(corrs_array), None
 
