@@ -78,10 +78,13 @@ if args.best_voxels: # choose best voxels predicted by the model
         % (SUBJ, NUM_VOXEL, MODEL)
     )
 else: # choose roi voxels
-    voxel_inds = np.load(
+    mask = np.load(
         "output/voxel_masks/subj%d/cortical_mask_subj%02d_%s.npy"
         % (SUBJ, SUBJ, args.roi)
     )
+    voxel_inds = np.argwhere(mask>0)
+
+print("Optimizing %d voxels in total..." % len(voxel_inds))
 fc_weight = weights[:, voxel_inds].T
 
 # Target model construction
@@ -110,7 +113,7 @@ for LR in learning_rates:
                 OUTPUT_DIR
                 + "/"
                 + str(datetime.date.today())
-                + ("voxel_#%s_%f_%f.jpg" % (voxel_inds[i], LR, LR_GAMMA))
+                + ("%svoxel_#%s_%f_%f.jpg" % (args.roi+"_", voxel_inds[i], LR, LR_GAMMA))
             )
 
             xf = autograd.Variable(
