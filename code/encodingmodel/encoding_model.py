@@ -84,7 +84,7 @@ def ridge_cv(
 
     clf.fit(X_train, y_train)
 
-    weights, bias = clf.get_model_weight_and_bias()
+    weights, bias = clf.get_model_weights_and_bias()
 
     print("Making predictions using ridge models...")
     yhat = clf.predict(X_test).cpu().numpy()

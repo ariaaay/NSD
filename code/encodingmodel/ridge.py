@@ -246,7 +246,7 @@ class RidgeCVEstimator:
             raise RuntimeError("cannot predict without fitting")
         return self.base_ridge.predict_single(X, self.best_l_idxs)
 
-    def get_model_weight(self):
+    def get_model_weights_and_bias(self):
         if self.best_l_idxs is None:
             raise RuntimeError("cannot return weight without fitting")
         return self.base_ridge.get_model_weights_and_bias(self.best_l_idxs)
