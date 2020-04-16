@@ -45,11 +45,10 @@ args = parser.parse_args()
 
 if args.best_voxels:
     try:
-        assert args.roi = ""
+        assert args.roi == ""
     except:
         AssertionError("You can only choose one between best voxels or roi masks.")
 
-NUM_VOXEL = args.num_voxel
 SUBJ = args.subj
 MODEL = args.model
 
@@ -75,16 +74,20 @@ weights = np.load(
 if args.best_voxels: # choose best voxels predicted by the model
     voxel_inds = np.load(
         "output/voxels_masks/subj%d/best_%d_voxel_inds_%s.npy"
-        % (SUBJ, NUM_VOXEL, MODEL)
+        % (SUBJ, args.num_voxel, MODEL)
     )
+
+    NUM_VOXEL = args.num_voxel
+
 else: # choose roi voxels
     mask = np.load(
         "output/voxel_masks/subj%d/cortical_mask_subj%02d_%s.npy"
         % (SUBJ, SUBJ, args.roi)
     )
     voxel_inds = np.argwhere(mask>0)
+    NUM_VOXEL = len(voxel_inds)
 
-print("Optimizing %d voxels in total..." % len(voxel_inds))
+print("Optimizing %d voxels in total..." % NUM_VOXEL)
 fc_weight = weights[:, voxel_inds].T
 
 # Target model construction
