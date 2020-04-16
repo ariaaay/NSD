@@ -5,6 +5,7 @@
 import datetime
 import pickle
 import tqdm
+import argparse
 import numpy as np
 import torch
 import torch.nn as nn
@@ -16,7 +17,6 @@ import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter
 
 
-
 # Channel to optimize (valid values depend on model)
 # OPT_CHANNEL = 8
 
@@ -24,30 +24,65 @@ from torch.utils.tensorboard import SummaryWriter
 # If all layers of the base model are not required, smaller sizes
 #   can also be used
 
-#load labels
+# load labels
 BASE_IMSIZE = 224
 IMPAD = 16  # Default 16
 INPUT_IMSIZE = BASE_IMSIZE + IMPAD
 
-NUM_VOXEL = 100
-SUBJ=1
-MODEL="convnet_res50"
 
 # Optimization parameters
 ITERS = 20000  # Default 10000
 STEP_SIZE = 1000  # Default 1000
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--subj", default=1)
+parser.add_argument("--model", default="convnet_res50")
+parser.add_argument("--num_voxel", default=100)
+parser.add_argument("--best_voxels", action="store_true")
+parser.add_argument("--roi", type="str", default="")
+
+args = parser.parse_args()
+
+if args.best_voxels:
+    try:
+        assert args.roi = ""
+    except:
+        AssertionError("You can only choose one between best voxels or roi masks.")
+
+NUM_VOXEL = args.num_voxel
+SUBJ = args.subj
+MODEL = args.model
+
 # ImageNet statistics to normalize images
-IMGNET_MEAN = autograd.Variable(torch.FloatTensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda())
-IMGNET_STD = autograd.Variable(torch.FloatTensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda())
+# TODO: change it to COCO size
+IMGNET_MEAN = autograd.Variable(
+    torch.FloatTensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
+)
+IMGNET_STD = autograd.Variable(
+    torch.FloatTensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1).cuda()
+)
 
 # File to save optimized image
 OUTPUT_DIR = "output/optim/subj%d" % SUBJ
 
-#load weights and voxel index
-weights = np.load("output/encoding_results/subj%d/weights_%s_whole_brain.npy" % (SUBJ, MODEL))
-voxel_inds = np.load("output/voxels_masks/subj%d/best_%d_voxel_inds_%s.npy" % (SUBJ, NUM_VOXEL, MODEL))
-fc_weight = weights[:,voxel_inds].T
+# Load weights and voxel index
+# number of Face voxels: 699192; words: 2068; visual: 10971
+
+weights = np.load(
+    "output/encoding_results/subj%d/weights_%s_whole_brain.npy" % (SUBJ, MODEL)
+)
+
+if args.best_voxels: # choose best voxels predicted by the model
+    voxel_inds = np.load(
+        "output/voxels_masks/subj%d/best_%d_voxel_inds_%s.npy"
+        % (SUBJ, NUM_VOXEL, MODEL)
+    )
+else: # choose roi voxels
+    voxel_inds = np.load(
+        "output/voxel_masks/subj%d/cortical_mask_subj%02d_%s.npy"
+        % (SUBJ, SUBJ, args.roi)
+    )
+fc_weight = weights[:, voxel_inds].T
 
 # Target model construction
 base_model = models.resnet50(pretrained=True).cuda()
@@ -64,16 +99,24 @@ learning_rates = [0.01, 0.1, 0.5, 1]
 gammas = [0.1, 0.3, 0.5, 0.7, 1]
 for LR in learning_rates:
     print("Learning rate is %f" % LR)
-    for LR_GAMMA in gammas: 
+    for LR_GAMMA in gammas:
         print("Learning gamma is %f" % LR_GAMMA)
         writer = SummaryWriter("tb_logs/%f_%f" % (LR, LR_GAMMA))
 
         # for i in tqdm.trange(NUM_CAT):
         for i in range(NUM_VOXEL):
             OPT_CHANNEL = i
-            OUTPUT_FILE = OUTPUT_DIR + "/" + str(datetime.date.today())+ ("voxel_#%s_%f_%f.jpg" % (voxel_inds[i], LR, LR_GAMMA))
+            OUTPUT_FILE = (
+                OUTPUT_DIR
+                + "/"
+                + str(datetime.date.today())
+                + ("voxel_#%s_%f_%f.jpg" % (voxel_inds[i], LR, LR_GAMMA))
+            )
 
-            xf = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(), requires_grad=True)
+            xf = autograd.Variable(
+                torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(),
+                requires_grad=True,
+            )
 
             # xr = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
             # xi = autograd.Variable(torch.randn(1, 3, INPUT_IMSIZE, INPUT_IMSIZE).cuda(), requires_grad=True)
@@ -82,7 +125,9 @@ for LR in learning_rates:
             # opt = optim.Adam([xr, xi], lr=LR)
             opt = optim.Adam([xf], lr=LR)
 
-            lr_sched = optim.lr_scheduler.StepLR(opt, step_size=STEP_SIZE, gamma=LR_GAMMA)
+            lr_sched = optim.lr_scheduler.StepLR(
+                opt, step_size=STEP_SIZE, gamma=LR_GAMMA
+            )
 
             # Inverse Fourier transform
             # invf = fft.Ifft2d()
@@ -106,8 +151,8 @@ for LR in learning_rates:
                 x = (x - x.min()) / (x.max() - x.min())  # Scale values to [0, 1]
 
                 # Take random crop of the image
-                cr = torch.LongTensor(2).random_(0, IMPAD+1)
-                x = x[:, :, cr[0]:cr[0]+BASE_IMSIZE, cr[1]:cr[1]+BASE_IMSIZE]
+                cr = torch.LongTensor(2).random_(0, IMPAD + 1)
+                x = x[:, :, cr[0] : cr[0] + BASE_IMSIZE, cr[1] : cr[1] + BASE_IMSIZE]
 
                 # Get output
                 xt = (x - IMGNET_MEAN) / IMGNET_STD
@@ -116,8 +161,10 @@ for LR in learning_rates:
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
-                loss = -y.mean()  # This maximizies the channel; flip sign to minimize instead
-                writer.add_scalar(("loss/ voxel #%s"% voxel_inds[i]), loss, k)
+                loss = (
+                    -y.mean()
+                )  # This maximizies the channel; flip sign to minimize instead
+                writer.add_scalar(("loss/ voxel #%s" % voxel_inds[i]), loss, k)
 
                 # Optimization step
                 opt.zero_grad()
@@ -153,5 +200,3 @@ for LR in learning_rates:
             img.save(OUTPUT_FILE)
 
         writer.close()
-
-
