@@ -85,7 +85,6 @@ else: # choose roi voxels
         % (SUBJ, SUBJ, args.roi)
     )
     voxel_inds = np.argwhere(mask>0).squeeze()
-    print(voxel_inds.shape)
     NUM_VOXEL = len(voxel_inds)
 
 print("Optimizing %d voxels in total..." % NUM_VOXEL)
