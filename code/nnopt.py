@@ -81,7 +81,7 @@ if args.best_voxels: # choose best voxels predicted by the model
 
 else: # choose roi voxels
     mask = np.load(
-        "output/voxels_masks/subj%d/cortical_mask_subj%02d_%s.npy"
+        "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
         % (SUBJ, SUBJ, args.roi)
     )
     voxel_inds = np.argwhere(mask>0)

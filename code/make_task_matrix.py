@@ -27,6 +27,7 @@ sns.set(style="whitegrid", font_scale=1)
 #                 rs.append(r[0])
 #     return rs
 
+
 def get_voxels(model_list, subj):
     datamat = list()
     for l in taskrepr_features:
@@ -35,6 +36,7 @@ def get_voxels(model_list, subj):
         datamat.append(data)
     datamat = np.array(datamat)
     return datamat
+
 
 def get_sig_mask(model_list, correction, alpha, subj):
     maskmat = list()
@@ -46,6 +48,7 @@ def get_sig_mask(model_list, correction, alpha, subj):
         maskmat.append(mask)
     maskmat = np.array(maskmat)
     return maskmat
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="please specify subject to show")
@@ -67,6 +70,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument("--subj", default=1, type=int, help="define which subject")
+
+    parser.add_argument("--roi", default=None, type=str, help="layer specific ROI mask")
+    parser.add_argument(
+        "--exclude_roi", default=None, type=str, help="exclude specidic ROI"
+    )
+
     parser.add_argument(
         "--method",
         default="cosine",
@@ -90,17 +99,47 @@ if __name__ == "__main__":
 
     n_tasks = len(taskrepr_features)  # 21 tasks
 
-    #mask correlation based on significance
+    # mask correlation based on significance
     voxel_mat = get_voxels(list(task_label.keys()), subj=args.subj)
     sig_mat = get_sig_mask(
         list(task_label.keys()), correction=p_method, alpha=0.05, subj=args.subj
     )
     assert voxel_mat.shape == sig_mat.shape
 
+    roi_tag = ""
+    cortical_mask = np.load("output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (args.subj, args.subj))
+
+    # load ROI mask if using
+    if args.roi is not None:
+        roi_1d_mask = np.load(
+            "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.subj, args.subj, args.roi)
+        )
+
+        assert voxel_mat.shape == roi_1d_mask.shape
+
+        voxel_mat[roi_1d_mask < 1] = 0
+        roi_tag += "_only_%s" % args.roi
+
+    elif args.exclude_roi is not None:
+        roi_excluded_1d_mask = np.load(
+            "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.subj, args.subj, args.exclude_roi)
+        )
+
+        print(roi_excluded_1d_mask.shape)
+        print(voxel_mat.shape)
+
+        assert voxel_mat.shape == roi_excluded_1d_mask.shape
+        voxel_mat[roi_excluded_1d_mask] = 0
+        roi_tag += "_exclude_%s" % args.roi
+
     voxel_mat[~sig_mat] = 0
     print(voxel_mat.shape)
+
     np.save(
-        "output/task_matrix/mask_corr_subj%d_%s.npy" % (args.subj, p_method),
+        "output/task_matrix/mask_corr_subj%d_%s%s.npy"
+        % (args.subj, p_method, roi_tag),
         voxel_mat,
     )
     #
@@ -112,8 +151,7 @@ if __name__ == "__main__":
         sim = cosine_similarity(voxel_mat, dense_output=False)
 
     np.save(
-        "output/task_matrix/task_matrix_subj%d_%s.npy" % (args.subj, args.method),
-        sim,
+        "output/task_matrix/task_matrix_subj%d_%s%s.npy" % (args.subj, args.method, roi_tag), sim,
     )
 
     model = AgglomerativeClustering(
@@ -145,5 +183,6 @@ if __name__ == "__main__":
     plt.subplots_adjust(bottom=0.3)
 
     plt.savefig(
-        "figures/task_matrix/task_matrix_subj%d_%s_%s.pdf" % (args.subj, args.method, p_method)
+        "figures/task_matrix/task_matrix_subj%d_%s_%s%s.pdf"
+        % (args.subj, args.method, p_method, roi_tag)
     )
