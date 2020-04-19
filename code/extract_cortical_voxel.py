@@ -51,7 +51,7 @@ def extract_cortical_mask(subj, roi=""):
 
         # save a one d version as well
         cortical = anat_mat > -1
-        roi_1d_mask = (anat_mat[cortical] - 1).astype(bool)
+        roi_1d_mask = (anat_mat[cortical]).astype(bool)
         print(np.sum(roi_1d_mask))
         print(np.sum(mask))
         assert np.sum(roi_1d_mask) == np.sum(mask)
