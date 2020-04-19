@@ -33,29 +33,42 @@ def zscore_by_run(mat, run_n=480):
 
 
 def extract_cortical_mask(subj, roi=""):
+    nsd_general_path = "%s/subj%02d/func1pt8mm/roi/nsdgeneral.nii.gz" % (
+        roi_path,
+        subj,
+    )
+    nsd_general = nib.load(nsd_general_path)
+    nsd_cortical_mat = nsd_general.get_fdata()
+
     if roi == "general" or "":
-        roi_subj_path = "%s/subj%02d/func1pt8mm/roi/nsdgeneral.nii.gz" % (
-            roi_path,
-            subj,
-        )
+        anat_mat = nsd_cortical_mat
     else:
         roi_subj_path = "%s/subj%02d/func1pt8mm/roi/%s.nii.gz" % (roi_path, subj, roi)
+        anat = nib.load(roi_subj_path)
+        anat_mat = anat.get_fdata()
 
-    anat = nib.load(roi_subj_path)
-    anat_mat = anat.get_data()
-
-    if roi == "": #cortical
+    if roi == "":  # cortical
         mask = anat_mat > -1
-    else: # roi
+    else:  # roi
         mask = anat_mat > 0
 
-        # save a one d version as well
-        cortical = anat_mat > -1
+        # save a 1D version as well
+        cortical = nsd_cortical_mat > -1
         roi_1d_mask = (anat_mat[cortical]).astype(bool)
         assert np.sum(roi_1d_mask) == np.sum(mask)
-        np.save("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (subj, subj, roi), roi_1d_mask)
+        assert len(roi_1d_mask) == np.sum(
+            cortical
+        )  # check the roi 1D length is same as cortical numbers in nsd general
+        np.save(
+            "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (subj, subj, roi),
+            roi_1d_mask,
+        )
 
-    np.save("output/voxels_masks/subj%d/cortical_mask_subj%02d_%s.npy" % (subj, subj, roi), mask)
+    np.save(
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d_%s.npy" % (subj, subj, roi),
+        mask,
+    )
 
     return mask
 
@@ -66,7 +79,10 @@ def extract_voxels(subj, roi, zscore):
     if zscore:
         tag += "_zscore"
 
-    output_path = "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, tag,)
+    output_path = (
+        "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
+        % (subj, tag,)
+    )
 
     try:
         cortical_beta_mat = np.load(output_path)
@@ -132,7 +148,7 @@ if __name__ == "__main__":
 
     for s in subj:
         if args.mask_only:
-            print("Extracting ROI %s for subj%d" % (args.roi, s) )
+            print("Extracting ROI %s for subj%d" % (args.roi, s))
             extract_cortical_mask(s, roi=args.roi)
         else:
             extract_voxels(s, args.roi, args.zscore_by_run)
