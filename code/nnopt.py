@@ -84,7 +84,7 @@ else: # choose roi voxels
         "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
         % (SUBJ, SUBJ, args.roi)
     )
-    voxel_inds = np.argwhere(mask>0)
+    voxel_inds = np.argwhere(mask>0).squeeze()
     print(voxel_inds.shape)
     NUM_VOXEL = len(voxel_inds)
 
