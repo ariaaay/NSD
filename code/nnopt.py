@@ -39,7 +39,7 @@ parser.add_argument("--subj", default=1)
 parser.add_argument("--model", default="convnet_res50")
 parser.add_argument("--num_voxel", default=100)
 parser.add_argument("--best_voxels", action="store_true")
-parser.add_argument("--roi", type="str", default="")
+parser.add_argument("--roi", type=str, default="")
 
 args = parser.parse_args()
 
