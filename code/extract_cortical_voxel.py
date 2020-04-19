@@ -53,9 +53,9 @@ def extract_cortical_mask(subj, roi=""):
         cortical = anat_mat > -1
         roi_1d_mask = (anat_mat[cortical]).astype(bool)
         assert np.sum(roi_1d_mask) == np.sum(mask)
-        np.save("output/voxels_masks/roi_1d_mask_subj%02d_%s.npy" % (subj, roi), roi_1d_mask)
+        np.save("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (subj, subj, roi), roi_1d_mask)
 
-    np.save("output/voxels_masks/cortical_mask_subj%02d_%s.npy" % (subj, roi), mask)
+    np.save("output/voxels_masks/subj%d/cortical_mask_subj%02d_%s.npy" % (subj, subj, roi), mask)
 
     return mask
 
