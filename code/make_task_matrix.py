@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from sklearn.cluster import AgglomerativeClustering
 
-from util.model_config import taskrepr_features, task_label
+from util.model_config import taskrepr_features, task_label, task_label_in_Taskonomy19_matrix_order
 from visualize_corr_in_pycortex import load_data
 
 
@@ -87,6 +87,9 @@ if __name__ == "__main__":
         action="store_true",
         help="use masked results with permutation p values",
     )
+    parser.add_argument(
+        "--fix_order", default=False, action="store_true", help="use the same order as in Taskonomy paper"
+    )
 
     # parser.add_argument("--compute_correlation_across_subject", action="store_true")
 
@@ -100,6 +103,8 @@ if __name__ == "__main__":
     n_tasks = len(taskrepr_features)  # 21 tasks
 
     # mask correlation based on significance
+    if args.fix_order:
+        task_label = task_label_in_Taskonomy19_matrix_order
     voxel_mat = get_voxels(list(task_label.keys()), subj=args.subj)
     sig_mat = get_sig_mask(
         list(task_label.keys()), correction=p_method, alpha=0.05, subj=args.subj
@@ -127,42 +132,40 @@ if __name__ == "__main__":
             % (args.subj, args.subj, args.exclude_roi)
         )
 
-        print(roi_excluded_1d_mask.shape)
-        print(voxel_mat.shape)
-
-        assert voxel_mat.shape == roi_excluded_1d_mask.shape
-        voxel_mat[roi_excluded_1d_mask] = 0
-        roi_tag += "_exclude_%s" % args.roi
+        assert voxel_mat.shape[1] == len(roi_excluded_1d_mask)
+        voxel_mat[:, roi_excluded_1d_mask] = 0
+        roi_tag += "_exclude_%s" % args.exclude_roi
 
     voxel_mat[~sig_mat] = 0
-    print(voxel_mat.shape)
 
-    np.save(
-        "output/task_matrix/mask_corr_subj%d_%s%s.npy"
-        % (args.subj, p_method, roi_tag),
-        voxel_mat,
-    )
     #
-
-    print(voxel_mat.shape)
     if args.method == "l2":
         sim = euclidean_distances(voxel_mat)
     elif args.method == "cosine":
         sim = cosine_similarity(voxel_mat, dense_output=False)
 
-    np.save(
-        "output/task_matrix/task_matrix_subj%d_%s%s.npy" % (args.subj, args.method, roi_tag), sim,
-    )
+    if not args.fix_order:
+        np.save(
+            "output/task_matrix/mask_corr_subj%d_%s%s.npy"
+            % (args.subj, p_method, roi_tag),
+            voxel_mat,
+        )
 
-    model = AgglomerativeClustering(
-        n_clusters=3, linkage="single", affinity="cosine"
-    ).fit(sim)
+        np.save(
+            "output/task_matrix/task_matrix_subj%d_%s%s.npy" % (args.subj, args.method, roi_tag), sim,
+        )
 
-    # print(model.labels_)
-    order = np.argsort(model.labels_)
-    fit_data = sim[order]
-    fit_data = fit_data[:, order]
-    # fit_data = fit_data / 3
+    if args.fix_order:
+        fit_data = sim
+        order = np.arange(sim.shape[0])
+    else:
+        model = AgglomerativeClustering(
+            n_clusters=3, linkage="single", affinity="cosine"
+        ).fit(sim)
+        order = np.argsort(model.labels_)
+        fit_data = sim[order]
+        fit_data = fit_data[:, order]
+        # fit_data = fit_data / 3
 
     # all_sim = all_sim/3
     cmap = sns.cubehelix_palette(light=1, as_cmap=True)
@@ -182,7 +185,13 @@ if __name__ == "__main__":
     ax.set_ylim(0, 21.1)
     plt.subplots_adjust(bottom=0.3)
 
-    plt.savefig(
-        "figures/task_matrix/task_matrix_subj%d_%s_%s%s.pdf"
-        % (args.subj, args.method, p_method, roi_tag)
-    )
+    if args.fix_order:
+        plt.savefig(
+            "figures/task_matrix/task_matrix_subj%d_%s_%s%s_NT19_order.pdf"
+            % (args.subj, args.method, p_method, roi_tag)
+        )
+    else:
+        plt.savefig(
+            "figures/task_matrix/task_matrix_subj%d_%s_%s%s.pdf"
+            % (args.subj, args.method, p_method, roi_tag)
+        )
