@@ -140,7 +140,7 @@ for LR in learning_rates:
 
             # Progress bar
             # pbar = tqdm.trange(ITERS, desc="Optimizing", ncols=80)
-            print("optimizing %d/100" % i)
+            print("optimizing %d/%s" % (i, NUM_VOXEL))
             # Main optimization loop
             # for k in pbar:
             for k in range(ITERS):
