@@ -1,6 +1,8 @@
 # Project #
 ###########
 data/
+output/optim
+output/cortical_voxels/
 .idea
 
 # Compiled source #
