@@ -79,11 +79,11 @@ def extract_voxels(subj, roi, zscore):
     tag = roi
 
     if zscore:
-        tag += "_zscore"
+        zscore_tag = "_zscore"
 
     output_path = (
         "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
-        % (subj, tag,)
+        % (subj, zscore_tag)
     )
 
     try:
@@ -96,7 +96,10 @@ def extract_voxels(subj, roi, zscore):
         )
 
         try:
-            mask = np.load("output/voxels_masks/cortical_mask_subj%02d%s" % (subj, tag))
+            mask = np.load(
+                "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
+                % (subj, subj, tag)
+            )
         except FileNotFoundError:
             mask = extract_cortical_mask(subj, roi)
 
