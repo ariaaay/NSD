@@ -79,11 +79,13 @@ def extract_voxels(subj, roi, zscore):
     tag = roi
 
     if zscore:
-        zscore_tag = "_zscore"
+        zscore_tag = "zscored_by_run_"
+    else:
+        zscore_tag = ""
 
     output_path = (
-        "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
-        % (subj, zscore_tag)
+        "output/cortical_voxels/cortical_voxel_across_sessions_%ssubj%02d.npy"
+        % (zscore_tag, subj)
     )
 
     try:
