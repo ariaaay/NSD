@@ -210,7 +210,7 @@ def fit_encoding_model(
                 )
 
             np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])
-            np.save("%bias_%s.npy" % (outpath, model_name), cv_outputs[6])
+            np.save("%sbias_%s.npy" % (outpath, model_name), cv_outputs[6])
 
     return np.array(corrs_array), None
 
