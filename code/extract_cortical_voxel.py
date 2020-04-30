@@ -40,7 +40,7 @@ def extract_cortical_mask(subj, roi=""):
     nsd_general = nib.load(nsd_general_path)
     nsd_cortical_mat = nsd_general.get_fdata()
 
-    if roi == "general" or "":
+    if roi == "general" or roi == "":
         anat_mat = nsd_cortical_mat
     else:
         roi_subj_path = "%s/subj%02d/func1pt8mm/roi/%s.nii.gz" % (roi_path, subj, roi)
