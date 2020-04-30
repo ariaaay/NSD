@@ -30,9 +30,9 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
         print(l.shape)
 
     if zscored_input:
-        data = np.load("output/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
+        data = np.load("output/cortical_voxels/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
     else:
-        data = np.load("output/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
+        data = np.load("output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
 
     ev_list = []
     avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
@@ -57,7 +57,7 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
             print(repeat.shape)
 
         ev_list.append(ev(repeat, biascorr=biascorr))
-    np.save("output/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (subj, roi), avg_mat)
+    np.save("output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (subj, roi), avg_mat)
     return np.array(ev_list)
 
 
