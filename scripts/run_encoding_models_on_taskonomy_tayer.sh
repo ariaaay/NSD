@@ -26,8 +26,7 @@ edge3d"
 
 #jigsaw
 
-SUBJS="2 \
-5\
+SUBJS="5 \
 7"
 
 #sub=$1
