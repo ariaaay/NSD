@@ -1,8 +1,7 @@
 #!/bin/sh
 
 #SBATCH --job-name=enco
-#SBATCH -p tarrq
-#SBATCH --gres=gpu:1
+#SBATCH -p cpu
 #SBATCH --ntasks=2
 #SBATCH --mem=30G
 #SBATCH --time=10-00:00:00
