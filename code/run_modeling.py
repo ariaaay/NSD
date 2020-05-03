@@ -93,6 +93,12 @@ if __name__ == "__main__":
         default=False,
         help="permute test label but not training label",
     )
+    parser.add_argument(
+        "--features_only",
+        action="store_true",
+        default=False,
+        help="only generate features but not running the encoding models"
+    )
     args = parser.parse_args()
 
     mask_tag = ""
@@ -107,7 +113,6 @@ if __name__ == "__main__":
     # Load brain data
     br_data = np.load(brain_path)
     print("Brain response size is: " + str(br_data.shape))
-
 
     # Load feature spaces
     print("Running ridge on " + args.model)
@@ -129,14 +134,14 @@ if __name__ == "__main__":
             args.model
             + mask_tag
     )
-
-    run(
-        feature_mat,
-        br_data,
-        model_name=model_name_to_save,
-        test=args.test,
-        notest=args.notest,
-        whole_brain=not args.roi,
-        fix_testing=args.fix_testing,
-        cv=args.cv,
-    )
+    if not args.features_only:
+        run(
+            feature_mat,
+            br_data,
+            model_name=model_name_to_save,
+            test=args.test,
+            notest=args.notest,
+            whole_brain=not args.roi,
+            fix_testing=args.fix_testing,
+            cv=args.cv,
+        )
