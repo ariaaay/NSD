@@ -1,3 +1,7 @@
+"""
+extract_image_list.py extracts coco ID
+"""
+
 import pickle
 import numpy as np
 import pandas as pd
@@ -5,6 +9,12 @@ import argparse
 
 
 def extract_repeat_img_list(stim, subj):
+    """
+    Extracts the COCO IDs of images that are shown to subjects for each of the three repetitions.
+    :param stim: stimulus file
+    :param subj: subj number
+    :return:
+    """
     all_rep_img_list = list()
     for rep in range(3):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
