@@ -18,9 +18,11 @@ def extract_repeat_img_list(stim, subj):
     all_rep_img_list = list()
     for rep in range(3):
         col_name = 'subject%1d_rep%01d' % (subj, rep)
+        print(col_name)
         image_id_list = list(stim.cocoId[stim[col_name]!=0])
         all_rep_img_list.append(image_id_list)
     return np.array(all_rep_img_list).T
+
 
 def extract_repeat_trials_list(stim, subj):
     all_rep_trials_list = list()
@@ -31,10 +33,12 @@ def extract_repeat_trials_list(stim, subj):
     all_rep_trials_list = np.array(all_rep_trials_list).T - 1 #change from 1 based to 0 based
     return all_rep_trials_list
 
+
 def extract_img_list(stim, subj):
     col_name = 'subject%1d' % (subj)
     image_id_list = list(stim.cocoId[stim[col_name]!=0])
     return image_id_list
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
