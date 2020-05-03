@@ -1,26 +1,25 @@
 #TASKS="class_1000 \
 # class_places \
 # edge2d \
-# edge3d"
+# edge3d \
+# rgb2sfnorm \
+# segment25d \
+# segment2d \
+# reshade \
+# curvature \
+# autoencoder \
+# denoise \
+# inpainting_whole
+# keypoint2d \
+# keypoint3d \
+# rgb2depth \
+# room_layout \
+# segmentsemantic \
+# vanishing_point"
+# rgb2mist \
+# colorization"
 
-#TASKS="rgb2sfnorm \
-#segment25d \
-#segment2d \
-#reshade \
-#curvature \
-#autoencoder \
-#denoise \
-#inpainting_whole
-#keypoint2d \
-#keypoint3d \
-#rgb2depth \
-#room_layout \
-#segmentsemantic \
-#vanishing_point"
-
-TASKS="rgb2mist \
-colorization \
-jigsaw"
+#jigsaw"
 
 
 
