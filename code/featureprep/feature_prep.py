@@ -17,12 +17,15 @@ def get_features(subj, stim_list, model):
     :param model: models to extract features from
     :return featmat: a matrix of features that matches with the order of brain data
     """
-    print("Getting features for {}, for subject {}".format(model, subj))
+    subj = int(subj)
+
+    print("Getting features for %s, for subject %d" % (model, subj))
     # events also has a stim list, it is same as the "stim_lists.txt"; but repetition is not indicated in the
     # file name.
 
+
     try:
-        if subj==1:
+        if subj == 1:
             featmat = np.load("features/%s.npy" % model)
         else:
             featmat = np.load("features/*s_subj%02d.npy" % (model, subj))
