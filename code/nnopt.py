@@ -153,6 +153,7 @@ for LR in learning_rates:
                     onesided=True,
                     signal_sizes=(INPUT_IMSIZE, INPUT_IMSIZE),
                 )
+                print(x.shape)
 
                 x = (x - x.min()) / (x.max() - x.min())  # Scale values to [0, 1]
 
