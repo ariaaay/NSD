@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--cpu", action="store_true", help="cpu only for subsmapling.")
 
     args = parser.parse_args()
-    print("Feature are subsampling with" + args.subsample)
+    print("Feature are subsampling with " + args.subsample)
     subsample_tag = "_" + args.subsample
 
 
