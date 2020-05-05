@@ -60,7 +60,7 @@ for LR in learning_rates:
     print("Learning rate is %f" % LR)
     for LR_GAMMA in gammas:
         print("Learning gamma is %f" % LR_GAMMA)
-        writer = SummaryWriter("tb_logs/%f_%f" % (LR, LR_GAMMA))
+        writer = SummaryWriter("tb_logs_imagenet/%f_%f" % (LR, LR_GAMMA))
 
         # for i in tqdm.trange(NUM_CAT):
         for i in range(20):
