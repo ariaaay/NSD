@@ -17,4 +17,4 @@ subj=$1
 task=$2
 
 echo "running taskonomy $task task on subject $subj"
-python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest
+python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest --features_only
