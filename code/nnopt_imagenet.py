@@ -76,6 +76,7 @@ for LR in learning_rates:
                 torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(),
                 requires_grad=True,
             )
+            print("xf shape is:" + str(xf.shape))
 
             opt = optim.Adam([xf], lr=LR)
 
@@ -115,7 +116,7 @@ for LR in learning_rates:
                 print("xt shape is: " + str(xt.shape))
 
                 y = model(xt)
-                print("model output y shape is: " + str(y.shape))
+                # print("model output y shape is: " + str(y.shape))
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
