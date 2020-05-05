@@ -14,11 +14,10 @@ def extract_repeat_img_list(stim, subj):
     :param subj: subject number
     :return: the COCO IDs of images that are shown to a subject.
     """
-    all_rep_img_list = list()
     # using the first rep b/c three repetitions should have the same order of IDs.
-    col_name = "subject%1d_rep0" % subj
+    col_name = "subject%d_rep0" % subj
     image_id_list = list(stim.cocoId[stim[col_name] != 0])
-    return np.array(all_rep_img_list)
+    return np.array(image_id_list)
 
 
 def extract_repeat_trials_list(stim, subj):
@@ -32,7 +31,7 @@ def extract_repeat_trials_list(stim, subj):
     """
     all_rep_trials_list = list()
     for rep in range(3):
-        col_name = "subject%1d_rep%01d" % (subj, rep)
+        col_name = "subject%d_rep%01d" % (subj, rep)
         trial_id_list = list(stim[col_name][stim[col_name] != 0])
         all_rep_trials_list.append(trial_id_list)
     all_rep_trials_list = (
@@ -41,10 +40,10 @@ def extract_repeat_trials_list(stim, subj):
     return all_rep_trials_list
 
 
-def extract_img_list(stim, subj):
-    col_name = "subject%1d" % (subj)
-    image_id_list = list(stim.cocoId[stim[col_name] != 0])
-    return image_id_list
+# def extract_img_list(stim, subj):
+#     col_name = "subject%1d" % (subj)
+#     image_id_list = list(stim.cocoId[stim[col_name] != 0])
+#     return image_id_list
 
 
 if __name__ == "__main__":
@@ -62,15 +61,18 @@ if __name__ == "__main__":
         "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
     )
 
-    if args.all_images:
-        image_list = extract_img_list(stim, args.subj)
-        with open("output/coco_ID_subj%02d.pkl" % (args.subj), "wb") as f:
-            pickle.dump(image_list, f)
+    # if args.all_images:
+    #     image_list = extract_img_list(stim, args.subj)
+    #     with open("output/coco_ID_subj%02d.pkl" % (args.subj), "wb") as f:
+    #         pickle.dump(image_list, f)
 
-    elif args.type == "cocoId":
+    if args.type == "cocoId":
         image_list = extract_repeat_img_list(stim, args.subj)
         np.save("output/coco_ID_of_repeats_subj%02d.npy" % args.subj, image_list)
 
     elif args.type == "trial":
         trial_list = extract_repeat_trials_list(stim, args.subj)
         np.save("output/trials_subj%02d.npy" % args.subj, trial_list)
+
+    else:
+        raise TypeError("please correct return type to cocoId or trial")
