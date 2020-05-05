@@ -1,18 +1,12 @@
-import os
-import pickle
-import json
 import argparse
 from tqdm import tqdm
 from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt
+
 import torch
-import torch.nn as nn
-from torch.nn import functional as F
 from torch.autograd import Variable
 from torchvision import transforms, utils, models
-from scipy.ndimage import gaussian_filter
-from collections import namedtuple
+
+import pandas as pd
 from sklearn.decomposition import PCA
 
 from util.util import *
@@ -48,9 +42,13 @@ preprocess = transforms.Compose(
 
 # Load Images
 stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
-all_images_paths = list()
 
-all_images_paths += ["%s/%s" % (stimuli_dir, name) for name in os.listdir(stimuli_dir)]
+stim = pd.read_pickle(
+        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+    )
+all_coco_ids = stim.cocoId
+all_images_paths = list()
+all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
 print("Number of Images: {}".format(len(all_images_paths)))
 
 
