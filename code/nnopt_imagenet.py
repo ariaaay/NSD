@@ -76,7 +76,7 @@ for LR in learning_rates:
                 torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(),
                 requires_grad=True,
             )
-            print("xf shape is:" + str(xf.shape))
+            # print("xf shape is:" + str(xf.shape))
 
             opt = optim.Adam([xf], lr=LR)
 
@@ -89,7 +89,7 @@ for LR in learning_rates:
 
             # Progress bar
             # pbar = tqdm.trange(ITERS, desc="Optimizing", ncols=80)
-            print("optimizing %d/%s" % (i, 20))
+            # print("optimizing %d/%s" % (i, 20))
             # Main optimization loop
             # for k in pbar:
             for k in range(ITERS):
@@ -102,7 +102,7 @@ for LR in learning_rates:
                     onesided=True,
                     signal_sizes=(INPUT_IMSIZE, INPUT_IMSIZE),
                 )
-                print("x shape is: " + str(x.shape))
+                # print("x shape is: " + str(x.shape))
 
                 x = (x - x.min()) / (x.max() - x.min())  # Scale values to [0, 1]
 
@@ -113,14 +113,14 @@ for LR in learning_rates:
                 # Get output
                 xt = (x - IMGNET_MEAN) / IMGNET_STD
                 xt = F.dropout(xt)
-                print("xt shape is: " + str(xt.shape))
+                # print("xt shape is: " + str(xt.shape))
 
                 y = model(xt)
                 # print("model output y shape is: " + str(y.shape))
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
-                print("the y value to optimize is: " + str(y))
+                # print("the y value to optimize is: " + str(y))
 
                 loss = (
                     -y.mean()
@@ -140,7 +140,7 @@ for LR in learning_rates:
                 # xr.data /= xnorm
                 # xi.data /= xnorm
                 xnorm = torch.norm(xf, dim=-1).unsqueeze(-1).data
-                print("xnorm shape is: " + str(xnorm.shape))
+                # print("xnorm shape is: " + str(xnorm.shape))
                 # print(xf.data.shape)
                 # print(xnorm.shape)
                 xf.data /= xnorm
