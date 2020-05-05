@@ -115,11 +115,11 @@ for LR in learning_rates:
                 print("xt shape is: " + str(xt.shape))
 
                 y = model(xt)
-                print("y shape is: " + str(y.shape))
+                print("model output y shape is: " + str(y.shape))
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
-                print("y value is: " + str(y))
+                print("the y value to optimize is: " + str(y))
 
                 loss = (
                     -y.mean()
