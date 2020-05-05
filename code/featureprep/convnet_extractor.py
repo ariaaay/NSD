@@ -18,6 +18,8 @@ from sklearn.decomposition import PCA
 from util.model_config import conv_layers, fc_layers
 from util.util import pool_size
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 
 
 class Vgg19(nn.Module):
