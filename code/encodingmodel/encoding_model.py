@@ -100,7 +100,7 @@ def ridge_cv(
             clf.best_l_idxs.cpu().numpy(),
             [yhat, y_test],
             weights.cpu().numpy(),
-            bias.cpu().numpy()
+            bias.cpu().numpy(),
         )
 
     else:  # permutation testings
