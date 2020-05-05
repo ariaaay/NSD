@@ -76,3 +76,6 @@ task_label_in_Taskonomy19_matrix_order = {
     "curvature": "Curvature",
     "vanishing_point": "Vanishing Pts.",
 }
+
+conv_layers = ["conv1", "conv2", "conv3", "conv4", "conv5"]
+fc_layers = ["fc6", "fc7"]
