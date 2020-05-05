@@ -13,9 +13,8 @@ source venv/bin/activate
 module load cuda-10.1
 module load cudnn-10.1-v7.6.5.32
 
-task=$1
+subj=$1
+task=$2
 
-sub=2
-
-echo "running taskonomy $task task on subject $sub"
-python code/run_modeling.py --model taskrepr_$task --subj $sub --fix_testing --notest
+echo "running taskonomy $task task on subject $subj"
+python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest

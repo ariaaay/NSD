@@ -22,7 +22,7 @@ TASKS="class_1000 \
 #jigsaw"
 
 
-
+subj=$1
 for task in $TASKS; do
- sbatch ~/NSD/scripts/run_encoding_models_on_taskonomy.sh $task
+ sbatch ~/NSD/scripts/run_encoding_models_on_taskonomy.sh $subj $task
 done
