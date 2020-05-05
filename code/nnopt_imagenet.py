@@ -101,7 +101,7 @@ for LR in learning_rates:
                     onesided=True,
                     signal_sizes=(INPUT_IMSIZE, INPUT_IMSIZE),
                 )
-                print(x.shape)
+                print("x shape is: " + str(x.shape))
 
                 x = (x - x.min()) / (x.max() - x.min())  # Scale values to [0, 1]
 
@@ -112,14 +112,14 @@ for LR in learning_rates:
                 # Get output
                 xt = (x - IMGNET_MEAN) / IMGNET_STD
                 xt = F.dropout(xt)
-                print(xt.shape)
+                print("xt shape is: " + str(xt.shape))
 
                 y = model(xt)
-                print(y.shape)
+                print("y shape is: " + str(y.shape))
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
-                print(y.shape)
+                print("opt y shape is: " + str(y.shape))
 
                 loss = (
                     -y.mean()
