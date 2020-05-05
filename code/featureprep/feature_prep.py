@@ -11,7 +11,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 def get_features(subj, stim_list, model):
-    print(stim_list)
     """
     :param subj: subject ID
     :param stim_list: a list of COCO IDs for the stimuli images
