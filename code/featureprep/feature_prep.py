@@ -26,7 +26,6 @@ def get_features(subj, stim_list, model):
         if subj == 1:
             featmat = np.load("features/%s.npy" % model)
         else:
-            print(type(subj))
             featmat = np.load("features/%s_subj%02d.npy" % (model, subj))
     except FileNotFoundError:
         if "taskrepr" in model:
