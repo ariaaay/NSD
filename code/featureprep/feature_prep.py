@@ -67,7 +67,7 @@ def get_features(subj, stim_list, model):
 
 
 
-        np.save("features/*s_subj%02d.npy" % (model, subj), featmat)
+        np.save("features/subj%d/%s.npy" % (subj, model), featmat)
         print("feature shape is " + str(featmat.shape[0]))
 
     return featmat
