@@ -120,7 +120,6 @@ for LR in learning_rates:
                 # Loss
                 y = y[0, OPT_CHANNEL]
                 print("y value is: " + str(y))
-                print("opt y shape is: " + str(y.shape))
 
                 loss = (
                     -y.mean()
