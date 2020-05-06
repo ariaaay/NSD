@@ -146,20 +146,23 @@ def count_repetition(stim_list, br_idx):
     return count / len(np.array(stim_list)[br_idx])
 
 
-def pool_size(fm, dim, adaptive=True):
+def pool_size(fm, dim):
+    """
+    pool_size() calculates what size avgpool needs to do to reduce the 2d feature into
+    desired dimension.
+    :param fm: 2D feature/data matrix
+    :param dim:
+    :param adaptive:
+    :return:
+    """
     import torch
-
-    if adaptive:  # use adaptive avgpool instead
-        c = fm.shape[1]
-        k = int(np.floor(np.sqrt(dim / c)))
-    else:
-        k = 1
-        tot = torch.numel(torch.Tensor(fm.view(-1).shape))
-        ctot = tot
-        while ctot > dim:
-            k += 1
-            ctot = tot / k / k
-
+    k = 1
+    tot = torch.numel(torch.Tensor(fm.view(-1).shape))
+    print(tot)
+    ctot = tot
+    while ctot > dim:
+        k += 1
+        ctot = tot / k / k
     return k
 
 
