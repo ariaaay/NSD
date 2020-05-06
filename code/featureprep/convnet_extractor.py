@@ -1,22 +1,12 @@
-import os
-import pickle
-import json
-import argparse
-from tqdm import tqdm
-from PIL import Image
 import numpy as np
-import matplotlib.pyplot as plt
+
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
-from torch.autograd import Variable
+
 from torchvision import transforms, utils, models
-from scipy.ndimage import gaussian_filter
-from collections import namedtuple
-from sklearn.decomposition import PCA
+
 
 from util.model_config import conv_layers, fc_layers
-from util.util import pool_size
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -50,14 +40,15 @@ class Vgg19(nn.Module):
                 *list(vgg19_bn.classifier.children())
             ).eval()
 
-    def forward(self, x, subsample):
+    def forward(self, x, subsample, subsampling_size=5000):
         results = []
         for ii, layer in enumerate(self.features):
             x = layer(x)
             if self.extract_conv and self.layer_ind == ii:
                 if subsample == "avgpool":
-                    print(x.data.shape)
-                    k = pool_size(x.data, 20000, adaptive=True)
+                    # print(x.data.shape)
+                    c = x.data.shape[1]  # number of channels
+                    k = int(np.floor(np.sqrt(subsampling_size/ c)))
                     results = (
                         nn.functional.adaptive_avg_pool2d(x.data, (k, k))
                         .cpu()
