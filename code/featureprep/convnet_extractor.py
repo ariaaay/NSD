@@ -40,7 +40,7 @@ class Vgg19(nn.Module):
                 *list(vgg19_bn.classifier.children())
             ).eval()
 
-    def forward(self, x, subsample, subsampling_size=5000):
+    def forward(self, x, subsample, subsampling_size=20000):
         results = []
         for ii, layer in enumerate(self.features):
             x = layer(x)

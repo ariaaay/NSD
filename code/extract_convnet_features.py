@@ -68,6 +68,12 @@ if __name__ == "__main__":
         help="Please specify the method to subsample convolutional layers. Options are PCA and "
              "avgpool.",
     )
+    parser.add_argument(
+        "--subsampling_size",
+        type=int,
+        default=20000,
+        help="Specify the target size for subsampling"
+    )
     parser.add_argument("--cpu", action="store_true", help="cpu only for subsmapling.")
 
     args = parser.parse_args()
@@ -105,7 +111,7 @@ if __name__ == "__main__":
         for p in tqdm(all_images_paths):
             img = Image.open(p)
             input = Variable(preprocess(img).unsqueeze_(0)).to(device)
-            out = model.forward(input, args.subsample)
+            out = model.forward(input, args.subsample, args.subsampling_size)
 
             all_features.append(out)
         all_features = np.array(all_features)
