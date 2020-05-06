@@ -56,6 +56,7 @@ class Vgg19(nn.Module):
             x = layer(x)
             if self.extract_conv and self.layer_ind == ii:
                 if subsample == "avgpool":
+                    print(x.data.shape)
                     k = pool_size(x.data, 20000, adaptive=True)
                     results = (
                         nn.functional.adaptive_avg_pool2d(x.data, (k, k))
