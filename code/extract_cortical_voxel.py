@@ -58,6 +58,7 @@ def extract_cortical_mask(subj, roi=""):
         # assert np.sum(roi_1d_mask) == np.sum(mask)
         print(np.sum(roi_1d_mask))
         print(np.sum(mask))
+        print(len(roi_1d_mask))
         assert len(roi_1d_mask) == np.sum(
             cortical
         )  # check the roi 1D length is same as cortical numbers in nsd general

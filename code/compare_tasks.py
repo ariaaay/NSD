@@ -81,6 +81,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     voxel_mat = get_voxels(args.task_list, subj=args.subj)
+    print(voxel_mat.shape)
 
     sig_mat = get_sig_mask(
         args.task_list, correction="emp_fdr", alpha=0.05, subj=args.subj
@@ -93,36 +94,15 @@ if __name__ == "__main__":
     )
 
     # masking out insignificant voxels in prediction
-    voxel_mat[:,~sig_mat] = 0
-
-    # load ROI mask and mask brain prediction if using
-    # if args.roi is not None:
-    #     roi_1d_mask = np.load(
-    #         "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-    #         % (args.subj, args.subj, args.roi)
-    #     )
-    #
-    #     assert voxel_mat.shape == roi_1d_mask.shape
-    #
-    #     voxel_mat[roi_1d_mask < 1] = 0
-    #     roi_tag += "_only_%s" % args.roi
-    #
-    # elif args.exclude_roi is not None:
-    #     roi_excluded_1d_mask = np.load(
-    #         "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-    #         % (args.subj, args.subj, args.exclude_roi)
-    #     )
-    #
-    #     assert voxel_mat.shape[1] == len(roi_excluded_1d_mask)
-    #     voxel_mat[:, roi_excluded_1d_mask] = 0
-    #     roi_tag += "_exclude_%s" % args.exclude_roi
+    voxel_mat[~sig_mat] = 0
 
     visual_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-visualrois"))
     ecc_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-eccrois"))
     place_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "floc-places"))
-    assert voxel_mat.shape == visual_rois.shape
-    assert voxel_mat.shape == ecc_rois.shape
-    assert voxel_mat.shape == place_rois.shape
+    assert voxel_mat.shape[1] == len(visual_rois)
+    print(len(ecc_rois))
+    assert voxel_mat.shape[1] == len(ecc_rois)
+    assert voxel_mat.shape[1] == len(place_rois)
 
     # create dataframe
     dfpath = "output/dataframes/correlations_subj%d.csv" % args.subj
