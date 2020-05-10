@@ -100,9 +100,8 @@ if __name__ == "__main__":
     ecc_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-eccrois"))
     place_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "floc-places"))
     assert voxel_mat.shape[1] == len(visual_rois)
-    print(len(ecc_rois))
-    assert voxel_mat.shape[1] == len(ecc_rois)
-    assert voxel_mat.shape[1] == len(place_rois)
+    # assert voxel_mat.shape[1] == len(ecc_rois)
+    # assert voxel_mat.shape[1] == len(place_rois)
 
     # create dataframe
     dfpath = "output/dataframes/correlations_subj%d.csv" % args.subj
@@ -117,12 +116,15 @@ if __name__ == "__main__":
 
         for vox_num in range(voxel_mat.shape[1]):
             vd = dict()
-            vd["ecc_rois"] = ecc_rois[vox_num]
-            vd["place_rois"] = place_rois[vox_num]
+            # vd["ecc_rois"] = ecc_rois[vox_num]
+            # vd["place_rois"] = place_rois[vox_num]
             vd["visual_rois"] = visual_rois[vox_num]
 
             for i, task in enumerate(args.task_list):
                 vd[task] = voxel_mat[i, vox_num]
+                df = df.append(vd, ignore_index=True)
 
-        pd.to_csv(dfpath)
+        df.to_csv(dfpath)
+
+
 
