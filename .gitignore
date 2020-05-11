@@ -1,6 +1,7 @@
 # Project #
 ###########
 data/
+features/
 output/encoding_results/
 output/optim*
 output/cortical_voxels/
