@@ -5,6 +5,9 @@ features/
 output/encoding_results/
 output/optim*
 output/cortical_voxels/
+output/dataframes/
+output/task_matrix/
+nsd_pycortex_db/
 tb_logs*
 .idea
 
