@@ -33,7 +33,11 @@ def zscore_by_run(mat, run_n=480):
 
 
 def extract_cortical_mask(subj, roi=""):
-    roi_tag = "_" + roi
+    if roi is not "":
+        roi_tag = "_" + roi
+    else:
+        roi_tag = ""
+
     nsd_general_path = "%s/subj%02d/func1pt8mm/roi/nsdgeneral.nii.gz" % (
         roi_path,
         subj,
@@ -77,7 +81,7 @@ def extract_cortical_mask(subj, roi=""):
     return mask
 
 
-def extract_voxels(subj, roi, zscore):
+def extract_voxels(subj, roi, zscore, mask=None, mask_tag=""):
     tag = roi
 
     if zscore:
@@ -86,8 +90,8 @@ def extract_voxels(subj, roi, zscore):
         zscore_tag = ""
 
     output_path = (
-        "output/cortical_voxels/cortical_voxel_across_sessions_%ssubj%02d.npy"
-        % (zscore_tag, subj)
+        "output/cortical_voxels/cortical_voxel_across_sessions_%ssubj%02d%s.npy"
+        % (zscore_tag, subj, mask_tag)
     )
 
     try:
@@ -98,14 +102,14 @@ def extract_voxels(subj, roi, zscore):
             beta_path,
             subj,
         )
-
-        try:
-            mask = np.load(
-                "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
-                % (subj, subj, tag)
-            )
-        except FileNotFoundError:
-            mask = extract_cortical_mask(subj, roi)
+        if mask is None:
+            try:
+                mask = np.load(
+                    "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
+                    % (subj, subj, tag)
+                )
+            except FileNotFoundError:
+                mask = extract_cortical_mask(subj, roi)
 
         cortical_beta_mat = None
         for ses in tqdm(range(1, 41)):
