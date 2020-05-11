@@ -30,8 +30,7 @@ sns.set(style="whitegrid", font_scale=1)
 
 def get_voxels(model_list, subj):
     datamat = list()
-    for l in taskrepr_features:
-
+    for l in model_list:
         data = load_data("taskrepr", task=l, subj=subj, measure="corr")
         datamat.append(data)
     datamat = np.array(datamat)

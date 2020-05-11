@@ -33,6 +33,7 @@ def zscore_by_run(mat, run_n=480):
 
 
 def extract_cortical_mask(subj, roi=""):
+    roi_tag = "_" + roi
     nsd_general_path = "%s/subj%02d/func1pt8mm/roi/nsdgeneral.nii.gz" % (
         roi_path,
         subj,
@@ -63,13 +64,13 @@ def extract_cortical_mask(subj, roi=""):
             cortical
         )  # check the roi 1D length is same as cortical numbers in nsd general
         np.save(
-            "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-            % (subj, subj, roi),
+            "output/voxels_masks/subj%d/roi_1d_mask_subj%02d%s.npy"
+            % (subj, subj, roi_tag),
             roi_1d_mask,
         )
 
     np.save(
-        "output/voxels_masks/subj%d/cortical_mask_subj%02d_%s.npy" % (subj, subj, roi),
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy" % (subj, subj, roi_tag),
         mask,
     )
 
@@ -122,36 +123,6 @@ def extract_voxels(subj, roi, zscore):
 
         np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat
-
-
-def realign_cortex_mask(old_mask, new_mask):
-    """
-    :param old_mask: old surface mask (3D matrix)
-    :param new_mask: new surface mask (3D matrix)
-    :param old_results: old correlation scores (1D array)
-    :return: a mask for new voxels under the new cortical mask
-    """
-    new_mask[old_mask] = False
-    return new_mask
-
-def fit_new_results(old_mask, new_mask, old_results, additional_results, additional_voxel_mask):
-    """
-    :param old_mask: old surface mask (3D matrix)
-    :param new_mask: new surface mask (3D matrix)
-    :param old_results: old correlation scores (1D array)
-    :param additional_results: new correlation scores (1D array)
-    :return:
-    """
-    assert np.sum(old_mask) == len(old_results)
-    assert np.sum(additional_voxel_mask) == np.sum(additional_results)
-
-    vol = np.zeros(old_mask.shape)
-    vol[old_mask] = old_results
-    vol[additional_voxel_mask] = additional_results
-
-    corrs = vol[new_mask]
-
-    return corrs
 
 
 if __name__ == "__main__":

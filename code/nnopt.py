@@ -53,7 +53,7 @@ SUBJ = args.subj
 MODEL = args.model
 
 # ImageNet statistics to normalize images
-# TODO: change it to COCO size
+# TODO: change it to COCO size?
 IMGNET_MEAN = autograd.Variable(
     torch.FloatTensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1).cuda()
 )
@@ -164,10 +164,15 @@ for LR in learning_rates:
                 # Get output
                 xt = (x - IMGNET_MEAN) / IMGNET_STD
                 xt = F.dropout(xt)
+                print(xt.shape)
+
                 y = model(xt)
+                print(y.shape)
 
                 # Loss
                 y = y[0, OPT_CHANNEL]
+                print(y.shape)
+
                 loss = (
                     -y.mean()
                 )  # This maximizies the channel; flip sign to minimize instead
@@ -186,6 +191,7 @@ for LR in learning_rates:
                 # xr.data /= xnorm
                 # xi.data /= xnorm
                 xnorm = torch.norm(xf, dim=-1).unsqueeze(-1).data
+                print(xnorm.shape)
                 # print(xf.data.shape)
                 # print(xnorm.shape)
                 xf.data /= xnorm
