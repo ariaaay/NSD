@@ -1,7 +1,7 @@
 subj=1
 
 python code/extract_image_list.py --subj $subj --type trial
-python code/extract_cortical_voxel.py --zscored_by_run --subj $subj
+python code/extract_cortical_voxel.py --zscore_by_run --subj $subj
 
 python code/compute_ev.py --subj $subj --zscored_input
 . scripts/run_encoding_models_on_taskonomy_tayer.sh $subj

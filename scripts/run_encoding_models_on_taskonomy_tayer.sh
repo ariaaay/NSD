@@ -9,20 +9,21 @@ class_places \
 edge2d \
 edge3d \
 class_1000 \
-rgb2sfnorm \
-segment25d \
-segment2d \
-reshade \
-curvature \
-autoencoder \
-denoise \
-inpainting_whole
-keypoint2d \
-keypoint3d \
-rgb2depth \
-segmentsemantic \
-colorization \
-rgb2mist"
+inpainting_whole"
+
+#rgb2sfnorm \
+#segment25d \
+#segment2d \
+#reshade \
+#curvature \
+#autoencoder \
+#denoise \
+#keypoint2d \
+#keypoint3d \
+#rgb2depth \
+#segmentsemantic \
+#colorization \
+#rgb2mist"
 
 #jigsaw
 
