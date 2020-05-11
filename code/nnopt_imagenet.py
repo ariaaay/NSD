@@ -45,7 +45,7 @@ IMGNET_STD = autograd.Variable(
 )
 
 # File to save optimized image
-OUTPUT_DIR = "output/optim_imagenet_resnet18"
+OUTPUT_DIR = "output/optim_imagenet_vgg19"
 
 # Target model construction
 base_model = models.vgg19_bn(pretrained=True).cuda()
