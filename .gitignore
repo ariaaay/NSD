@@ -4,6 +4,8 @@ data/
 features/
 output/encoding_results/
 output/optim*
+output/baseline
+output/permutation_results
 output/cortical_voxels/
 output/dataframes/
 output/task_matrix/
