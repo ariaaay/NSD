@@ -48,7 +48,7 @@ IMGNET_STD = autograd.Variable(
 OUTPUT_DIR = "output/optim_imagenet_resnet18"
 
 # Target model construction
-base_model = models.resnet18(pretrained=True).cuda()
+base_model = models.vgg19_bn(pretrained=True).cuda()
 model = base_model.cuda().eval()
 
 # Input variables: the image is represented as a Fourier transform
@@ -60,7 +60,7 @@ for LR in learning_rates:
     print("Learning rate is %f" % LR)
     for LR_GAMMA in gammas:
         print("Learning gamma is %f" % LR_GAMMA)
-        writer = SummaryWriter("tb_logs_imagenet_resnet18/%f_%f" % (LR, LR_GAMMA))
+        writer = SummaryWriter("tb_logs_imagenet_vgg19/%f_%f" % (LR, LR_GAMMA))
 
         # for i in tqdm.trange(NUM_CAT):
         for i in range(20):
@@ -68,7 +68,6 @@ for LR in learning_rates:
             OUTPUT_FILE = (
                 OUTPUT_DIR
                 + "/"
-                + str(datetime.date.today())
                 + ("%d_%f_%f.jpg" % (i, LR, LR_GAMMA))
             )
 
