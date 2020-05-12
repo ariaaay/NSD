@@ -58,11 +58,6 @@ def get_features(subj, stim_list, model):
             featmat = []
             for img_id in tqdm(stim_list):
                 try:
-                    print(img_id)
-                    print(len(stim_list))
-                    print(stim.columns)
-                    print(len(stim['cocoId'] == img_id))
-                    print(np.sum(stim['cocoId'] == img_id))
                     # extract the nsd ID corresponding to the coco ID in the stimulus list
                     stim_ind = stim['nsdId'][stim['cocoId'] == img_id]
                     # extract the repective features for that nsd ID
