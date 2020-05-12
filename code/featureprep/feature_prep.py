@@ -45,7 +45,7 @@ def get_features(subj, stim_list, model):
         if "convnet" in model: # model should be "convnet_vgg16" to load "feat_vgg16.npy"
             model_id = model.split("_")[1:]
             feat_name = "_".join(model_id)
-            print("Loading convenet model %s..." % feat_name)
+            print("Loading convnet model %s..." % feat_name)
             # this extracted feature is order based on nsd ID (order in the stimulus info file)
             try:
                 all_feat = np.load("features/feat_%s.npy" % feat_name)
@@ -58,6 +58,11 @@ def get_features(subj, stim_list, model):
             featmat = []
             for img_id in tqdm(stim_list):
                 try:
+                    print(img_id)
+                    print(len(stim_list))
+                    print(stim.columns)
+                    print(len(stim['cocoId'] == img_id))
+                    print(np.sum(stim['cocoId'] == img_id))
                     # extract the nsd ID corresponding to the coco ID in the stimulus list
                     stim_ind = stim['nsdId'][stim['cocoId'] == img_id]
                     # extract the repective features for that nsd ID
