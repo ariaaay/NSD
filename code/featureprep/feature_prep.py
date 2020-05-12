@@ -47,7 +47,11 @@ def get_features(subj, stim_list, model):
             feat_name = "_".join(model_id)
 
             # this extracted feature is order based on nsd ID (order in the stimulus info file)
-            all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD2/feat_%s.npy" % feat_name)
+            try:
+                all_feat = np.load("features/feat_%s.npy" % feat_name)
+            except FileNotFoundError:
+                all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD2/feat_%s.npy" % feat_name) #on clsuter
+
             stim = pd.read_pickle(
                 "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
 
