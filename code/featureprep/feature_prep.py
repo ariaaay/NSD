@@ -45,12 +45,12 @@ def get_features(subj, stim_list, model):
         if "convnet" in model: # model should be "convnet_vgg16" to load "feat_vgg16.npy"
             model_id = model.split("_")[1:]
             feat_name = "_".join(model_id)
-
+            print("Loading convenet model %s..." % feat_name)
             # this extracted feature is order based on nsd ID (order in the stimulus info file)
             try:
                 all_feat = np.load("features/feat_%s.npy" % feat_name)
             except FileNotFoundError:
-                all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD2/feat_%s.npy" % feat_name) #on clsuter
+                all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy" % feat_name) #on clsuter
 
             stim = pd.read_pickle(
                 "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
