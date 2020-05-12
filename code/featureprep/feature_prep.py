@@ -23,10 +23,7 @@ def get_features(subj, stim_list, model):
     # file name.
 
     try:
-        if subj == 1:
-            featmat = np.load("features/%s.npy" % model)
-        else:
-            featmat = np.load("features/subj%d/%s.npy" % (subj, model))
+        featmat = np.load("features/subj%d/%s.npy" % (subj, model))
     except FileNotFoundError:
         if "taskrepr" in model:
             # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
