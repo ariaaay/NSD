@@ -12,7 +12,7 @@ from featureprep.feature_prep import get_features
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--tasks", default=[], action="extend", nargs="+", type=str)
+    parser.add_argument("--tasks", default=[], nargs="+", type=str)
     parser.add_argument("--subjs", default=[1])
 
     args = parser.parse_args()
