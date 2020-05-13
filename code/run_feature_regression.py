@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     stim_list = stim.cocoId
 
-    tasks = ["taskrepr" + task for task in args.tasks]
+    tasks = ["taskrepr_" + task for task in args.tasks]
     X = get_features(0, stim_list, tasks[0])
     Y = get_features(0, stim_list, tasks[1])
     assert X.shape[0] == 73000
