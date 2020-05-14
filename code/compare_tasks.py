@@ -65,9 +65,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="please specify subject to show")
 
     parser.add_argument(
-        "--task_list", type=list, default=["inpainting_whole", "edge3d", "room_layout"]
-    )
-    parser.add_argument(
         "--use_voxel_prediction", default=False, action="store_true",
     )
     parser.add_argument("--subj", default=1, type=int, help="define which subject")
@@ -78,36 +75,64 @@ if __name__ == "__main__":
         help="define what metric should be used to generate task matrix",
     )
 
+    parser.add_argument(
+        "--no_masked", action="store_true", help="do not use significance mask"
+    )
+
+    parser.add_argument(
+        "--task_list", nargs="+", type=str, default=["vanishing_point", "edge2d", "room_layout", "class_places"]
+    )
+
     args = parser.parse_args()
 
     voxel_mat = get_voxels(args.task_list, subj=args.subj)
     print(voxel_mat.shape)
 
-    sig_mat = get_sig_mask(
-        args.task_list, correction="emp_fdr", alpha=0.05, subj=args.subj
-    )
-    assert voxel_mat.shape == sig_mat.shape
+
+    if not args.no_masked:
+        sig_mat = get_sig_mask(
+            args.task_list, correction="emp_fdr", alpha=0.05, subj=args.subj
+        )
+        assert voxel_mat.shape == sig_mat.shape
+        # masking out insignificant voxels in prediction
+        voxel_mat[~sig_mat] = 0
+        sig_mask_tag = "_no_sig_mask"
+    else:
+        sig_mask_tag = "_emp_fdr_0.05"
 
     roi_tag = ""
     cortical_mask = np.load(
         "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (args.subj, args.subj)
     )
 
-    # masking out insignificant voxels in prediction
-    voxel_mat[~sig_mat] = 0
+
 
     visual_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-visualrois"))
     ecc_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-eccrois"))
     place_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "floc-places"))
     assert voxel_mat.shape[1] == len(visual_rois)
-    # assert voxel_mat.shape[1] == len(ecc_rois)
-    # assert voxel_mat.shape[1] == len(place_rois)
+    assert voxel_mat.shape[1] == len(ecc_rois)
+    assert voxel_mat.shape[1] == len(place_rois)
 
     # create dataframe
-    dfpath = "output/dataframes/correlations_subj%d.csv" % args.subj
+    dfpath = "output/dataframes/correlations_subj%d%s.csv" % (args.subj, sig_mask_tag)
 
     try:
         df = pd.read_csv(dfpath)
+        task_cols = []
+        for task in args.task_list:
+            if task not in df.columns:
+                task_cols += task
+
+        if task_cols != []:
+            for vox_num in range(voxel_mat.shape[1]):
+                vd = dict()
+                for i, task in enumerate(args.task_list):
+                    vd[task] = voxel_mat[i, vox_num]
+                    df = df.append(vd, ignore_index=True)
+
+            df.to_csv(dfpath)
+
     except FileNotFoundError:
         print("Making a new dataframe...")
         task_cols = [task for task in args.task_list]
@@ -116,8 +141,8 @@ if __name__ == "__main__":
 
         for vox_num in range(voxel_mat.shape[1]):
             vd = dict()
-            # vd["ecc_rois"] = ecc_rois[vox_num]
-            # vd["place_rois"] = place_rois[vox_num]
+            vd["ecc_rois"] = ecc_rois[vox_num]
+            vd["place_rois"] = place_rois[vox_num]
             vd["visual_rois"] = visual_rois[vox_num]
 
             for i, task in enumerate(args.task_list):
