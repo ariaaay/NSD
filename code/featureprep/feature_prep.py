@@ -72,7 +72,7 @@ def get_features(subj, stim_list, model):
 
 
         if subj == 0: #meaning it is features for all subjects
-            np.save("features/%s.npy" % (subj, model), featmat)
+            np.save("features/%s.npy" % (model), featmat)
         else:
             np.save("features/subj%d/%s.npy" % (subj, model), featmat)
 
