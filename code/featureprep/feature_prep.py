@@ -23,7 +23,11 @@ def get_features(subj, stim_list, model):
     # file name.
 
     try:
-        featmat = np.load("features/subj%d/%s.npy" % (subj, model))
+        if subj == 0:
+            featmat = np.load("features/%s.npy" % model)
+        else:
+            featmat = np.load("features/subj%d/%s.npy" % (subj, model))
+
     except FileNotFoundError:
         if "taskrepr" in model:
             # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
@@ -67,8 +71,11 @@ def get_features(subj, stim_list, model):
             featmat = np.array(featmat)
 
 
+        if subj == 0: #meaning it is features for all subjects
+            np.save("features/%s.npy" % (subj, model), featmat)
+        else:
+            np.save("features/subj%d/%s.npy" % (subj, model), featmat)
 
-        np.save("features/subj%d/%s.npy" % (subj, model), featmat)
         print("feature shape is " + str(featmat.shape[0]))
 
     return featmat
