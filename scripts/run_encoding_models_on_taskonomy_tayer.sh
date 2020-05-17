@@ -8,18 +8,17 @@ source venv/bin/activate
 #class_places \
 #edge2d \
 #edge3d \
-#"
+#class_1000 \
+#inpainting_whole \
+#segmentsemantic \
+#keypoint2d"
 
-TASKS="class_1000 \
-inpainting_whole \
-segmentsemantic \
-keypoint2d \
-keypoint3d \
-segment2d"
+TASKS="keypoint3d \
+segment25d"
 
 
 #rgb2sfnorm \
-#segment25d \
+#segment2d \
 #reshade \
 #curvature \
 #autoencoder \
