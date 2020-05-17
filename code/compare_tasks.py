@@ -8,12 +8,10 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
-from sklearn.cluster import AgglomerativeClustering
 from scipy.stats import ranksums
 
 from visualize_corr_in_pycortex import load_data
-from util.model_config import taskrepr_features, task_label
+from util.model_config import visual_roi_names, place_roi_names, ecc_roi_names
 
 sns.set(style="whitegrid", font_scale=1)
 
@@ -28,11 +26,11 @@ sns.set(style="whitegrid", font_scale=1)
 #     return rs
 
 
-def load_prediction(model, task, subj=1, measure="pred"):
+def load_prediction(model, task, subj=1):
     output = pickle.load(
         open(
-            "output/encoding_results/subj%d/%s_%s_%s_whole_brain.pkl"
-            % (subj, measure, model, task),
+            "output/encoding_results/subj%d/pred_%s_%s_whole_brain.p"
+            % (subj, model, task),
             "rb",
         )
     )
@@ -80,14 +78,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--task_list", nargs="+", type=str, default=["vanishing_point", "edge2d", "room_layout", "class_places"]
+        "--task_list",
+        nargs="+",
+        type=str,
+        default=["vanishing_point", "edge2d", "edge3d", "room_layout", "class_places"],
     )
 
     args = parser.parse_args()
 
     voxel_mat = get_voxels(args.task_list, subj=args.subj)
     print(voxel_mat.shape)
-
 
     if not args.no_masked:
         sig_mat = get_sig_mask(
@@ -96,20 +96,27 @@ if __name__ == "__main__":
         assert voxel_mat.shape == sig_mat.shape
         # masking out insignificant voxels in prediction
         voxel_mat[~sig_mat] = 0
-        sig_mask_tag = "_no_sig_mask"
-    else:
         sig_mask_tag = "_emp_fdr_0.05"
+    else:
+        sig_mask_tag = "_no_sig_mask"
 
     roi_tag = ""
     cortical_mask = np.load(
         "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (args.subj, args.subj)
     )
 
-
-
-    visual_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-visualrois"))
-    ecc_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "prf-eccrois"))
-    place_rois = np.load("output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.subj, args.subj, "floc-places"))
+    visual_rois = np.load(
+        "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.subj, args.subj, "prf-visualrois")
+    )
+    ecc_rois = np.load(
+        "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.subj, args.subj, "prf-eccrois")
+    )
+    place_rois = np.load(
+        "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.subj, args.subj, "floc-places")
+    )
     assert voxel_mat.shape[1] == len(visual_rois)
     assert voxel_mat.shape[1] == len(ecc_rois)
     assert voxel_mat.shape[1] == len(place_rois)
@@ -119,19 +126,12 @@ if __name__ == "__main__":
 
     try:
         df = pd.read_csv(dfpath)
-        task_cols = []
-        for task in args.task_list:
+        assert voxel_mat.shape[1] == len(df)
+        for i, task in enumerate(args.task_list):
             if task not in df.columns:
-                task_cols += task
+                df[task] = voxel_mat[i, :]
 
-        if task_cols != []:
-            for vox_num in range(voxel_mat.shape[1]):
-                vd = dict()
-                for i, task in enumerate(args.task_list):
-                    vd[task] = voxel_mat[i, vox_num]
-                    df = df.append(vd, ignore_index=True)
-
-            df.to_csv(dfpath)
+        df.to_csv(dfpath)
 
     except FileNotFoundError:
         print("Making a new dataframe...")
@@ -141,9 +141,9 @@ if __name__ == "__main__":
 
         for vox_num in range(voxel_mat.shape[1]):
             vd = dict()
-            vd["ecc_rois"] = ecc_rois[vox_num]
-            vd["place_rois"] = place_rois[vox_num]
-            vd["visual_rois"] = visual_rois[vox_num]
+            vd["ecc_rois"] = ecc_roi_names[ecc_rois[vox_num]]
+            vd["place_rois"] = place_roi_names[place_rois[vox_num]]
+            vd["visual_rois"] = visual_roi_names[visual_rois[vox_num]]
 
             for i, task in enumerate(args.task_list):
                 vd[task] = voxel_mat[i, vox_num]
@@ -151,5 +151,23 @@ if __name__ == "__main__":
 
         df.to_csv(dfpath)
 
+    if args.use_voxel_prediction:
+        assert len(args.task_list) == 2
+        pred1 = load_prediction(
+            "taskrepr", args.task_list[0], subj=args.subj
+        )
+        # print(pred1.shape)
+        pred2 = load_prediction(
+            "taskrepr", args.task_list[1], subj=args.subj
+        )
+        print("number of voxels is: " + str(pred1[0].shape[1]))
+        assert pred1[1].all() == pred2[1].all() #make sure the testing examples are the same
+        rs_output = list()
+        for i in range(pred1[0].shape[1]):
+            rs_output.append(ranksums(pred1[0][:, i], pred2[0][:, i])[0])
 
-
+        np.save(
+            "output/comparisons/ranksums_of_pred_of_%s_and_%s_subj%d.npy"
+            % (args.task_list[0], args.task_list[1], args.subj),
+            np.array(rs_output),
+        )

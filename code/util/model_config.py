@@ -79,3 +79,51 @@ task_label_in_Taskonomy19_matrix_order = {
 
 conv_layers = ["conv1", "conv2", "conv3", "conv4", "conv5"]
 fc_layers = ["fc6", "fc7"]
+
+ecc_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "0.5 deg",
+    2: "1 deg",
+    3: "2 deg",
+    4: "4 deg",
+    5: ">4 deg",
+}
+
+visual_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "V1v",
+    2: "V1d",
+    3: "V2v",
+    4: "V2d",
+    5: "V3v",
+    6: "v3d",
+    7: "h4v"}
+
+place_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "OPA",
+    2: "PPA",
+    3: "RSC",
+}
+
+face_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "OFA",
+    2: "FFA-1",
+    3: "FFA-2",
+    4: "mTL-faces",
+    5: "aTL-faces"
+}
+
+word_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "OWFA",
+    2: "VWFA-1",
+    3: "VWFA-2",
+    4: "mfs-words"
+}
