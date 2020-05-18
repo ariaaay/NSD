@@ -14,6 +14,7 @@ from util.model_config import conv_layers, fc_layers
 
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -31,8 +32,8 @@ preprocess = transforms.Compose(
 stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
 
 stim = pd.read_pickle(
-        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-    )
+    "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+)
 all_coco_ids = stim.cocoId
 all_images_paths = list()
 all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
@@ -53,20 +54,19 @@ if __name__ == "__main__":
         type=str,
         default="avgpool",
         help="Please specify the method to subsample convolutional layers. Options are PCA and "
-             "avgpool.",
+        "avgpool.",
     )
     parser.add_argument(
         "--subsampling_size",
         type=int,
         default=20000,
-        help="Specify the target size for subsampling"
+        help="Specify the target size for subsampling",
     )
     parser.add_argument("--cpu", action="store_true", help="cpu only for subsmapling.")
 
     args = parser.parse_args()
     print("Feature are subsampling with " + args.subsample)
     subsample_tag = "_" + args.subsample
-
 
     if args.layer in conv_layers:
         extract_conv = True
@@ -76,20 +76,28 @@ if __name__ == "__main__":
     if args.model == "vgg19":
         from featureprep.convnet_extractor import Vgg19
 
+        print("Extracting features from Vgg19_bn")
+
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(device)
 
         model = Vgg19(args.layer, extract_conv).eval()
-    # elif args.model == "AlexNet":
-    #     from featureprep.convnet_extractor import alexnet
-    #
-    #     model = Alexnet(args.layer, extract_conv).eval()
+
+    elif args.model == "alexnet":
+        from featureprep.convnet_extractor import AlexNet
+
+        print("Extracting features from Alexnet...")
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print(device)
+        model = AlexNet(args.layer, extract_conv).eval()
 
     # if there's only cpu, extracting feature is too slow so load pre-computed features
     if args.cpu and args.subsample == "pca":
         try:
             all_features = np.load(
-                "../outputs/convnet_features/vgg19_eval_full_{}.npy".format(args.layer)
+                "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s_%s%s.npy"
+                % (args.model, args.layer, subsample_tag)
             )
         except FileNotFoundError:
             pass
