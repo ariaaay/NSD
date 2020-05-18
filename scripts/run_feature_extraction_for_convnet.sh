@@ -7,5 +7,5 @@ fc6 \
 fc7"
 
 for layer in $LAYERS; do
- sbatch ~/NSD/scripts/feature_extraction.sh $layer --model alexnet --subsampling_size 10000
+ sbatch ~/NSD/scripts/feature_extraction.sh $layer
 done
