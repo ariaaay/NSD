@@ -86,7 +86,7 @@ class Vgg19(nn.Module):
 class AlexNet(nn.Module):
     def __init__(self, layer, extract_conv=True):
         super(AlexNet, self).__init__()
-        conv_layers = {"conv1": 6, "conv2": 13, "conv3": 26, "conv4": 39, "conv5": 52}
+        conv_layers = {"conv1": 2, "conv2": 5, "conv3": 7, "conv4": 9, "conv5": 12}
         fc_layers = {"fc6": 1, "fc7": 4}
         self.extract_conv = extract_conv
         if self.extract_conv:
@@ -95,20 +95,20 @@ class AlexNet(nn.Module):
             self.layer_ind = fc_layers[layer]
 
         # load models from PyTorch
-        vgg19_bn = models.vgg19_bn(pretrained=True)
-        vgg19_bn.to(device)
-        for param in vgg19_bn.parameters():
+        alexnet = models.alexnet(pretrained=True)
+        alexnet.to(device)
+        for param in alexnet.parameters():
             param.requires_grad = False
-        vgg19_bn.eval()
+        alexnet.eval()
 
-        features = list(vgg19_bn.features)
+        features = list(alexnet.features)
         self.features = nn.ModuleList(features).eval()
-        self.adaptivepool = vgg19_bn.avgpool
+        self.adaptivepool = alexnet.avgpool
         if (
             not self.extract_conv
         ):  # if need fc layer then add those linear layers into the forward pass
             self.classifiers = nn.Sequential(
-                *list(vgg19_bn.classifier.children())
+                *list(alexnet.classifier.children())
             ).eval()
 
     def forward(self, x, subsample, subsampling_size=20000):

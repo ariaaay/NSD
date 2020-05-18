@@ -14,24 +14,11 @@ from util.model_config import conv_layers, fc_layers
 
 
 import warnings
-
 warnings.filterwarnings("ignore")
-#
 
-
-# Load vision models
-# alexnet = models.alexnet(pretrained=True)
-# for param in alexnet.parameters():
-#     param.requires_grad = False
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-#
-# vgg19_bn = models.vgg19_bn(pretrained=True)
-# vgg19_bn.to(device)
-# for param in vgg19_bn.parameters():
-#     param.requires_grad = False
-# vgg19_bn.eval()
 
 preprocess = transforms.Compose(
     [
@@ -131,8 +118,8 @@ if __name__ == "__main__":
 
     print(all_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/feat_vgg19_%s%s.npy"
-        % (args.layer, subsample_tag),
+        "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s_%s%s.npy"
+        % (args.model, args.layer, subsample_tag),
         all_features,
     )
     # pickle.dump(all_images_paths, open('../outputs/convnet_features/convnet_image_orders_{}.p'.format(args.layer), 'wb'))
