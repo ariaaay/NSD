@@ -19,4 +19,4 @@ model=$1
 sub=1
 
 echo "running convnet $model task on subject $sub"
-python code/run_modeling_5000.py --model convnet_$model --subj $sub --fix_testing --notest
+python code/run_modeling.py --model convnet_$model --subj $sub --fix_testing --notest

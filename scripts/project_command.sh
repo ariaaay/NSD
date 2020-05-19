@@ -1,6 +1,7 @@
 subj=1
 # extract trial ID list
 python code/extract_image_list.py --subj $subj --type trial
+python code/extract_image_list.py --subj $subj --type cocoId
 
 # prepare brain voxels for encoding models:
 #   - extract cortical mask;
