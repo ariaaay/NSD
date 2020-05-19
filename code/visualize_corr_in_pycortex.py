@@ -172,12 +172,12 @@ if __name__ == "__main__":
         #     task="rgb2sfnorm",
         #     mask_with_significance=args.mask_sig,
         # ),
-        "Object Class": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="class_1000",
-            mask_with_significance=args.mask_sig,
-        ),
+        # "Object Class": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="class_1000",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         "Scene Class": make_volume(
             subj=args.subj,
             model="taskrepr",
