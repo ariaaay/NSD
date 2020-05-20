@@ -2,13 +2,13 @@
 
 source venv/bin/activate
 
-FEATURES="alexnet_conv1 \
-alexnet_conv2 \
-alexnet_conv3 \
-alexnet_conv4 \
-alexnet_conv5 \
-alexnet_fc6 \
-alexnet_fc7
+FEATURES="alexnet_conv1_avgpool \
+alexnet_conv2_avgpool \
+alexnet_conv3_avgpool \
+alexnet_conv4_avgpool \
+alexnet_conv5_avgpool \
+alexnet_fc6_avgpool \
+alexnet_fc7__avgpool
 "
 
 
