@@ -6,8 +6,6 @@ import torch.nn as nn
 from torchvision import transforms, utils, models
 
 
-from util.model_config import conv_layers, fc_layers
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -20,9 +18,9 @@ class Vgg19(nn.Module):
         super(Vgg19, self).__init__()
         self.extract_conv = extract_conv
         if self.extract_conv:
-            self.layer_ind = conv_layers[layer]
+            self.layer_ind = Vgg19.conv_layers[layer]
         else:
-            self.layer_ind = fc_layers[layer]
+            self.layer_ind = Vgg19.fc_layers[layer]
 
         # load models from PyTorch
         vgg19_bn = models.vgg19_bn(pretrained=True)
@@ -58,7 +56,7 @@ class Vgg19(nn.Module):
                     )
                 elif subsample == "pca":
                     if (
-                        self.layer_ind == conv_layers["conv1"]
+                        self.layer_ind ==Vgg19.conv_layers["conv1"]
                     ):  # need to reduce dimension of the first layer by half for PCA
                         results = (
                             nn.functional.avg_pool2d(x.data, (2, 2))
@@ -92,9 +90,9 @@ class AlexNet(nn.Module):
         super(AlexNet, self).__init__()
         self.extract_conv = extract_conv
         if self.extract_conv:
-            self.layer_ind = conv_layers[layer]
+            self.layer_ind = AlexNet.conv_layers[layer]
         else:
-            self.layer_ind = fc_layers[layer]
+            self.layer_ind = AlexNet.fc_layers[layer]
 
         # load models from PyTorch
         alexnet = models.alexnet(pretrained=True)
@@ -130,7 +128,7 @@ class AlexNet(nn.Module):
                     )
                 elif subsample == "pca":
                     if (
-                        self.layer_ind == conv_layers["conv1"]
+                        self.layer_ind == AlexNet.conv_layers["conv1"]
                     ):  # need to reduce dimension of the first layer by half for PCA
                         results = (
                             nn.functional.avg_pool2d(x.data, (2, 2))
