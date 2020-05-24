@@ -49,7 +49,7 @@ class Vgg19(nn.Module):
                 if subsample == "avgpool":
                     # print(x.data.shape)
                     c = x.data.shape[1]  # number of channels
-                    k = int(np.floor(np.sqrt(subsampling_size/ c)))
+                    k = int(np.floor(np.sqrt(subsampling_size / c)))
                     results = (
                         nn.functional.adaptive_avg_pool2d(x.data, (k, k))
                         .cpu()
@@ -57,6 +57,8 @@ class Vgg19(nn.Module):
                         .numpy()
                     )
                 elif subsample == "pca":
+                    print(self.layer_ind)
+                    print(conv_layers["conv1"])
                     if (
                         self.layer_ind == conv_layers["conv1"]
                     ):  # need to reduce dimension of the first layer by half for PCA
@@ -121,7 +123,7 @@ class AlexNet(nn.Module):
                 if subsample == "avgpool":
                     # print(x.data.shape)
                     c = x.data.shape[1]  # number of channels
-                    k = int(np.floor(np.sqrt(subsampling_size/ c)))
+                    k = int(np.floor(np.sqrt(subsampling_size / c)))
                     results = (
                         nn.functional.adaptive_avg_pool2d(x.data, (k, k))
                         .cpu()
