@@ -6,11 +6,11 @@ import torch
 from torch.autograd import Variable
 from torchvision import transforms, utils, models
 
+import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 
-from util.util import *
-from util.model_config import conv_layers, fc_layers
+from util.util import pytorch_pca
 
 
 import warnings
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     print("Feature are subsampling with " + args.subsample)
     subsample_tag = "_" + args.subsample
 
-    if args.layer in conv_layers:
+    if 'conv' in args.layer:
         extract_conv = True
     else:
         extract_conv = False
