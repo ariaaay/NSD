@@ -21,6 +21,7 @@ class Vgg19(nn.Module):
         self.extract_conv = extract_conv
         print(layer)
         print(conv_layers)
+        print(type(conv_layers))
         print(conv_layers[layer])
         if self.extract_conv:
             self.layer_ind = conv_layers[layer]
