@@ -13,10 +13,11 @@ print(device)
 
 
 class Vgg19(nn.Module):
+    conv_layers = {"conv1": 6, "conv2": 13, "conv3": 26, "conv4": 39, "conv5": 52}
+    fc_layers = {"fc6": 1, "fc7": 4}
+
     def __init__(self, layer, extract_conv=True):
         super(Vgg19, self).__init__()
-        conv_layers = {"conv1": 6, "conv2": 13, "conv3": 26, "conv4": 39, "conv5": 52}
-        fc_layers = {"fc6": 1, "fc7": 4}
         self.extract_conv = extract_conv
         if self.extract_conv:
             self.layer_ind = conv_layers[layer]
@@ -84,10 +85,11 @@ class Vgg19(nn.Module):
 
 
 class AlexNet(nn.Module):
+    conv_layers = {"conv1": 2, "conv2": 5, "conv3": 7, "conv4": 9, "conv5": 12}
+    fc_layers = {"fc6": 1, "fc7": 4}
+
     def __init__(self, layer, extract_conv=True):
         super(AlexNet, self).__init__()
-        conv_layers = {"conv1": 2, "conv2": 5, "conv3": 7, "conv4": 9, "conv5": 12}
-        fc_layers = {"fc6": 1, "fc7": 4}
         self.extract_conv = extract_conv
         if self.extract_conv:
             self.layer_ind = conv_layers[layer]
