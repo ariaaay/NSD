@@ -15,6 +15,7 @@ print(device)
 class Vgg19(nn.Module):
     conv_layers = {"conv1": 6, "conv2": 13, "conv3": 26, "conv4": 39, "conv5": 52}
     fc_layers = {"fc6": 1, "fc7": 4}
+    print(type(conv_layers))
 
     def __init__(self, layer, extract_conv=True):
         super(Vgg19, self).__init__()
