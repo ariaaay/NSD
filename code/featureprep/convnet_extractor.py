@@ -19,6 +19,8 @@ class Vgg19(nn.Module):
     def __init__(self, layer, extract_conv=True):
         super(Vgg19, self).__init__()
         self.extract_conv = extract_conv
+        print(self.layer_ind)
+        print(conv_layers[layer])
         if self.extract_conv:
             self.layer_ind = conv_layers[layer]
         else:
@@ -57,8 +59,6 @@ class Vgg19(nn.Module):
                         .numpy()
                     )
                 elif subsample == "pca":
-                    print(self.layer_ind)
-                    print(conv_layers["conv1"])
                     if (
                         self.layer_ind == conv_layers["conv1"]
                     ):  # need to reduce dimension of the first layer by half for PCA
