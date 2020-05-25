@@ -3,7 +3,7 @@
 #SBATCH --job-name=fe
 #SBATCH -p gpu
 #SBATCH --ntasks=2
-#SBATCH --mem=30G
+#SBATCH --mem=50G
 #SBATCH --time=10-00:00:00
 #SBATCH --error=/home/yuanw3/error_log/job.%J.err
 #SBATCH --output=/home/yuanw3/error_log/job.%J.out
