@@ -9,12 +9,12 @@ class_places \
 edge3d \
 class_1000 \
 inpainting_whole \
-segmentsemantic"
+segmentsemantic \
+edge2d"
 
 
 #TASKS="keypoint3d \
 #segment25d \
-#edge2d \
 #keypoint2d
 
 
@@ -30,9 +30,12 @@ segmentsemantic"
 
 #jigsaw
 
-subj=$1
+SUBJS="5 \
+      7"
 
-for task in $TASKS; do
-  echo "running taskonomy $task task on subject $subj"
-  python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest
+for subj in $SUBJS; do
+  for task in $TASKS; do
+    echo "running taskonomy $task task on subject $subj"
+    python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest
+  done
 done
