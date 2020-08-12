@@ -81,7 +81,7 @@ if __name__ == "__main__":
         "--task_list",
         nargs="+",
         type=str,
-        default=["vanishing_point", "edge2d", "edge3d", "room_layout", "class_places"],
+        default=["vanishing_point", "inpainting_whole", "edge2d", "edge3d", "room_layout", "class_places"],
     )
 
     args = parser.parse_args()
@@ -117,6 +117,9 @@ if __name__ == "__main__":
         "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
         % (args.subj, args.subj, "floc-places")
     )
+    print(voxel_mat.shape[1])
+    print(len(visual_rois))
+    print(len(ecc_rois))
     assert voxel_mat.shape[1] == len(visual_rois)
     assert voxel_mat.shape[1] == len(ecc_rois)
     assert voxel_mat.shape[1] == len(place_rois)

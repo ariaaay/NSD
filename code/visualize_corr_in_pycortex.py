@@ -60,7 +60,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
         mask=mask,
         cmap="hot",
         vmin=0,
-        vmax=0.335,
+        vmax=0.5,
     )
     return vol_data
 
@@ -172,12 +172,12 @@ if __name__ == "__main__":
         #     task="rgb2sfnorm",
         #     mask_with_significance=args.mask_sig,
         # ),
-        # "Object Class": make_volume(
-        #     subj=args.subj,
-        #     model="taskrepr",
-        #     task="class_1000",
-        #     mask_with_significance=args.mask_sig,
-        # ),
+        "Object Class": make_volume(
+            subj=args.subj,
+            model="taskrepr",
+            task="class_1000",
+            mask_with_significance=args.mask_sig,
+        ),
         "Scene Class": make_volume(
             subj=args.subj,
             model="taskrepr",
@@ -208,12 +208,12 @@ if __name__ == "__main__":
         #     task="segment2d",
         #     mask_with_significance=args.mask_sig,
         # ),
-        # "Semantic Segm": make_volume(
-        #     subj=args.subj,
-        #     model="taskrepr",
-        #     task="segmentsemantic",
-        #     mask_with_significance=args.mask_sig,
-        # ),
+        "Semantic Segm": make_volume(
+            subj=args.subj,
+            model="taskrepr",
+            task="segmentsemantic",
+            mask_with_significance=args.mask_sig,
+        ),
         "Vanishing Point": make_volume(
             subj=args.subj,
             model="taskrepr",
@@ -232,12 +232,12 @@ if __name__ == "__main__":
         #     task="colorization",
         #     mask_with_significance=args.mask_sig,
         # ),
-        # "Inpainting Whole": make_volume(
-        #     subj=args.subj,
-        #     model="taskrepr",
-        #     task="inpainting_whole",
-        #     mask_with_significance=args.mask_sig,
-        # ),
+        "Inpainting Whole": make_volume(
+            subj=args.subj,
+            model="taskrepr",
+            task="inpainting_whole",
+            mask_with_significance=args.mask_sig,
+        ),
         # "Jigsaw": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",

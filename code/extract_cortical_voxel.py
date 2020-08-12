@@ -59,6 +59,7 @@ def extract_cortical_mask(subj, roi=""):
 
         # save a 1D version as well
         cortical = nsd_cortical_mat > -1
+        print("from NSD general, cortical voxel number is: %d." % np.sum(cortical))
         roi_1d_mask = (anat_mat[cortical])
         # assert np.sum(roi_1d_mask) == np.sum(mask)
         print("Number of non-zero ROI voxels: " + str(np.sum(roi_1d_mask>0)))

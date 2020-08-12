@@ -43,10 +43,12 @@ def make_volume(subj, model, task, mask_with_significance=False):
             mask[mask == True] = sig_mask
             vals = vals[sig_mask]
 
-    cortical_mask = np.load("output/cortical_mask_subj%02d.npy" % subj)
+    cortical_mask = np.load("output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj))
     all_vals = np.zeros(cortical_mask.shape)
     all_vals[cortical_mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
+
+    np.save("output/volumetric_results/subj%d/%s_%s.npy" % (subj, model, task), all_vals)
 
     vol_data = cortex.Volume(
         all_vals,
@@ -89,12 +91,12 @@ if __name__ == "__main__":
     # subjport = int("1111{}".format(args.subj))
 
     volumes = {
-        "vgg16": make_volume(
-            subj=args.subj,
-            model="convnet",
-            task="vgg16",
-            mask_with_significance=args.mask_sig,
-        ),
+        # "vgg16": make_volume(
+        #     subj=args.subj,
+        #     model="convnet",
+        #     task="vgg16",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         "resnet50": make_volume(
             subj=args.subj,
             model="convnet",
