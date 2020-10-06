@@ -3,34 +3,34 @@
 source venv/bin/activate
 
 
-TASKS="vanishing_point \
-room_layout \
-class_places \
-edge3d \
-class_1000 \
-inpainting_whole \
-segmentsemantic \
-edge2d"
+#TASKS="vanishing_point \
+#room_layout \
+#class_places \
+#edge3d \
+#class_1000 \
+#inpainting_whole \
+#segmentsemantic \
+#edge2d"
 
 
 #TASKS="keypoint3d \
 #segment25d \
 #keypoint2d
 
-
-#rgb2sfnorm \
-#segment2d \
-#reshade \
-#curvature \
-#autoencoder \
-#denoise \
-#rgb2depth \
-#colorization \
-#rgb2mist \
+TASKS="rgb2sfnorm \
+segment2d \
+reshade \
+curvature \
+autoencoder \
+denoise \
+rgb2depth \
+colorization \
+rgb2mist"
 
 #jigsaw
 
-SUBJS="5 \
+SUBJS="1 \
+      5 \
       7"
 
 for subj in $SUBJS; do
