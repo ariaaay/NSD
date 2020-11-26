@@ -28,7 +28,7 @@ from torch.utils.tensorboard import SummaryWriter
 BASE_IMSIZE = 224
 IMPAD = 16  # Default 16
 INPUT_IMSIZE = BASE_IMSIZE + IMPAD
-NUM_CAT=10
+NUM_CAT = 10
 
 
 # Optimization parameters
@@ -65,11 +65,7 @@ for LR in learning_rates:
         # for i in tqdm.trange(NUM_CAT):
         for i in range(20):
             OPT_CHANNEL = i
-            OUTPUT_FILE = (
-                OUTPUT_DIR
-                + "/"
-                + ("%d_%f_%f.jpg" % (i, LR, LR_GAMMA))
-            )
+            OUTPUT_FILE = OUTPUT_DIR + "/" + ("%d_%f_%f.jpg" % (i, LR, LR_GAMMA))
 
             xf = autograd.Variable(
                 torch.randn(1, 3, INPUT_IMSIZE, 1 + INPUT_IMSIZE // 2, 2).cuda(),

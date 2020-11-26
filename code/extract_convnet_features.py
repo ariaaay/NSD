@@ -68,7 +68,7 @@ if __name__ == "__main__":
     print("Feature are subsampling with " + args.subsample)
     subsample_tag = "_" + args.subsample
 
-    if 'conv' in args.layer:
+    if "conv" in args.layer:
         extract_conv = True
     else:
         extract_conv = False

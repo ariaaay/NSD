@@ -39,8 +39,9 @@ if __name__ == "__main__":
         Y_pred = reg.predict(X_subj)
 
         Y_res = Y_true - Y_pred
-        np.save("features/subj%d/pred_of_%s_from_%s.npy" % (s, tasks[1], tasks[0]), Y_pred)
-        np.save("features/subj%d/res_of_%s_from_%s.npy" % (s, tasks[1], tasks[0]), Y_res)
-
-
-
+        np.save(
+            "features/subj%d/pred_of_%s_from_%s.npy" % (s, tasks[1], tasks[0]), Y_pred
+        )
+        np.save(
+            "features/subj%d/res_of_%s_from_%s.npy" % (s, tasks[1], tasks[0]), Y_res
+        )

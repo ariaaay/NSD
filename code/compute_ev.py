@@ -11,15 +11,17 @@ from util.util import ev
 def extract_subject_trials_index_shared1000(stim, subj):
     index = list()
     for i in range(3):
-        col = 'subject%01d_rep%01d' % (subj, i)
-        assert len(stim[col][stim['shared1000']]) == 1000
-        index.append(list(stim[col][stim['shared1000']]))
+        col = "subject%01d_rep%01d" % (subj, i)
+        assert len(stim[col][stim["shared1000"]]) == 1000
+        index.append(list(stim[col][stim["shared1000"]]))
     assert len(index) == 3
     return index
 
 
 def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
-    l = np.load("output/trials_subj%02d.npy" % subj) # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
+    l = np.load(
+        "output/trials_subj%02d.npy" % subj
+    )  # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
 
     repeat_n = l.shape[0]
     print("The number of images with 3 repetitions are: " + str(repeat_n))
@@ -30,24 +32,32 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
         print(l.shape)
 
     if zscored_input:
-        data = np.load("output/cortical_voxels/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy" % (subj, roi))
+        data = np.load(
+            "output/cortical_voxels/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy"
+            % (subj, roi)
+        )
     else:
-        data = np.load("output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy" % (subj, roi))
+        data = np.load(
+            "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
+            % (subj, roi)
+        )
 
     ev_list = []
-    avg_mat = np.zeros((repeat_n, data.shape[1])) # size = number of repeated images by number of voxels
+    avg_mat = np.zeros(
+        (repeat_n, data.shape[1])
+    )  # size = number of repeated images by number of voxels
 
     print("Brain data shape is:")
     print(data.shape)
 
-    for v in tqdm(range(data.shape[1])): #loop over voxels
+    for v in tqdm(range(data.shape[1])):  # loop over voxels
         repeat = list()
         for r in range(3):
             try:
-                repeat.append(data[l[:,r], v]) # all repeated trials for each voxels
+                repeat.append(data[l[:, r], v])  # all repeated trials for each voxels
             except IndexError:
                 print("Index Error")
-                print(r,v)
+                print(r, v)
 
         repeat = np.array(repeat).T
         try:
@@ -57,7 +67,11 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
             print(repeat.shape)
 
         ev_list.append(ev(repeat, biascorr=biascorr))
-    np.save("output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (subj, roi), avg_mat)
+    np.save(
+        "output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
+        % (subj, roi),
+        avg_mat,
+    )
     return np.array(ev_list)
 
 

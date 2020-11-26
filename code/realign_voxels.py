@@ -76,4 +76,3 @@ if __name__ == "__main__":
                     )
                 )
                 out = np.array(output)[:, 0]
-

@@ -60,9 +60,9 @@ def extract_cortical_mask(subj, roi=""):
         # save a 1D version as well
         cortical = nsd_cortical_mat > -1
         print("from NSD general, cortical voxel number is: %d." % np.sum(cortical))
-        roi_1d_mask = (anat_mat[cortical])
+        roi_1d_mask = anat_mat[cortical]
         # assert np.sum(roi_1d_mask) == np.sum(mask)
-        print("Number of non-zero ROI voxels: " + str(np.sum(roi_1d_mask>0)))
+        print("Number of non-zero ROI voxels: " + str(np.sum(roi_1d_mask > 0)))
         print("Number of cortical voxels is: " + str(len(roi_1d_mask)))
         assert len(roi_1d_mask) == np.sum(
             cortical
@@ -74,7 +74,8 @@ def extract_cortical_mask(subj, roi=""):
         )
 
     np.save(
-        "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy" % (subj, subj, roi_tag),
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
+        % (subj, subj, roi_tag),
         mask,
     )
 
@@ -93,7 +94,6 @@ def extract_voxels(subj, roi, zscore, mask=None, mask_tag=""):
         "output/cortical_voxels/cortical_voxel_across_sessions_%ssubj%02d%s.npy"
         % (zscore_tag, subj, mask_tag)
     )
-
 
     beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (
         beta_path,

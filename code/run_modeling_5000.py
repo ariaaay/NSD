@@ -10,15 +10,15 @@ from featureprep.feature_prep import get_features
 
 
 def run(
-        fm,
-        br,
-        model_name,
-        test,
-        notest,
-        whole_brain,
-        fix_testing,
-        cv,
-        # model_list,
+    fm,
+    br,
+    model_name,
+    test,
+    notest,
+    whole_brain,
+    fix_testing,
+    cv,
+    # model_list,
 ):
     print("Features are {}. Using whole brain data: {}".format(model_name, whole_brain))
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         type=str,
         default="convnet",
         help="input the name of the features."
-             "Options are: convnet, scenenet, response,surface_normal_latent, surface_normal_subsample, RT, etc",
+        "Options are: convnet, scenenet, response,surface_normal_latent, surface_normal_subsample, RT, etc",
     )
     # parser.add_argument(
     #     "--layer", type=str, default="", help="input name of the convolutional layer or task"
@@ -75,9 +75,7 @@ if __name__ == "__main__":
         "--subj", type=int, default=1, help="specify which subject to build model on"
     )
 
-    parser.add_argument(
-        "--zscored", action="store_true", help="load zscored data"
-    )
+    parser.add_argument("--zscored", action="store_true", help="load zscored data")
 
     parser.add_argument(
         "--fix_testing",
@@ -102,7 +100,10 @@ if __name__ == "__main__":
     if args.zscored:
         mask_tag += "_zscore"
 
-    brain_path = "output/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (args.subj, mask_tag)
+    brain_path = "output/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy" % (
+        args.subj,
+        mask_tag,
+    )
 
     # Load brain data
     br_data = np.load(brain_path)
@@ -112,36 +113,28 @@ if __name__ == "__main__":
 
     print("Brain response size is: " + str(br_data.shape))
 
-
     # Load feature spaces
     print("Running ridge on " + args.model)
 
     stimulus_with_repeat = np.load("output/coco_ID_of_repeats_subj%02d.npy" % args.subj)
     try:
-        assert stimulus_with_repeat.shape[1] ==3
+        assert stimulus_with_repeat.shape[1] == 3
     except AssertionError:
         print(stimulus_with_repeat.shape)
 
-    stimulus_list = stimulus_with_repeat[:,0] #All subjects should have same orders
+    stimulus_list = stimulus_with_repeat[:, 0]  # All subjects should have same orders
 
-    feature_mat = get_features(
-        args.subj,
-        stimulus_list,
-        args.model,
-    )
+    feature_mat = get_features(args.subj, stimulus_list, args.model,)
 
     if len(feature_mat.shape) > 2:
         feature_mat = np.squeeze(feature_mat)
 
     # take the first 4916 stimuli
-    feature_mat = feature_mat[:4916,:]
+    feature_mat = feature_mat[:4916, :]
 
     print("Feature size is: " + str(feature_mat.shape))
 
-    model_name_to_save = (
-            args.model
-            + mask_tag
-    )
+    model_name_to_save = args.model + mask_tag
 
     run(
         feature_mat,

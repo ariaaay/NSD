@@ -51,13 +51,6 @@ def ridge_cv(
         X, y, test_size=0.15, random_state=fix_testing_state
     )
 
-    if pca:
-        print("Running PCA...")
-        pca = PCA()
-        X_train = pca.fit_transform(X_train.astype(np.float32))
-        X_test = pca.transform(X_test)
-        print("PCA Done.")
-
     X_train = torch.from_numpy(X_train).to(dtype=torch.float64).to(device)
     y_train = torch.from_numpy(y_train).to(dtype=torch.float64).to(device)
     X_test = torch.from_numpy(X_test).to(dtype=torch.float64).to(device)
@@ -121,25 +114,25 @@ def ridge_cv(
 
 def fit_encoding_model(
     X,
-    br,
+    y,
     model_name=None,
-    ROI=True,
-    subset_idx=None,
     subj=1,
     fix_testing=False,
     cv=False,
     saving=True,
     permute_y=False,
+    output_dir=None,
 ):
+
+    model_name += "_whole_brain"
+
     if cv:
         print("Running cross validation")
 
-    if ROI:
-        model_name += "_roi"
+    if output_dir is None:
+        outpath = "output/encoding_results/subj%d/" % subj
     else:
-        model_name += "_whole_brain"
-
-    outpath = "output/encoding_results/subj%d/" % subj
+        outpath = "%s/encoding_results/subj%d/" % (output_dir, subj)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
@@ -158,10 +151,6 @@ def fit_encoding_model(
         [],
         [],
     )
-    if subset_idx is None:
-        y = br
-    else:
-        y = br[subset_idx, :]  # subset to get rid of the repetition trials
 
     assert (
         y.shape[0] == X.shape[0]
@@ -174,7 +163,7 @@ def fit_encoding_model(
     if permute_y:  # if running permutation just return subsets of the output
         # save correaltions
         np.save(
-            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s.npy"
+            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s_whole_brain.npy"
             % (subj, model_name),
             np.array(corrs_array),
         )
@@ -220,23 +209,22 @@ def permutation_test(
     y,
     model_name,
     repeat=5000,
-    ROI=True,
-    subset_idx=None,
     subj=1,
     pca=False,
     permute_y=True,  # rather than permute training
+    output_dir=None,
 ):
     """
 	Running permutation test (permute the label 5000 times).
 	"""
-    outdir = "output/permutation_results/subj{}/".format(subj)
+    model_name += "_whole_brain"
+    if outdir is None:
+        outdir = "output/permutation_results/subj%d/" % subj
+    else:
+        outdir = "%s/subj%d/" % (output_dir, subj)
+
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
-
-    if ROI:
-        model_name += "_roi"
-    else:
-        model_name += "_whole_brain"
 
     print("Running permutation test of {} for {} times".format(model_name, repeat))
     corr_dists, rsq_dists = list(), list()
@@ -247,12 +235,11 @@ def permutation_test(
             y,
             model_name=model_name,
             subj=subj,
-            ROI=ROI,
-            subset_idx=subset_idx,
             cv=False,
             saving=False,
             permute_y=True,
             fix_testing=False,
+            output_dir=output_dir,
         )
     else:
         label_idx = np.arange(X.shape[0])
@@ -264,8 +251,6 @@ def permutation_test(
                 y,
                 model_name=model_name,
                 subj=subj,
-                ROI=ROI,
-                subset_idx=subset_idx,
                 cv=False,
                 saving=False,
                 fix_testing=False,

@@ -20,7 +20,7 @@ import torch
 
 
 def _validate_ls(ls, X):
-    #TODO
+    # TODO
     """Ensure that ls is a list of list torch float/double tensor."""
     try:
         assert isinstance(ls[0], torch.Tensor)

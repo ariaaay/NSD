@@ -4,51 +4,33 @@ import pickle
 import numpy as np
 
 import argparse
+
 from util.model_config import model_features
 
 
-def load_data(model, task, subj=1, measure="corr"):
-    output = pickle.load(
-        open(
-            "output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-            % (subj, measure, model, task),
-            "rb",
-        )
+def load_data(task1, task2, subj=1):
+    return np.load(
+        "output/comparisons/ranksums_of_pred_of_%s_and_%s_subj%d.npy"
+        % (task1, task2, subj)
     )
-    if measure == "corr":
-        out = np.array(output)[:, 0]
-    else:
-        out = np.array(output)
-    return out
 
 
-def make_volume(subj, model, task, mask_with_significance=False):
+def make_volume(subj, task1, task2):
     import cortex
 
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
-    vals = load_data(model, task, subj=subj)
+    vals = load_data(task1, task2, subj=subj)
 
-    if mask_with_significance:
-        correction = "emp_fdr"
-        alpha = 0.05
-        sig_mask = np.load(
-            "output/voxels_masks/subj%d/%s_%s_%s_%s_%s.npy"
-            % (subj, model, task, correction, str(alpha))
-        )
-        # print(sig_mask.shape)
-        # print(np.sum(sig_mask))
-        if np.sum(sig_mask) > 0:
-            mask[mask == True] = sig_mask
-            vals = vals[sig_mask]
-
-    cortical_mask = np.load("output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj))
+    cortical_mask = np.load(
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+    )
     all_vals = np.zeros(cortical_mask.shape)
     all_vals[cortical_mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
 
-    np.save("output/volumetric_results/subj%d/%s_%s.npy" % (subj, model, task), all_vals)
+    # np.save("output/volumetric_results/subj%d/%s_%s.npy" % (subj, model, task), all_vals)
 
     vol_data = cortex.Volume(
         all_vals,
@@ -56,7 +38,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
         cmap="hot",
-        vmax=np.max(all_vals)
+        vmax=np.max(all_vals),
     )
     return vol_data
 
@@ -85,23 +67,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--subj", type=int, default=1, help="specify which subject to build model on"
     )
-    parser.add_argument("--mask_sig", default=False, action="store_true")
     args = parser.parse_args()
 
     # subjport = int("1111{}".format(args.subj))
 
     volumes = {
-        # "vgg16": make_volume(
-        #     subj=args.subj,
-        #     model="convnet",
-        #     task="vgg16",
-        #     mask_with_significance=args.mask_sig,
-        # ),
-        "resnet50": make_volume(
-            subj=args.subj,
-            model="convnet",
-            task="res50",
-            mask_with_significance=args.mask_sig,
+        "edge2d vs. edge3d": make_volume(
+            subj=args.subj, task1="edge2d", task2="edge3d"
+        ),
+        "edge3d vs. class_places": make_volume(
+            subj=args.subj, task1="edge3d", task2="class_places"
+        ),
+        "vanishing pts vs. layout": make_volume(
+            subj=args.subj, task1="vanishing_point", task2="room_layout"
         ),
     }
     import cortex

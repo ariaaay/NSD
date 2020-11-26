@@ -81,7 +81,14 @@ if __name__ == "__main__":
         "--task_list",
         nargs="+",
         type=str,
-        default=["vanishing_point", "inpainting_whole", "edge2d", "edge3d", "room_layout", "class_places"],
+        default=[
+            "vanishing_point",
+            "inpainting_whole",
+            "edge2d",
+            "edge3d",
+            "room_layout",
+            "class_places",
+        ],
     )
 
     args = parser.parse_args()
@@ -156,15 +163,13 @@ if __name__ == "__main__":
 
     if args.use_voxel_prediction:
         assert len(args.task_list) == 2
-        pred1 = load_prediction(
-            "taskrepr", args.task_list[0], subj=args.subj
-        )
+        pred1 = load_prediction("taskrepr", args.task_list[0], subj=args.subj)
         # print(pred1.shape)
-        pred2 = load_prediction(
-            "taskrepr", args.task_list[1], subj=args.subj
-        )
+        pred2 = load_prediction("taskrepr", args.task_list[1], subj=args.subj)
         print("number of voxels is: " + str(pred1[0].shape[1]))
-        assert pred1[1].all() == pred2[1].all() #make sure the testing examples are the same
+        assert (
+            pred1[1].all() == pred2[1].all()
+        )  # make sure the testing examples are the same
         rs_output = list()
         for i in range(pred1[0].shape[1]):
             rs_output.append(ranksums(pred1[0][:, i], pred2[0][:, i])[0])

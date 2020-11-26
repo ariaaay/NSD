@@ -27,27 +27,46 @@ def make_volume(subj, model, task, mask_with_significance=False):
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
-    #load correlation scores of cortical voxels
+    # load correlation scores of cortical voxels
     vals = load_data(model, task, subj=subj)
+    try:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
+    except FileNotFoundError:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
+    # projecting value back to 3D space
+    all_vals = np.zeros(cortical_mask.shape)
+    all_vals[cortical_mask] = vals
+    all_vals = np.swapaxes(all_vals, 0, 2)
 
-    #TODO: fix the following piece of code
-
-    # if mask_with_significance:
-    #     correction = "emp_fdr"
-    #     alpha = 0.05
-    #     sig_mask = np.load(
-    #         "output/voxels_masks/subj%d/%s_%s_%s_%s_%s.npy"
-    #         % (subj, model, task, correction, str(alpha))
-    #     )
-    #     # print(sig_mask.shape)
-    #     # print(np.sum(sig_mask))
-    #     if np.sum(sig_mask) > 0:
-    #         mask[mask == True] = sig_mask
-    #         vals = vals[sig_mask]
-
-    cortical_mask = np.load(
-        "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+    vol_data = cortex.Volume(
+        all_vals,
+        "subj%02d" % subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=mask,
+        cmap="hot",
+        vmin=0,
+        vmax=0.5,
     )
+    return vol_data
+
+
+def make_pc_volume(subj, vals):
+    mask = cortex.utils.get_cortical_mask(
+        "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
+    )
+
+    try:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
+    except FileNotFoundError:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
     # projecting value back to 3D space
     all_vals = np.zeros(cortical_mask.shape)
     all_vals[cortical_mask] = vals
@@ -74,6 +93,7 @@ if __name__ == "__main__":
         "--subj", type=int, default=1, help="specify which subject to build model on"
     )
     parser.add_argument("--mask_sig", default=False, action="store_true")
+    parser.add_argument("--show_pcs", default=False, action="store_true")
     args = parser.parse_args()
 
     vroi = nib.load("output/voxels_masks/subj%d/prf-visualrois.nii.gz" % args.subj)
@@ -202,18 +222,18 @@ if __name__ == "__main__":
         #     task="segment25d",
         #     mask_with_significance=args.mask_sig,
         # ),
-        # "2D Segm.": make_volume(
-        #     subj=args.subj,
-        #     model="taskrepr",
-        #     task="segment2d",
-        #     mask_with_significance=args.mask_sig,
-        # ),
-        "Semantic Segm": make_volume(
+        "2D Segm.": make_volume(
             subj=args.subj,
             model="taskrepr",
-            task="segmentsemantic",
+            task="segment2d",
             mask_with_significance=args.mask_sig,
         ),
+        # "Semantic Segm": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="segmentsemantic",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         "Vanishing Point": make_volume(
             subj=args.subj,
             model="taskrepr",
@@ -248,10 +268,18 @@ if __name__ == "__main__":
         #     subj=args.subj, model_dict=model_features
         # ),
         "Visual ROIs": visual_roi_volume,
-        "Eccentricity ROIs" : ecc_roi_volume,
-        "Places ROIs": place_roi_volume
+        "Eccentricity ROIs": ecc_roi_volume,
+        "Places ROIs": place_roi_volume,
     }
-    import cortex
+
+    if args.show_pcs:
+        pc_vols = []
+        PCs = np.load("output/pca/subj%d/pca_components.npy" % args.subj)
+        # Normalize the PCs
+        norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
+        for i in range(PCs.shape[0]):
+            key = "PC" + str(i)
+            volumes[key] = make_pc_volume(args.subj, norm_PCs[i, :])
 
     cortex.webgl.show(data=volumes, autoclose=False)
 

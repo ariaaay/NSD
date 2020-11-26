@@ -71,7 +71,7 @@ weights = np.load(
     "output/encoding_results/subj%d/weights_%s_whole_brain.npy" % (SUBJ, MODEL)
 )
 
-if args.best_voxels: # choose best voxels predicted by the model
+if args.best_voxels:  # choose best voxels predicted by the model
     voxel_inds = np.load(
         "output/voxels_masks/subj%d/best_%d_voxel_inds_%s.npy"
         % (SUBJ, args.num_voxel, MODEL)
@@ -79,12 +79,12 @@ if args.best_voxels: # choose best voxels predicted by the model
 
     NUM_VOXEL = args.num_voxel
 
-else: # choose roi voxels
+else:  # choose roi voxels
     mask = np.load(
         "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
         % (SUBJ, SUBJ, args.roi)
     )
-    voxel_inds = np.argwhere(mask>0).squeeze()
+    voxel_inds = np.argwhere(mask > 0).squeeze()
     NUM_VOXEL = len(voxel_inds)
 
 print("Optimizing %d voxels in total..." % NUM_VOXEL)
@@ -116,7 +116,10 @@ for LR in learning_rates:
                 OUTPUT_DIR
                 + "/"
                 + str(datetime.date.today())
-                + ("%svoxel_#%s_%f_%f.jpg" % (args.roi+"_", voxel_inds[i], LR, LR_GAMMA))
+                + (
+                    "%svoxel_#%s_%f_%f.jpg"
+                    % (args.roi + "_", voxel_inds[i], LR, LR_GAMMA)
+                )
             )
 
             xf = autograd.Variable(

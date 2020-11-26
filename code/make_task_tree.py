@@ -42,14 +42,12 @@ if __name__ == "__main__":
     elif args.exclude_roi:
         roi_tag += "_exclude_%s" % args.exclude_roi
 
-
     matrix_path = "output/task_matrix"
     if args.method == "sig":
         mat = np.load("%s/sig_mask_subj%d.npy" % (matrix_path, args.subj)).astype(int)
     elif args.method == "masked_corr":
         mat = np.load(
-            "output/task_matrix/mask_corr_subj%d_emp_fdr%s.npy"
-            % (args.subj, roi_tag)
+            "output/task_matrix/mask_corr_subj%d_emp_fdr%s.npy" % (args.subj, roi_tag)
         )
         # mat = np.load("output/task_matrix/mask_corr_subj%d_emp_fdr.npy" % args.subj)
 

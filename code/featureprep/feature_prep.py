@@ -10,6 +10,7 @@ import pandas as pd
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
+
 def get_features(subj, stim_list, model):
     """
     :param subj: subject ID
@@ -32,7 +33,9 @@ def get_features(subj, stim_list, model):
         if "taskrepr" in model:
             # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
             task = "_".join(model.split("_")[1:])
-            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
+            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(
+                task
+            )
 
             featmat = []
             print("stimulus length is: " + str(len(stim_list)))
@@ -46,7 +49,9 @@ def get_features(subj, stim_list, model):
                 featmat.append(repr)
             featmat = np.array(featmat)
 
-        if "convnet" in model: # model should be "convnet_vgg16" to load "feat_vgg16.npy"
+        if (
+            "convnet" in model
+        ):  # model should be "convnet_vgg16" to load "feat_vgg16.npy"
             model_id = model.split("_")[1:]
             feat_name = "_".join(model_id)
             print("Loading convnet model %s..." % feat_name)
@@ -54,24 +59,27 @@ def get_features(subj, stim_list, model):
             try:
                 all_feat = np.load("features/feat_%s.npy" % feat_name)
             except FileNotFoundError:
-                all_feat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy" % feat_name) #on clsuter
+                all_feat = np.load(
+                    "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy"
+                    % feat_name
+                )  # on clsuter
 
             stim = pd.read_pickle(
-                "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
+                "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+            )
 
             featmat = []
             for img_id in tqdm(stim_list):
                 try:
                     # extract the nsd ID corresponding to the coco ID in the stimulus list
-                    stim_ind = stim['nsdId'][stim['cocoId'] == img_id]
+                    stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
                     # extract the repective features for that nsd ID
-                    featmat.append(all_feat[stim_ind,:])
+                    featmat.append(all_feat[stim_ind, :])
                 except IndexError:
                     print("COCO Id Not Found: " + str(img_id))
             featmat = np.array(featmat)
 
-
-        if subj == 0: #meaning it is features for all subjects
+        if subj == 0:  # meaning it is features for all subjects
             np.save("features/%s.npy" % (model), featmat)
         else:
             np.save("features/subj%d/%s.npy" % (subj, model), featmat)

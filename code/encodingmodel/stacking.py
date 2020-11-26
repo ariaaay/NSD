@@ -5,6 +5,7 @@ from util.util import *
 
 # Adapted from Ruogu Lin
 
+
 def stack(err_list, yhat, y_test):
     """
     :param err_list: an 2D array of prediction error from each feature spaces mxn (m = # of features, n = # of voxels)
@@ -24,7 +25,9 @@ def stack(err_list, yhat, y_test):
 
     for i in range(n_features):
         for j in range(n_features):
-            P[:, i, j] = err_list[i] * err_list[j]#err is a list of errors for from each individual models
+            P[:, i, j] = (
+                err_list[i] * err_list[j]
+            )  # err is a list of errors for from each individual models
     # import pdb;pdb.set_trace()
 
     # PROGRAMATICALLY SET THIS FROM THE NUMBER OF FEATURES
@@ -40,13 +43,12 @@ def stack(err_list, yhat, y_test):
 
     for i in range(0, n_voxels):
         PP = matrix(P[i])
-        S[i, :] = np.array(solvers.qp(PP, q, G, h, A, b)['x']).reshape(n_features, )
+        S[i, :] = np.array(solvers.qp(PP, q, G, h, A, b)["x"]).reshape(n_features,)
         # combine the predictions from the individual feature spaces for voxel i
         z = np.array([yhat[feature_j, :, i] for feature_j in range(n_features)])
         # if i == 0:
-            # print(z.shape)  # to make sure
+        # print(z.shape)  # to make sure
         # multiply the predictions by S[i,:]
         stacked_yhat[:, i] = np.dot(S[i, :], z)
     stacked_r2s = r2_score(stacked_yhat, y_test, multioutput="raw_values")
     return S, stacked_r2s
-

@@ -56,7 +56,7 @@ class Vgg19(nn.Module):
                     )
                 elif subsample == "pca":
                     if (
-                        self.layer_ind ==Vgg19.conv_layers["conv1"]
+                        self.layer_ind == Vgg19.conv_layers["conv1"]
                     ):  # need to reduce dimension of the first layer by half for PCA
                         results = (
                             nn.functional.avg_pool2d(x.data, (2, 2))

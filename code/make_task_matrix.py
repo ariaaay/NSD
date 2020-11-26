@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from sklearn.cluster import AgglomerativeClustering
 
-from util.model_config import taskrepr_features, task_label, task_label_in_Taskonomy19_matrix_order
+from util.model_config import task_label_NSD_tmp as task_label
+from util.model_config import task_label_in_Taskonomy19_matrix_order
 from visualize_corr_in_pycortex import load_data
 
 
@@ -61,16 +62,18 @@ if __name__ == "__main__":
         action="store_true",
         help="use the overlap of significant voxels",
     )
-    parser.add_argument(
-        "--use_mask_corr",
-        default=False,
-        action="store_true",
-        help="use the masked correlation matrix",
-    )
+    # parser.add_argument(
+    #     "--use_mask_corr",
+    #     default=False,
+    #     action="store_true",
+    #     help="use the masked correlation matrix",
+    # )
 
     parser.add_argument("--subj", default=1, type=int, help="define which subject")
 
     parser.add_argument("--roi", default=None, type=str, help="layer specific ROI mask")
+    parser.add_argument("--roi_num", type=int, default=0)
+
     parser.add_argument(
         "--exclude_roi", default=None, type=str, help="exclude specidic ROI"
     )
@@ -87,7 +90,10 @@ if __name__ == "__main__":
         help="use masked results with permutation p values",
     )
     parser.add_argument(
-        "--fix_order", default=False, action="store_true", help="use the same order as in Taskonomy paper"
+        "--fix_order",
+        default=False,
+        action="store_true",
+        help="use the same order as in Taskonomy paper",
     )
 
     # parser.add_argument("--compute_correlation_across_subject", action="store_true")
@@ -99,19 +105,18 @@ if __name__ == "__main__":
     else:
         p_method = "fdr"
 
-    n_tasks = len(taskrepr_features)  # 21 tasks
+    # n_tasks = len(taskrepr_features)  # 21 tasks
+    n_task = len(task_label.keys())
 
     # mask correlation based on significance
     if args.fix_order:
         task_label = task_label_in_Taskonomy19_matrix_order
     voxel_mat = get_voxels(list(task_label.keys()), subj=args.subj)
-    sig_mat = get_sig_mask(
-        list(task_label.keys()), correction=p_method, alpha=0.05, subj=args.subj
-    )
-    assert voxel_mat.shape == sig_mat.shape
 
     roi_tag = ""
-    cortical_mask = np.load("output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (args.subj, args.subj))
+    cortical_mask = np.load(
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (args.subj, args.subj)
+    )
 
     # load ROI mask if using
     if args.roi is not None:
@@ -119,11 +124,12 @@ if __name__ == "__main__":
             "output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
             % (args.subj, args.subj, args.roi)
         )
-
-        assert voxel_mat.shape == roi_1d_mask.shape
-
-        voxel_mat[roi_1d_mask < 1] = 0
-        roi_tag += "_only_%s" % args.roi
+        # import pdb; pdb.set_trace()
+        assert voxel_mat.shape[1] == len(roi_1d_mask)
+        if args.roi_num != 0:
+            roi_1d_mask[roi_1d_mask != args.roi_num] = 0
+        voxel_mat[:, roi_1d_mask < 1] = 0
+        roi_tag += "_only_%s%d" % (args.roi, args.roi_num)
 
     elif args.exclude_roi is not None:
         roi_excluded_1d_mask = np.load(
@@ -135,7 +141,11 @@ if __name__ == "__main__":
         voxel_mat[:, roi_excluded_1d_mask] = 0
         roi_tag += "_exclude_%s" % args.exclude_roi
 
-    voxel_mat[~sig_mat] = 0
+    # sig_mat = get_sig_mask(
+    #     list(task_label.keys()), correction=p_method, alpha=0.05, subj=args.subj
+    # )
+    # assert voxel_mat.shape == sig_mat.shape
+    # voxel_mat[~sig_mat] = 0
 
     #
     if args.method == "l2":
@@ -151,7 +161,9 @@ if __name__ == "__main__":
         )
 
         np.save(
-            "output/task_matrix/task_matrix_subj%d_%s%s.npy" % (args.subj, args.method, roi_tag), sim,
+            "output/task_matrix/task_matrix_subj%d_%s%s.npy"
+            % (args.subj, args.method, roi_tag),
+            sim,
         )
 
     if args.fix_order:

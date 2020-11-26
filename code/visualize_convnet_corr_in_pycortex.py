@@ -43,12 +43,16 @@ def make_volume(subj, model, task, mask_with_significance=False):
             mask[mask == True] = sig_mask
             vals = vals[sig_mask]
 
-    cortical_mask = np.load("output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj))
+    cortical_mask = np.load(
+        "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+    )
     all_vals = np.zeros(cortical_mask.shape)
     all_vals[cortical_mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
 
-    np.save("output/volumetric_results/subj%d/%s_%s.npy" % (subj, model, task), all_vals)
+    np.save(
+        "output/volumetric_results/subj%d/%s_%s.npy" % (subj, model, task), all_vals
+    )
 
     vol_data = cortex.Volume(
         all_vals,
@@ -56,7 +60,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
         cmap="hot",
-        vmax=np.max(all_vals)
+        vmax=np.max(all_vals),
     )
     return vol_data
 

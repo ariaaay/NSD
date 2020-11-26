@@ -6,9 +6,15 @@ from tqdm import tqdm
 
 from util.model_config import taskrepr_features, convnet_structures
 
+
 def read_and_plot_performances(model, feature, subj, type="corr", model_note=""):
     perf = pickle.load(
-        open("output/encoding_results/subj%d/%s_%s_%s_whole_brain%s.p" % (subj, type, model, feature, model_note), "rb"))
+        open(
+            "output/encoding_results/subj%d/%s_%s_%s_whole_brain%s.p"
+            % (subj, type, model, feature, model_note),
+            "rb",
+        )
+    )
     try:
         out = [item[0] for item in perf]
     except IndexError:
@@ -17,12 +23,26 @@ def read_and_plot_performances(model, feature, subj, type="corr", model_note="")
     plt.figure()
     plt.hist(out, bins=50)
     plt.xlabel(type)
-    plt.title("Histogram of encoding model performances across all cortical voxels (%s, subj %s, %s_%s%s)" % (type, subj, model, feature, model_note))
-    plt.savefig("figures/encoding_results/subj%d/%s_%s_%s_whole_brain%s.png" % (subj, type, model, feature, model_note))
+    plt.title(
+        "Histogram of encoding model performances across all cortical voxels (%s, subj %s, %s_%s%s)"
+        % (type, subj, model, feature, model_note)
+    )
+    plt.savefig(
+        "figures/encoding_results/subj%d/%s_%s_%s_whole_brain%s.png"
+        % (subj, type, model, feature, model_note)
+    )
 
-def read_and_plot_compared_performances(model, feature, subj, type="corr", model_note=""):
+
+def read_and_plot_compared_performances(
+    model, feature, subj, type="corr", model_note=""
+):
     perf = pickle.load(
-        open("output/encoding_results/subj%d/%s_%s_%s_whole_brain.p" % (subj, type, model, feature), "rb"))
+        open(
+            "output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
+            % (subj, type, model, feature),
+            "rb",
+        )
+    )
     try:
         out = [item[0] for item in perf]
     except IndexError:
@@ -32,8 +52,12 @@ def read_and_plot_compared_performances(model, feature, subj, type="corr", model
     plt.hist(out, bins=50, label=10000, alpha=0.5)
 
     perf = pickle.load(
-        open("output/encoding_results/subj%d/%s_%s_%s_whole_brain%s.p" % (subj, type, model, feature, model_note),
-             "rb"))
+        open(
+            "output/encoding_results/subj%d/%s_%s_%s_whole_brain%s.p"
+            % (subj, type, model, feature, model_note),
+            "rb",
+        )
+    )
     try:
         out = [item[0] for item in perf]
     except IndexError:
@@ -42,8 +66,14 @@ def read_and_plot_compared_performances(model, feature, subj, type="corr", model
     plt.xlabel(type)
     plt.legend()
 
-    plt.title("Comparison Histogram across all cortical voxels (%s, subj %s, %s_%s%s)" % (type, subj, model, feature, model_note))
-    plt.savefig("figures/encoding_results/subj%d/Comparison_%s_%s_%s_whole_brain%s.png" % (subj, type, model, feature, model_note))
+    plt.title(
+        "Comparison Histogram across all cortical voxels (%s, subj %s, %s_%s%s)"
+        % (type, subj, model, feature, model_note)
+    )
+    plt.savefig(
+        "figures/encoding_results/subj%d/Comparison_%s_%s_%s_whole_brain%s.png"
+        % (subj, type, model, feature, model_note)
+    )
 
 
 parser = argparse.ArgumentParser()
@@ -70,6 +100,8 @@ args = parser.parse_args()
 
 for structure in convnet_structures:
     try:
-        read_and_plot_compared_performances(args.model, structure, args.subj, args.type, args.model_note)
+        read_and_plot_compared_performances(
+            args.model, structure, args.subj, args.type, args.model_note
+        )
     except FileNotFoundError:
         continue

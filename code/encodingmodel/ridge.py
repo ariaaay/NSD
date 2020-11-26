@@ -111,14 +111,17 @@ class MultiRidge:
 
     def _compute_single_beta(self, l, y_idx):
         Y_j, Ym_j = self.Y[:, y_idx], self.Ym[y_idx]
-        beta = (1 / l) * (self.X_t @ (Y_j - Ym_j) - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (Y_j - Ym_j))
+        beta = (1 / l) * (
+            self.X_t @ (Y_j - Ym_j)
+            - self.Q / (self.e + l) @ self.Q.t() @ self.X_t @ (Y_j - Ym_j)
+        )
         return beta
 
     def get_model_weights_and_bias(self, l_idxs):
         betas = torch.zeros((self.X_t.shape[0], len(l_idxs)))
         for j, l_idx in enumerate(l_idxs):
             l = self.ls[l_idx]
-            betas[:,j] = self._compute_single_beta(l, j)
+            betas[:, j] = self._compute_single_beta(l, j)
         return betas, self.Ym
 
     def get_prediction_scores(self, X_te, Y_te, scoring):
