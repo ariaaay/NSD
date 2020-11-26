@@ -18,6 +18,7 @@ def run(
     whole_brain,
     fix_testing,
     cv,
+    output_dir,
     # model_list,
 ):
     print("Features are {}. Using whole brain data: {}".format(model_name, whole_brain))
@@ -33,6 +34,7 @@ def run(
             fix_testing=fix_testing,
             cv=cv,
             saving=True,
+            output_dir=output_dir,
             # model_list=model_list
         )
     if not notest:
@@ -45,6 +47,7 @@ def run(
             subj=args.subj,
             # split_by_runs=split_by_runs,
             permute_y=args.permute_y,
+            output_dir=output_dir,
         )
 
 
@@ -97,6 +100,9 @@ if __name__ == "__main__":
         default=False,
         help="only generate features but not running the encoding models",
     )
+    parser.add_argument(
+        "--output_dir", type=str, default="output"
+    )
     args = parser.parse_args()
 
     mask_tag = ""
@@ -107,8 +113,8 @@ if __name__ == "__main__":
         mask_tag += "_zscore"
 
     brain_path = (
-        "output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
-        % (args.subj, mask_tag)
+        "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
+        % (args.output_dir, args.subj, mask_tag)
     )
 
     # Load brain data
@@ -118,7 +124,7 @@ if __name__ == "__main__":
     # Load feature spaces
     print("Running ridge on " + args.model)
 
-    stimulus_list = np.load("output/coco_ID_of_repeats_subj%02d.npy" % args.subj)
+    stimulus_list = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj))
 
     feature_mat = get_features(args.subj, stimulus_list, args.model,)
 
@@ -138,4 +144,5 @@ if __name__ == "__main__":
             whole_brain=not args.roi,
             fix_testing=args.fix_testing,
             cv=args.cv,
+            output_dir = output_dir,
         )
