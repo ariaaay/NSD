@@ -1,6 +1,9 @@
 SUBJS="5 \
       7"
+
 for subj in $SUBJS; do
+  python code/extract_cortical_voxel.py --subj $subj --mask_only
+
   python code/extract_cortical_voxel.py --zscore_by_run --subj $subj
 
   # extract ROI mask to apply on cortical data

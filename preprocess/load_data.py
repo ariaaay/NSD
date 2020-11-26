@@ -1,4 +1,5 @@
 import nibabel as nib
+
 # import matplotlib
 # import matplotlib.pyplot as plt
 # matplotlib.use('TkAgg')
@@ -25,6 +26,8 @@ freesurfer_path = "/home/tarrlab/NSD_data/freesurfer"
 
 
 db = cortex.database.default_filestore
+
+
 def initiate_subject(subj):
     if "subj0{}".format(subj) not in cortex.db.subjects:
         print(
@@ -33,8 +36,13 @@ def initiate_subject(subj):
             )
         )
         # initiate subjects
-        cortex.freesurfer.import_subj("subj0" + str(subj), freesurfer_subject_dir=freesurfer_path)
-        cortex.freesurfer.import_flat("subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path)
+        cortex.freesurfer.import_subj(
+            "subj0" + str(subj), freesurfer_subject_dir=freesurfer_path
+        )
+        cortex.freesurfer.import_flat(
+            "subj0" + str(subj), "full", freesurfer_subject_dir=freesurfer_path
+        )
+
 
 def align(subj):
     transform_name = "full"
@@ -49,10 +57,12 @@ def align(subj):
         cortex.align.automatic("subj0" + str(subj), transform_name, slice_path)
         # creates a reference transform matrix for this functional run in filestore/db/<subject>/transforms
 
+
 def main():
     for i in range(8):
-        initiate_subject(i+1)
-        align(i+1)
+        initiate_subject(i + 1)
+        align(i + 1)
         # mask = cortex.utils.get_cortical_mask("subj0{}".format(subj), "full")
+
 
 main()

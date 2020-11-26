@@ -13,7 +13,7 @@ source venv/bin/activate
 FEATURES="res50"
 
 
-sub=1
+sub=2
 
 for feature in $FEATURES; do
   echo "running convnet $feature on subject $sub"
