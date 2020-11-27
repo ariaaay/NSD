@@ -26,7 +26,6 @@ def run(
             fm,
             br,
             model_name=model_name,
-            ROI=not whole_brain,
             subj=args.subj,
             permute_y=args.permute_y,
             output_dir=output_dir,
@@ -38,7 +37,6 @@ def run(
             fm,
             br,
             model_name=model_name,
-            ROI=not whole_brain,
             subj=args.subj,
             fix_testing=fix_testing,
             cv=cv,
@@ -64,9 +62,6 @@ if __name__ == "__main__":
     # )
     parser.add_argument(
         "--test", action="store_true", help="running permutation testing only"
-    )
-    parser.add_argument(
-        "--roi", default=False, action="store_true", help="use roi data for modeling"
     )
     parser.add_argument(
         "--subj", type=int, default=1, help="specify which subject to build model on"
@@ -129,7 +124,6 @@ if __name__ == "__main__":
             br_data,
             model_name=model_name_to_save,
             test=args.test,
-            whole_brain=not args.roi,
             fix_testing=args.fix_testing,
             cv=args.cv,
             output_dir = args.output_dir,
