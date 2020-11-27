@@ -96,8 +96,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    print(args.model)
-
     brain_path = (
         "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
         % (args.output_dir, args.subj)
@@ -108,7 +106,8 @@ if __name__ == "__main__":
     print("Brain response size is: " + str(br_data.shape))
 
     # Load feature spaces
-    print("Running ridge on " + args.model)
+    print("Running ridge on :")
+    print(args.model)
 
     stimulus_list = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj))
 
@@ -120,7 +119,7 @@ if __name__ == "__main__":
             more_feature = get_features(args.subj, stimulus_list, model,)
             feature_mat = np.hstack((feature_mat, more_feature))
 
-            model_name_to_save = args.model[0] + "_" + model
+            model_name_to_save += "_" + model
     
     print("Feature size is: " + str(feature_mat.shape))
 
