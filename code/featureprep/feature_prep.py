@@ -86,6 +86,6 @@ def get_features(subj, stim_list, model):
 
         print("feature shape is " + str(featmat.shape[0]))
 
-    if len(feature_mat.shape) > 2:
-        feature_mat = np.squeeze(feature_mat)
+    if len(featmat.shape) > 2:
+        featmat = np.squeeze(featmat)
     return featmat
