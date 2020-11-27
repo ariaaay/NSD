@@ -14,12 +14,10 @@ def run(
     br,
     model_name,
     test,
-    whole_brain,
     fix_testing,
     cv,
     output_dir,
 ):
-    print("Features are {}. Using whole brain data: {}".format(model_name, whole_brain))
     if test:
         print("Running Permutation Test")
         permutation_test(
