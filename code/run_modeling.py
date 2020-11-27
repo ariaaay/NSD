@@ -14,16 +14,25 @@ def run(
     br,
     model_name,
     test,
-    notest,
     whole_brain,
     fix_testing,
     cv,
     output_dir,
-    # model_list,
 ):
     print("Features are {}. Using whole brain data: {}".format(model_name, whole_brain))
+    if test:
+        print("Running Permutation Test")
+        permutation_test(
+            fm,
+            br,
+            model_name=model_name,
+            ROI=not whole_brain,
+            subj=args.subj,
+            permute_y=args.permute_y,
+            output_dir=output_dir,
+        )
 
-    if not test:
+    else:
         print("Fitting Encoding Models")
         fit_encoding_model(
             fm,
@@ -34,19 +43,6 @@ def run(
             fix_testing=fix_testing,
             cv=cv,
             saving=True,
-            output_dir=output_dir,
-            # model_list=model_list
-        )
-    if not notest:
-        print("Running Permutation Test")
-        permutation_test(
-            fm,
-            br,
-            model_name=model_name,
-            ROI=not whole_brain,
-            subj=args.subj,
-            # split_by_runs=split_by_runs,
-            permute_y=args.permute_y,
             output_dir=output_dir,
         )
 
@@ -59,15 +55,13 @@ if __name__ == "__main__":
         "--model",
         type=str,
         default="convnet",
-        help="input the name of the features."
+        nargs="+",
+        help="input the names of the features."
         "Options are: convnet, scenenet, response,surface_normal_latent, surface_normal_subsample, RT, etc",
     )
     # parser.add_argument(
     #     "--layer", type=str, default="", help="input name of the convolutional layer or task"
     # )
-    parser.add_argument(
-        "--notest", action="store_true", help="run encoding model with permutation test"
-    )
     parser.add_argument(
         "--test", action="store_true", help="running permutation testing only"
     )
@@ -77,9 +71,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--subj", type=int, default=1, help="specify which subject to build model on"
     )
-
-    parser.add_argument("--zscored", action="store_true", help="load zscored data")
-
     parser.add_argument(
         "--fix_testing",
         action="store_true",
@@ -95,7 +86,7 @@ if __name__ == "__main__":
         help="permute test label but not training label",
     )
     parser.add_argument(
-        "--features_only",
+        "--get_features_only",
         action="store_true",
         default=False,
         help="only generate features but not running the encoding models",
@@ -105,16 +96,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    mask_tag = ""
-    if args.roi:
-        mask_tag += "_roi_only"
-
-    if args.zscored:
-        mask_tag += "_zscore"
+    print(args.model)
 
     brain_path = (
-        "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
-        % (args.output_dir, args.subj, mask_tag)
+        "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
+        % (args.output_dir, args.subj)
     )
 
     # Load brain data
@@ -126,23 +112,26 @@ if __name__ == "__main__":
 
     stimulus_list = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj))
 
-    feature_mat = get_features(args.subj, stimulus_list, args.model,)
+    feature_mat = get_features(args.subj, stimulus_list, args.model[0],)
+    model_name_to_save = args.model[0]
 
-    if len(feature_mat.shape) > 2:
-        feature_mat = np.squeeze(feature_mat)
+    if len(args.model) > 1:
+        for model in args.model[1:]:
+            more_feature = get_features(args.subj, stimulus_list, model,)
+            feature_mat = np.hstack((feature_mat, more_feature))
 
+            model_name_to_save = args.model[0] + "_" + model
+    
     print("Feature size is: " + str(feature_mat.shape))
 
-    model_name_to_save = args.model + mask_tag
-    if not args.features_only:
+    if not args.get_features_only:
         run(
             feature_mat,
             br_data,
             model_name=model_name_to_save,
             test=args.test,
-            notest=args.notest,
             whole_brain=not args.roi,
             fix_testing=args.fix_testing,
             cv=args.cv,
-            output_dir = output_dir,
+            output_dir = args.output_dir,
         )
