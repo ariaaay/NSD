@@ -122,9 +122,9 @@ def ev(data, biascorr=True):
 
 def generate_rdm(mat, idx=None, avg=False):
     """
-	Generate rdm based on data selected by the idx
-	idx: lists of index if averaging is not needed; list of list of index if averaging is needed
-	"""
+    Generate rdm based on data selected by the idx
+    idx: lists of index if averaging is not needed; list of list of index if averaging is needed
+    """
     from scipy.spatial.distance import pdist, squareform
 
     if idx is None:

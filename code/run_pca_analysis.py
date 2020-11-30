@@ -58,7 +58,8 @@ def plot_MDS_of_proj(pca, acc_mat, PC_n):
     out_mds = embedding.fit_transform(acc_transform[:, :PC_n])
     plt.figure(figsize=(6, 6))
     plt.scatter(
-        out_mds[:, 0], out_mds[:, 1],
+        out_mds[:, 0],
+        out_mds[:, 1],
     )
     for i, t in enumerate(TOI):
         plt.annotate(t, (out_mds[i, 0], out_mds[i, 1]))

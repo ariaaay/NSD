@@ -84,9 +84,7 @@ if __name__ == "__main__":
         default=False,
         help="only generate features but not running the encoding models",
     )
-    parser.add_argument(
-        "--output_dir", type=str, default="output"
-    )
+    parser.add_argument("--output_dir", type=str, default="output")
     args = parser.parse_args()
 
     brain_path = (
@@ -102,18 +100,28 @@ if __name__ == "__main__":
     print("Running ridge on :")
     print(args.model)
 
-    stimulus_list = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj))
+    stimulus_list = np.load(
+        "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj)
+    )
 
-    feature_mat = get_features(args.subj, stimulus_list, args.model[0],)
+    feature_mat = get_features(
+        args.subj,
+        stimulus_list,
+        args.model[0],
+    )
     model_name_to_save = args.model[0]
 
     if len(args.model) > 1:
         for model in args.model[1:]:
-            more_feature = get_features(args.subj, stimulus_list, model,)
+            more_feature = get_features(
+                args.subj,
+                stimulus_list,
+                model,
+            )
             feature_mat = np.hstack((feature_mat, more_feature))
 
             model_name_to_save += "_" + model
-    
+
     print("Feature size is: " + str(feature_mat.shape))
 
     if not args.get_features_only:
@@ -124,5 +132,5 @@ if __name__ == "__main__":
             test=args.test,
             fix_testing=args.fix_testing,
             cv=args.cv,
-            output_dir = args.output_dir,
+            output_dir=args.output_dir,
         )

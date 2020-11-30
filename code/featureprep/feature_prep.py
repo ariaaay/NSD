@@ -33,8 +33,8 @@ def get_features(subj, stim_list, model):
         if "taskrepr" in model:
             # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
             task = "_".join(model.split("_")[1:])
-            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(
-                task
+            repr_dir = (
+                "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(task)
             )
 
             featmat = []

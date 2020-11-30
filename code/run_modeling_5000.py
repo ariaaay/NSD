@@ -124,7 +124,11 @@ if __name__ == "__main__":
 
     stimulus_list = stimulus_with_repeat[:, 0]  # All subjects should have same orders
 
-    feature_mat = get_features(args.subj, stimulus_list, args.model,)
+    feature_mat = get_features(
+        args.subj,
+        stimulus_list,
+        args.model,
+    )
 
     if len(feature_mat.shape) > 2:
         feature_mat = np.squeeze(feature_mat)

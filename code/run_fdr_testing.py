@@ -45,7 +45,11 @@ for task in TOI:
     threshold_dict[task] = task_threshold
 
     sig_mask = corrs > task_threshold
-    np.save("output/voxels_masks/subj%d/taskrepr_%s_negtail_fdr_%0.2f.npy" % (args.subj, task, args.alpha), sig_mask)
+    np.save(
+        "output/voxels_masks/subj%d/taskrepr_%s_negtail_fdr_%0.2f.npy"
+        % (args.subj, task, args.alpha),
+        sig_mask,
+    )
 
     # Compute a significance mask using superset of mask from all tasks
     if superset_mask is None:
@@ -54,7 +58,11 @@ for task in TOI:
         superset_mask += sig_mask.astype(int)
 
 superset_mask = superset_mask > 0
-np.save("output/voxels_masks/subj%d/taskrepr_superset_mask_negtail_fdr_%0.2f.npy" % (args.subj, args.alpha), superset_mask)
+np.save(
+    "output/voxels_masks/subj%d/taskrepr_superset_mask_negtail_fdr_%0.2f.npy"
+    % (args.subj, args.alpha),
+    superset_mask,
+)
 
 output_path = os.path.join(args.dir, "subj" + str(args.subj), "fdr_threshold.json")
 with open(output_path, "w") as f:
