@@ -36,6 +36,6 @@ SUBJS="1 \
 for subj in $SUBJS; do
   for task in $TASKS; do
     echo "running taskonomy $task task on subject $subj"
-    python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing --notest
+    python code/run_modeling.py --model taskrepr_$task --subj $subj --fix_testing
   done
 done
