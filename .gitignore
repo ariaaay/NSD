@@ -2,6 +2,7 @@
 ###########
 data/
 features/
+output/
 output/encoding_results/
 output/optim*
 output/baseline
