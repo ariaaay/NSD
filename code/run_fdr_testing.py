@@ -26,9 +26,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", type=int, default=1, help="specify subjects")
     parser.add_argument("--dir", type=str, default="output/encoding_results")
+    parser.add_argument("--alpha", type=float, default=0.05)
 
     args = parser.parse_args()
     threshold_dict = dict()
+
+    superset_mask = None
 
 for task in TOI:
     output = pickle.load(
@@ -38,7 +41,20 @@ for task in TOI:
         )
     )
     corrs = np.array(output)[:, 0]
-    threshold_dict[task] = negative_tail_fdr_threshold(corrs, 0, alpha=0.01, axis=0)
+    task_threshold = negative_tail_fdr_threshold(corrs, 0, alpha=args.alpha, axis=0)
+    threshold_dict[task] = task_threshold
+
+    sig_mask = corrs > task_threshold
+    np.save("output/voxels_masks/subj%d/taskrepr_%s_negtail_fdr_%0.2f.npy" % (args.subj, task, args.alpha), sig_mask)
+
+    # Compute a significance mask using superset of mask from all tasks
+    if superset_mask is None:
+        superset_mask = sig_mask.astype(int)
+    else:
+        superset_mask += sig_mask.astype(int)
+
+superset_mask = superset_mask > 0
+np.save("output/voxels_masks/subj%d/taskrepr_superset_mask_negtail_fdr_%0.2f.npy" % (args.subj, args.alpha), superset_mask)
 
 output_path = os.path.join(args.dir, "subj" + str(args.subj), "fdr_threshold.json")
 with open(output_path, "w") as f:

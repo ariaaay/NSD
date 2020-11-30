@@ -86,10 +86,14 @@ if __name__ == "__main__":
         acc_mat.append(corrs)
 
     acc_mat = np.array(acc_mat)
+    np.save("output/pca/subj%d/accuracy_mat.npy" % args.subj, acc_mat)
+
     assert acc_mat.shape[0] == len(TOI)
     pca = PCA(n_components=9)
     pca.fit(acc_mat)
     np.save("output/pca/subj%d/pca_components.npy" % args.subj, pca.components_)
+    with open("output/pca/subj%d/pca.pkl" % args.subj) as pickle_file:
+        pickle.dump(pca, pickle_file)
 
     plot_pc_variance(pca)
     plot_pca_proj(pca, acc_mat)

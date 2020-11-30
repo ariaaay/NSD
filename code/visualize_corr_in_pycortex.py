@@ -22,6 +22,13 @@ def load_data(model, task, subj=1, measure="corr"):
     return out
 
 
+def project_vals_to_3d(vals, mask):
+    all_vals = np.zeros(mask.shape)
+    all_vals[mask] = vals
+    all_vals = np.swapaxes(all_vals, 0, 2)
+    return all_vals
+
+
 def make_volume(subj, model, task, mask_with_significance=False):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
@@ -37,10 +44,11 @@ def make_volume(subj, model, task, mask_with_significance=False):
         cortical_mask = np.load(
             "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
         )
+    if mask_with_significance:
+        sig_mask = np.load("output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy" % (subj, model, task, "negtail_fdr", 0.05))
+        vals[~sig_mask] = 0
     # projecting value back to 3D space
-    all_vals = np.zeros(cortical_mask.shape)
-    all_vals[cortical_mask] = vals
-    all_vals = np.swapaxes(all_vals, 0, 2)
+    all_vals = project_vals_to_3d(vals, cortical_mask)
 
     vol_data = cortex.Volume(
         all_vals,
@@ -54,7 +62,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
     return vol_data
 
 
-def make_pc_volume(subj, vals):
+def make_pc_volume(subj, vals, mask_with_significance=False):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
@@ -67,21 +75,62 @@ def make_pc_volume(subj, vals):
         cortical_mask = np.load(
             "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
         )
+
+    if mask_with_significance:
+        sig_mask = np.load("output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy" % (subj, "negtail_fdr", 0.05))
+        vals[~sig_mask] = -999
     # projecting value back to 3D space
-    all_vals = np.zeros(cortical_mask.shape)
-    all_vals[cortical_mask] = vals
-    all_vals = np.swapaxes(all_vals, 0, 2)
+    all_vals = project_vals_to_3d(vals, cortical_mask)
 
     vol_data = cortex.Volume(
         all_vals,
         "subj%02d" % subj,
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
-        cmap="hot",
-        vmin=0,
-        vmax=0.5,
+        cmap="RdPu",
+        vmin=-3,
+        vmax=3,
     )
     return vol_data
+
+
+def make_3pc_volume(subj, PCs, mask_with_significance=False):
+    mask = cortex.utils.get_cortical_mask(
+        "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
+    )
+
+    try:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
+    except FileNotFoundError:
+        cortical_mask = np.load(
+            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+        )
+
+
+    pc_3d = []
+    for i in range(3):
+        tmp = PCs[i,:] / np.max(PCs_zscore[i,:]) * 255
+        if mask_with_significance:
+            sig_mask = np.load("output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy" % (subj, "negtail_fdr", 0.05))
+            tmp[~sig_mask] = 0
+        # projecting value back to 3D space
+        pc_3d.append(project_vals_to_3d(tmp, cortical_mask))
+
+        
+    red = cortex.Volume(pc_3d[0].astype(np.uint8), "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr", mask=mask)
+    green = cortex.Volume(pc_3d[1].astype(np.uint8), "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr", mask=mask)
+    blue = cortex.Volume(pc_3d[2].astype(np.uint8), "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr", mask=mask)
+
+    vol_data = cortex.VolumeRGB(red, green, blue, "subj%02d" % subj,
+                                                    channel1color=(194, 30, 86),
+                                                    channel2color=(50,205,50),
+                                                    channel3color=(30, 144, 255))
+    
+    
+    return vol_data
+    
 
 
 if __name__ == "__main__":
@@ -93,8 +142,12 @@ if __name__ == "__main__":
         "--subj", type=int, default=1, help="specify which subject to build model on"
     )
     parser.add_argument("--mask_sig", default=False, action="store_true")
+    parser.add_argument("--sig_method", default="negtail_fdr")
+    parser.add_argument("--alpha", default=0.05)
     parser.add_argument("--show_pcs", default=False, action="store_true")
+    
     args = parser.parse_args()
+    
 
     vroi = nib.load("output/voxels_masks/subj%d/prf-visualrois.nii.gz" % args.subj)
     vroi_data = vroi.get_fdata()
@@ -276,10 +329,16 @@ if __name__ == "__main__":
         pc_vols = []
         PCs = np.load("output/pca/subj%d/pca_components.npy" % args.subj)
         # Normalize the PCs
-        norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
+
+        from util.util import zscore
+        PCs_zscore = zscore(PCs, axis=1)
+
+        # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
         for i in range(PCs.shape[0]):
             key = "PC" + str(i)
-            volumes[key] = make_pc_volume(args.subj, norm_PCs[i, :])
+            volumes[key] = make_pc_volume(args.subj, PCs_zscore[i, :], mask_with_significance=args.mask_sig)
+        
+        volumes["3PC"] = make_3pc_volume(args.subj, PCs_zscore, mask_with_significance=args.mask_sig)
 
     cortex.webgl.show(data=volumes, autoclose=False)
 
