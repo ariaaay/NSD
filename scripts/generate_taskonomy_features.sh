@@ -36,7 +36,7 @@ for imgfile in $STIMULI_DIR/*; do
   id="$(cut -d'/' -f7 <<<"$tmp")"
   printf -v old_name "COCO_train2014_%012d_layer0.npy" $id
 
-  if [ ! -e $target_DIR/${file_name}_layer0.npy] && [ ! -e $target_DIR/$old_name ]; then
+  if [ ! -e $target_DIR/${file_name}_layer0.npy ] && [ ! -e $target_DIR/$old_name ]; then
 		python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-early-rep
 	fi
 
