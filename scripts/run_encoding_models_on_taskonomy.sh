@@ -10,8 +10,8 @@
 
 set -eu
 source venv/bin/activate
-module load cuda-10.1
-module load cudnn-10.1-v7.6.5.32
+module load cuda-11.1.1
+module load cudnn-11.1.1-v8.0.4.30
 
 subj=$1
 task=$2
