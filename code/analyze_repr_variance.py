@@ -60,6 +60,7 @@ if __name__ == "__main__":
         tasks = ["taskrepr_" + t for t in args.task_list]
         var_dict = dict()
         for t in tasks:
+            print("loading " + t)
             fm = load_common_feature_matrix(t)
             var_dict[t] = measure_variance(fm)
         print(var_dict)
