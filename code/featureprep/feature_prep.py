@@ -1,14 +1,7 @@
 "This scripts load feature spaces and prepares it for encoding model"
 import numpy as np
 from tqdm import tqdm
-import torch
 import pandas as pd
-
-# from util.util import *
-# from featureprep.conv_autoencoder import Autoencoder, preprocess
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
 
 
 def get_preloaded_features(subj, stim_list, model):
@@ -39,7 +32,7 @@ def get_preloaded_features(subj, stim_list, model):
     return featmat
 
 
-def extact_feature_by_imgs(stim_list, model):
+def extract_feature_by_imgs(stim_list, model):
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
         task = "_".join(model.split("_")[1:])
