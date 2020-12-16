@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from featureprep.feature_prep import extact_feature_by_imgs
+from featureprep.feature_prep import extract_feature_by_imgs
 
 
 def load_common_feature_matrix(task):
