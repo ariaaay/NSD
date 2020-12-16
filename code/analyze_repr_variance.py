@@ -38,7 +38,7 @@ if __name__ == "__main__":
             "class_places",
             "class_1000",
             "autoencoder",
-            "vaningshing_point",
+            "vanishing_point",
             "colorization",
             "rgb2sfnorm",
         ],
