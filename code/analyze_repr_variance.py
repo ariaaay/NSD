@@ -51,6 +51,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # coco ID - common 1000
+    fm = load_common_feature_matrix(args.task)
+    print(measure_variance(fm))
 
     if args.task_list is not None:
         tasks = ["taskrepr_" + t for t in args.task_list]
@@ -59,7 +61,5 @@ if __name__ == "__main__":
             fm = load_common_feature_matrix(t)
             var_dict[t] = measure_variance(fm)
         print(var_dict)
+
         
-    if args.task is not None:
-        fm = load_common_feature_matrix(args.task)
-        print(measure_variance(fm))
