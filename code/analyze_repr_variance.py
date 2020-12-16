@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # coco ID - common 10000
     stimulus_list = np.load("output/trials_subj01.npy")[:,0]
     feature_mat = extact_feature_by_imgs(stimulus_list, args.task)
-    np.save("%s/taskrepr_%s_common_features.npy" % (args.output_path, task), feature_mat)
+    np.save("%s/taskrepr_%s_common_features.npy" % (args.output_path, args.task), feature_mat)
     
     cov = np.cov(feature_mat)
     eigv = np.linalg.eigvals(cov)
