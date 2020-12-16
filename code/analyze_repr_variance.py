@@ -14,7 +14,7 @@ def load_common_feature_matrix(task):
         )
         stimulus_list = stim["cocoId"][stim["shared1000"]]
         assert len(stimulus_list) == 1000
-        feature_mat = extact_feature_by_imgs(stimulus_list, task)
+        feature_mat = extract_feature_by_imgs(stimulus_list, task)
         np.save("%s/%s_common_features.npy" % (args.output_path, task), feature_mat)
     return feature_mat
 
