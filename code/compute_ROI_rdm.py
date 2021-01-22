@@ -21,17 +21,19 @@ if __name__ == "__main__":
 
     place = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_floc-places.npy" % (args.output_dir, args.subj, args.subj))
     for i in place_roi_names.keys():
-        if int(i) > 0:
-            roi_response = br_data[:, place == int(i)]
+        if i > 0:
+            print(i)
+            roi_response = br_data[:, place == i]
             rdm = np.corrcoef(roi_response)
-            np.save("%s/rdms/subj%02d_places_%01d.npy" % (args.output_dir, args.subj, i), rdm)
+            np.save("%s/rdms/subj%02d_places_%s.npy" % (args.output_dir, args.subj, place_roi_names[i]), rdm)
 
     face = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_floc-faces.npy" % (args.output_dir, args.subj, args.subj))
     for i in face_roi_names.keys():
-        if int(i) > 0:
-            roi_response = br_data[:, face == int(i)]
+        if i > 0:
+            print(i)
+            roi_response = br_data[:, face == i]
             rdm = np.corrcoef(roi_response)
-            np.save("%s/rdms/subj%02d_faces_%01d.npy" % (args.output_dir, args.subj, i), rdm)
+            np.save("%s/rdms/subj%02d_faces_%s.npy" % (args.output_dir, args.subj, face_roi_names[i]), rdm)
 
 
     # stimulus_list = np.load(
