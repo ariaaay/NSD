@@ -35,7 +35,7 @@ if __name__ == "__main__":
         if i > 0:
             roi_response = br_data[:, face == i]
             face_rdm.append(pearson_corr(roi_response, roi_response))
-    np.save("%s/rdms/subj%02d_faces.npy", np.array(face_rdm))
+    np.save("%s/rdms/subj%02d_faces.npy" % (args.output_dir, args.subj), np.array(face_rdm))
 
 
     # stimulus_list = np.load(
