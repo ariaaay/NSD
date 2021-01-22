@@ -25,7 +25,7 @@ if __name__ == "__main__":
     for i in place_roi_names.keys():
         if i > 0:
             roi_response = br_data[:, place == i]
-            place_rdm.append(pearson_corr(roi_response, roi_response))
+            place_rdm.append(np.corrcoef(roi_response))
     
     np.save("%s/rdms/subj%02d_places.npy" % (args.output_dir, args.subj), np.array(place_rdm))
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     for i in face_roi_names.keys():
         if i > 0:
             roi_response = br_data[:, face == i]
-            face_rdm.append(pearson_corr(roi_response, roi_response))
+            face_rdm.append(np.corrcoef(roi_response))
     np.save("%s/rdms/subj%02d_faces.npy" % (args.output_dir, args.subj), np.array(face_rdm))
 
 
