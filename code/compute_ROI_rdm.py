@@ -27,7 +27,7 @@ if __name__ == "__main__":
             roi_response = br_data[:, place == i]
             place_rdm.append(pearson_corr(roi_response, roi_response))
     
-    np.save("%s/rdms/subj%02d_places.npy", np.array(place_rdm))
+    np.save("%s/rdms/subj%02d_places.npy" % (args.output_dir, args.subj), np.array(place_rdm))
 
     face = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_floc-faces.npy" % (args.output_dir, args.subj, args.subj))
     face_rdm = list()
