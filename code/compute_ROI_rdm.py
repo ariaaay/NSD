@@ -1,8 +1,17 @@
 import argparse
 import numpy as np
 
-from util.model_config import place_roi_names, face_roi_names
-from util.util import pearson_corr
+from util.model_config import *
+
+def add_roi_to_voxel_selected(roi_list, voxel_mask):
+    for roi_name in roi_list:
+        roi_mask = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy" % (args.output_dir, args.subj, args.subj, roi_name))
+        for i in roi_name_dict[roi_name].keys():
+            if i > 0:
+                voxel_mask[roi_mask == i] += 1
+    
+    return voxel_mask
+        
 
 if __name__ == "__main__":
 
@@ -17,25 +26,15 @@ if __name__ == "__main__":
             % (args.output_dir, args.subj)
         )
 
+    roi_list = ["floc-words", "floc-face", "floc-places", "prf-visualrois"]
+
     br_data = np.load(brain_path)
+    voxel_selected = np.zeros(br_data.shape, dtype=bool)
+    voxel_selected = add_roi_to_voxel_selected(roi_list, voxel_selected)
 
-    place = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_floc-places.npy" % (args.output_dir, args.subj, args.subj))
-    for i in place_roi_names.keys():
-        if i > 0:
-            print(i)
-            roi_response = br_data[:, place == i]
-            rdm = np.corrcoef(roi_response)
-            np.save("%s/rdms/subj%02d_places_%s.npy" % (args.output_dir, args.subj, place_roi_names[i]), rdm)
+    selected_brain_data = br_data[:, voxel_selected]
+    rdm = np.corrcoef(selected_brain_data)
 
-    face = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_floc-faces.npy" % (args.output_dir, args.subj, args.subj))
-    for i in face_roi_names.keys():
-        if i > 0:
-            print(i)
-            roi_response = br_data[:, face == i]
-            rdm = np.corrcoef(roi_response)
-            np.save("%s/rdms/subj%02d_faces_%s.npy" % (args.output_dir, args.subj, face_roi_names[i]), rdm)
-
-
-    # stimulus_list = np.load(
-    #         "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj)
-    #     )
+    np.save("%s/rdm/subj%02d_%s.npy" % (args.output_dir, args.subj, "_".join(roi_list)), rdm)
+    
+            

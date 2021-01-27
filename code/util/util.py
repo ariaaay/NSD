@@ -54,7 +54,6 @@ def pool_size(fm, dim):
     :param adaptive:
     :return:
     """
-    import torch
 
     k = 1
     tot = torch.numel(torch.Tensor(fm.view(-1).shape))

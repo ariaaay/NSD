@@ -153,3 +153,11 @@ word_roi_names = {
     3: "VWFA-2",
     4: "mfs-words",
 }
+
+roi_name_dict = {
+    "floc-words": word_roi_names,
+    "floc-face": face_roi_names,
+    "floc-places": place_roi_names,
+    "prf-visualrois": visual_roi_names,
+    "prf-eccrois": ecc_roi_names
+}
