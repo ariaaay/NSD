@@ -8,7 +8,7 @@ def add_roi_to_voxel_selected(roi_list, voxel_mask):
         roi_mask = np.load("%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy" % (args.output_dir, args.subj, args.subj, roi_name))
         for i in roi_name_dict[roi_name].keys():
             if i > 0:
-                voxel_mask[roi_mask == i] += 1
+                voxel_mask[roi_mask == i] = voxel_mask[roi_mask == i] + 1
     
     return voxel_mask
         
