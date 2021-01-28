@@ -35,6 +35,6 @@ if __name__ == "__main__":
     selected_brain_data = br_data[:, voxel_selected]
     rdm = np.corrcoef(selected_brain_data)
 
-    np.save("%s/rdm/subj%02d_%s.npy" % (args.output_dir, args.subj, "_".join(roi_list)), rdm)
+    np.save("%s/rdms/subj%02d_%s.npy" % (args.output_dir, args.subj, "_".join(roi_list)), rdm)
     
             
