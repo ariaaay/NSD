@@ -156,7 +156,7 @@ word_roi_names = {
 
 roi_name_dict = {
     "floc-words": word_roi_names,
-    "floc-face": face_roi_names,
+    "floc-faces": face_roi_names,
     "floc-places": place_roi_names,
     "prf-visualrois": visual_roi_names,
     "prf-eccrois": ecc_roi_names
