@@ -29,7 +29,7 @@ if __name__ == "__main__":
     roi_list = ["floc-words", "floc-face", "floc-places", "prf-visualrois"]
 
     br_data = np.load(brain_path)
-    voxel_selected = np.zeros(br_data.shape, dtype=bool)
+    voxel_selected = np.zeros(br_data.shape[1], dtype=bool)
     voxel_selected = add_roi_to_voxel_selected(roi_list, voxel_selected)
 
     selected_brain_data = br_data[:, voxel_selected]
