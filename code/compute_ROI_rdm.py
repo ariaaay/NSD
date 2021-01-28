@@ -26,7 +26,7 @@ if __name__ == "__main__":
             % (args.output_dir, args.subj)
         )
 
-    roi_list = ["floc-words", "floc-face", "floc-places", "prf-visualrois"]
+    roi_list = ["floc-words", "floc-faces", "floc-places", "prf-visualrois"]
 
     br_data = np.load(brain_path)
     voxel_selected = np.zeros(br_data.shape[1], dtype=bool)
