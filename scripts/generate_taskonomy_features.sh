@@ -20,26 +20,34 @@ OUT_DIR="/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli_layers/"
 
 #n=0
 task=$1
+target_DIR=${OUT_DIR}${task}
+if ! [ -e $target_DIR ]; then
+	mkdir $target_DIR
+fi
 
-#for imgfile in $(ls -1 $STIMULI_DIR/* | sort -r); do
-for imgfile in $STIMULI_DIR/*; do
-	store_name=$(basename $imgfile)
-	file_name="${store_name%.*}"
-	target_DIR=${OUT_DIR}${task}
-
-	if ! [ -e $target_DIR ]; then
-		mkdir $target_DIR
-	fi
-
-  echo "processing $file_name for task $task"
-  tmp="$(cut -d'.' -f1 <<<"$imgfile")"
-  id="$(cut -d'/' -f7 <<<"$tmp")"
-  printf -v old_name "COCO_train2014_%012d_input_layer0.npy" $id
-
-  if [ ! -e $target_DIR/${file_name}_input_layer0.npy ] && [ ! -e $target_DIR/$old_name ]; then
+while read p; do
+	echo "$p"
+	file_name=$p
+	store_name="$p.jpg"
+	img_file="$STIMULI_DIR/$store_name"
+	if [ ! -e $target_DIR/${file_name}_input_layer0.npy ]; then
 		python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-all-rep
 	fi
+done <coco_ID_of_repeats_subj01.txt
 
-done
 
-#echo $n
+# #for imgfile in $(ls -1 $STIMULI_DIR/* | sort -r); do
+# for imgfile in $STIMULI_DIR/*; do
+# 	store_name=$(basename $imgfile)
+# 	file_name="${store_name%.*}"
+
+# 	echo "processing $file_name for task $task"
+# 	tmp="$(cut -d'.' -f1 <<<"$imgfile")"
+# 	id="$(cut -d'/' -f7 <<<"$tmp")"
+# 	printf -v old_name "COCO_train2014_%012d_input_layer0.npy" $id
+
+# 	if [ ! -e $target_DIR/${file_name}_input_layer0.npy ] && [ ! -e $target_DIR/$old_name ]; then
+# 		python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-all-rep
+# 	fi
+
+# done
