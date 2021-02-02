@@ -25,7 +25,7 @@ if ! [ -e $target_DIR ]; then
 	mkdir $target_DIR
 fi
 
-i=0
+i=1
 while read p; do
 	echo "$p $i/10000"
 	file_name=$p
