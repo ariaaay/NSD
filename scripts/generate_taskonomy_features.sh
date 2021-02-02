@@ -33,7 +33,7 @@ while read p; do
 	if [ ! -e $target_DIR/${file_name}_input_layer0.npy ]; then
 		python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-all-rep
 	fi
-done <coco_ID_of_repeats_subj01.txt
+done </user_data/yuanw3/project_outputs/NSD/output/coco_ID_of_repeats_subj01.txt
 
 
 # #for imgfile in $(ls -1 $STIMULI_DIR/* | sort -r); do
