@@ -4,7 +4,13 @@ from tqdm import tqdm
 import pandas as pd
 
 
-def get_preloaded_features(subj, stim_list, model, layer=None, features_dir="/user_data/yuanw3/project_outputs/NSD/features"):
+def get_preloaded_features(
+    subj,
+    stim_list,
+    model,
+    layer=None,
+    features_dir="/user_data/yuanw3/project_outputs/NSD/features",
+):
     """
     :param subj: subject ID
     :param stim_list: a list of COCO IDs for the stimuli images
@@ -33,13 +39,21 @@ def get_preloaded_features(subj, stim_list, model, layer=None, features_dir="/us
         if subj == 0:  # meaning it is features for all subjects
             np.save("%s/%s%s.npy" % (features_dir, model, layer_modifier), featmat)
         else:
-            np.save("%s/subj%d/%s%s.npy" % (features_dir, subj, model, layer_modifier), featmat)
+            np.save(
+                "%s/subj%d/%s%s.npy" % (features_dir, subj, model, layer_modifier),
+                featmat,
+            )
 
     print("feature shape is " + str(featmat.shape[0]))
     return featmat
 
 
-def extract_feature_by_imgs(stim_list, model, layer=None, features_dir="/user_data/yuanw3/project_outputs/NSD/features"):
+def extract_feature_by_imgs(
+    stim_list,
+    model,
+    layer=None,
+    features_dir="/user_data/yuanw3/project_outputs/NSD/features",
+):
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
         task = "_".join(model.split("_")[1:])
@@ -72,10 +86,10 @@ def extract_feature_by_imgs(stim_list, model, layer=None, features_dir="/user_da
 
         if featmat.shape[1] > 6000:
             from sklearn.decomposition import PCA
-            pca = PCA(n_components=500)  # TODO:test this dimension later
+
+            pca = PCA(n_components=1000)  # TODO:test this dimension later 500d --> 44%
             featmat = pca.fit_transform(featmat.astype(np.float16))
             print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
-            
 
     elif "convnet" in model:
         # model should be named "convnet_vgg16" to load "feat_vgg16.npy"

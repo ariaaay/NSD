@@ -13,7 +13,13 @@ from featureprep.feature_prep import (
 
 
 def run(
-    fm, br, model_name, test, fix_testing, cv, output_dir,
+    fm,
+    br,
+    model_name,
+    test,
+    fix_testing,
+    cv,
+    output_dir,
 ):
     if test:
         print("Running Permutation Test")
@@ -145,13 +151,17 @@ if __name__ == "__main__":
 
         if len(args.model) > 1:
             for model in args.model[1:]:
-                more_feature = get_preloaded_features(args.subj, stimulus_list, model,)
+                more_feature = get_preloaded_features(
+                    args.subj,
+                    stimulus_list,
+                    model,
+                )
                 feature_mat = np.hstack((feature_mat, more_feature))
 
                 model_name_to_save += "_" + model
 
     print("Running ridge on :")
-    print(model_name)
+    print(model_name_to_save)
 
     print("Feature size is: " + str(feature_mat.shape))
 
