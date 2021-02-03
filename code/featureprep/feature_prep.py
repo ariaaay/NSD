@@ -14,7 +14,7 @@ def get_preloaded_features(subj, stim_list, model, layer=None):
     """
     subj = int(subj)
     if layer is not "":
-        layer_modifier =  "_" + layer
+        layer_modifier = "_" + layer
     else:
         layer_modifier = ""
 
@@ -24,7 +24,9 @@ def get_preloaded_features(subj, stim_list, model, layer=None):
         if subj == 0:
             featmat = np.load("features/%s%s.npy" % (model, layer_modifier))
         else:
-            featmat = np.load("features/subj%d/%s%s.npy" % (subj, model, layer_modifier))
+            featmat = np.load(
+                "features/subj%d/%s%s.npy" % (subj, model, layer_modifier)
+            )
 
     except FileNotFoundError:
         featmat = extract_feature_by_imgs(stim_list, model, layer=layer)
@@ -43,9 +45,14 @@ def extract_feature_by_imgs(stim_list, model, layer=None):
         task = "_".join(model.split("_")[1:])
 
         if layer is None:
-            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/%s" % task
+            repr_dir = (
+                "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/%s" % task
+            )
         else:
-            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli_layers/%s" % task
+            repr_dir = (
+                "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli_layers/%s"
+                % task
+            )
 
         featmat = []
         print("stimulus length is: " + str(len(stim_list)))
@@ -65,7 +72,8 @@ def extract_feature_by_imgs(stim_list, model, layer=None):
 
         if featmat.shape[1] > 6000:
             from sklearn.decomposition import PCA
-            pca = PCA(n_components=500) # TODO:test this dimension later
+
+            pca = PCA(n_components=500)  # TODO:test this dimension later
             print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
             featmat = pca.fit_transform(featmat.astype(np.float16))
 

@@ -52,7 +52,10 @@ if __name__ == "__main__":
         help="input the names of the features.",
     )
     parser.add_argument(
-        "--layer", type=str, default=None, help="input name of the layer. e.g. input_layer1"
+        "--layer",
+        type=str,
+        default=None,
+        help="input name of the layer. e.g. input_layer1",
     )
     parser.add_argument(
         "--test", action="store_true", help="Run permutation testing only"
@@ -131,13 +134,15 @@ if __name__ == "__main__":
             stimulus_list, feature_mat_unordered, image_order
         )
     else:
-        if args.layers is not None:
+        if args.layer is not None:
             model_name_to_save = args.model[0] + "_" + args.layer
         else:
             model_name_to_save = args.model[0]
-        
-        feature_mat = get_preloaded_features(args.subj, stimulus_list, args.model[0], layer=args.layer)
-        
+
+        feature_mat = get_preloaded_features(
+            args.subj, stimulus_list, args.model[0], layer=args.layer
+        )
+
         if len(args.model) > 1:
             for model in args.model[1:]:
                 more_feature = get_preloaded_features(args.subj, stimulus_list, model,)
