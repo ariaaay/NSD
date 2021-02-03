@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 
 
-def get_preloaded_features(subj, stim_list, model, layer=None):
+def get_preloaded_features(subj, stim_list, model, layer=None, features_dir="/user_data/yuanw3/project_outputs/NSD/features"):
     """
     :param subj: subject ID
     :param stim_list: a list of COCO IDs for the stimuli images
@@ -22,24 +22,24 @@ def get_preloaded_features(subj, stim_list, model, layer=None):
 
     try:
         if subj == 0:
-            featmat = np.load("features/%s%s.npy" % (model, layer_modifier))
+            featmat = np.load("%s/%s%s.npy" % (features_dir, model, layer_modifier))
         else:
             featmat = np.load(
-                "features/subj%d/%s%s.npy" % (subj, model, layer_modifier)
+                "%s/subj%d/%s%s.npy" % (features_dir, subj, model, layer_modifier)
             )
 
     except FileNotFoundError:
         featmat = extract_feature_by_imgs(stim_list, model, layer=layer)
         if subj == 0:  # meaning it is features for all subjects
-            np.save("features/%s%s.npy" % (model, layer_modifier), featmat)
+            np.save("%s/%s%s.npy" % (features_dir, model, layer_modifier), featmat)
         else:
-            np.save("features/subj%d/%s%s.npy" % (subj, model, layer_modifier), featmat)
+            np.save("%s/subj%d/%s%s.npy" % (features_dir, subj, model, layer_modifier), featmat)
 
     print("feature shape is " + str(featmat.shape[0]))
     return featmat
 
 
-def extract_feature_by_imgs(stim_list, model, layer=None):
+def extract_feature_by_imgs(stim_list, model, layer=None, features_dir="/user_data/yuanw3/project_outputs/NSD/features"):
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
         task = "_".join(model.split("_")[1:])
@@ -84,7 +84,7 @@ def extract_feature_by_imgs(stim_list, model, layer=None):
         print("Loading convnet model %s..." % feat_name)
         # this extracted feature is order based on nsd ID (order in the stimulus info file)
         try:
-            all_feat = np.load("features/feat_%s.npy" % feat_name)
+            all_feat = np.load("%s/feat_%s.npy" % (features_dir, feat_name))
         except FileNotFoundError:
             all_feat = np.load(
                 "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy" % feat_name
