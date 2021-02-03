@@ -123,7 +123,7 @@ if __name__ == "__main__":
     )
 
     # Load feature spaces
-    if args.feature_mat_path is not None:  # for general design matrix input
+    if args.feature_matrix is not None:  # for general design matrix input
         feature_mat_unordered = np.load(args.feature_matrix)
         image_order = np.laod(args.image_order)
         model_name_to_save = args.model_name_to_save
