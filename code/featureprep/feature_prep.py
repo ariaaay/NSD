@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 
 
-def get_preloaded_features(subj, stim_list, model):
+def get_preloaded_features(subj, stim_list, model, layer=None):
     """
     :param subj: subject ID
     :param stim_list: a list of COCO IDs for the stimuli images
@@ -13,44 +13,61 @@ def get_preloaded_features(subj, stim_list, model):
     :return featmat: a matrix of features that matches with the order of brain data
     """
     subj = int(subj)
-    print("Getting features for %s, for subject %d" % (model, subj))
+    if layer is not "":
+        layer_modifier =  "_" + layer
+    else:
+        layer_modifier = ""
+
+    print("Getting features for %s%s, for subject %d" % (model, layer_modifier, subj))
 
     try:
         if subj == 0:
-            featmat = np.load("features/%s.npy" % model)
+            featmat = np.load("features/%s%s.npy" % (model, layer_modifier))
         else:
-            featmat = np.load("features/subj%d/%s.npy" % (subj, model))
+            featmat = np.load("features/subj%d/%s%s.npy" % (subj, model, layer_modifier))
 
     except FileNotFoundError:
-        featmat = extract_feature_by_imgs(stim_list, model)
+        featmat = extract_feature_by_imgs(stim_list, model, layer=layer)
         if subj == 0:  # meaning it is features for all subjects
-            np.save("features/%s.npy" % (model), featmat)
+            np.save("features/%s%s.npy" % (model, layer_modifier), featmat)
         else:
-            np.save("features/subj%d/%s.npy" % (subj, model), featmat)
+            np.save("features/subj%d/%s%s.npy" % (subj, model, layer_modifier), featmat)
 
     print("feature shape is " + str(featmat.shape[0]))
     return featmat
 
 
-def extract_feature_by_imgs(stim_list, model):
+def extract_feature_by_imgs(stim_list, model, layer=None):
     if "taskrepr" in model:
         # latent space in taskonomy, model should be in the format of "taskrepr_X", e.g. taskrep_curvature
         task = "_".join(model.split("_")[1:])
-        repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/{}".format(
-            task
-        )
+
+        if layer is None:
+            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli/%s" % task
+        else:
+            repr_dir = "/lab_data/tarrlab/yuanw3/taskonomy_features/genStimuli_layers/%s" % task
 
         featmat = []
         print("stimulus length is: " + str(len(stim_list)))
         for img_id in tqdm(stim_list):
-            try:
-                fpath = "%s/%d.npy" % (repr_dir, img_id)
-                repr = np.load(fpath).flatten()
-            except FileNotFoundError:
-                fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
+            if layer is None:
+                try:
+                    fpath = "%s/%d.npy" % (repr_dir, img_id)
+                    repr = np.load(fpath).flatten()
+                except FileNotFoundError:
+                    fpath = "%s/COCO_train2014_%012d.npy" % (repr_dir, img_id)
+                    repr = np.load(fpath).flatten()
+            else:
+                fpath = "%s/%d_%s.npy" % (repr_dir, img_id, layer)
                 repr = np.load(fpath).flatten()
             featmat.append(repr)
         featmat = np.array(featmat)
+
+        if featmat.shape[1] > 6000:
+            from sklearn.decomposition import PCA
+            pca = PCA(n_components=500) # TODO:test this dimension later
+            print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
+            featmat = pca.fit_transform(featmat.astype(np.float16))
 
     elif "convnet" in model:
         # model should be named "convnet_vgg16" to load "feat_vgg16.npy"
@@ -83,3 +100,17 @@ def extract_feature_by_imgs(stim_list, model):
         print("Unknown feature spaces...")
 
     return featmat.squeeze()
+
+
+def extract_feature_with_image_order(stim_list, feature_matrix, image_order):
+    try:
+        assert len(image_order) == feature_matrix.shape[0]
+    except AssertionError:
+        print(
+            "Image order should have the same length as the 1st dimension of the feature matrix."
+        )
+    image_order = list(image_order)
+    idxes = [image_order.index(cid) for cid in stim_list]
+    # extract the respective features for that coco ID
+    featmat = feature_matrix[np.array(idxes), :]
+    return featmat
