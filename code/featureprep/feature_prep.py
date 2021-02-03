@@ -72,10 +72,10 @@ def extract_feature_by_imgs(stim_list, model, layer=None):
 
         if featmat.shape[1] > 6000:
             from sklearn.decomposition import PCA
-
             pca = PCA(n_components=500)  # TODO:test this dimension later
-            print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
             featmat = pca.fit_transform(featmat.astype(np.float16))
+            print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
+            
 
     elif "convnet" in model:
         # model should be named "convnet_vgg16" to load "feat_vgg16.npy"
