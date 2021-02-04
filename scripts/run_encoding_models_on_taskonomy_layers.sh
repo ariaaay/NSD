@@ -17,5 +17,5 @@ layer=$1
 
 # echo "running taskonomy $task task on subject $subj"
 
-python code/run_modeling.py --model "taskrepr_edge2d --layer $layer --subj 1 --fix_testing --output_dir /user_data/yuanw3/project_outputs/NSD/output
-python code/run_modeling.py --model "taskrepr_edge3d --layer $layer --subj 1 --fix_testing --output_dir /user_data/yuanw3/project_outputs/NSD/output
+python code/run_modeling.py --model taskrepr_edge2d --layer $layer --subj 1 --fix_testing --output_dir /user_data/yuanw3/project_outputs/NSD/output
+python code/run_modeling.py --model taskrepr_edge3d --layer $layer --subj 1 --fix_testing --output_dir /user_data/yuanw3/project_outputs/NSD/output
