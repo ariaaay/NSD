@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #SBATCH --job-name=tl
-#SBATCH -p tarrlab
+#SBATCH -p tarrq
 #SBATCH --ntasks=2
 #SBATCH --mem=100G
 #SBATCH --time=10-00:00:00
