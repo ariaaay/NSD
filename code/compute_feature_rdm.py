@@ -15,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     feature_path = "/user_data/yuanw3/project_outputs/NSD/features/subj%d/%s.npy" % (args.subj, args.feature)
-    feature = np.load(feature_path)
+    feature = np.load(feature_path).squeeze()
     rsm = np.corrcoef(feature)
 
     np.save(
