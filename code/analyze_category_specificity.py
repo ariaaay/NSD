@@ -161,7 +161,7 @@ if __name__ == "__main__":
     cocoId_subj = np.load(
         "%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj)
     )
-    nsd2coco = np.load("%s/output/NSD2cocoId.npy" % nsd_output_dir)
+    nsd2coco = np.load("%s/NSD2cocoId.npy" % nsd_output_dir)
     img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
     assert len(img_ind) == 10000
 
