@@ -127,7 +127,9 @@ if __name__ == "__main__":
         "indoor",
     ]
 
-    proj_output_dir = "/user_data/yuanw3/project_outputs/NSD/output/rdms"
+    
+    nsd_output_dir = "/user_data/yuanw3/project_outputs/NSD/output"
+    proj_output_dir = nsd_output_dir + "/rdms
 
     image_cat = np.load("../data/NSD_cat_feat.npy")
     image_supercat = np.load("../data/NSD_supcat_feat.npy")
@@ -157,10 +159,10 @@ if __name__ == "__main__":
     # # load random 1000 images idb
     # random_img_ind = np.random.choice(np.arange(image_supercat.shape[0]), 10000)
 
-    # load subj1's 10000 image id
-    cocoId_subj1 = np.load("../output/coco_ID_of_repeats_subj01.npy")
-    nsd2coco = np.load("../output/NSD2cocoId.npy")
-    img_ind = [list(nsd2coco).index(i) for i in cocoId_subj1]
+    # load subj's 10000 image id
+    cocoId_subj = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj))
+    nsd2coco = np.load("%s/output/NSD2cocoId.npy" % nsd_output_dir)
+    img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
     assert len(img_ind) == 10000
 
 
@@ -197,11 +199,11 @@ if __name__ == "__main__":
 
 
     # individua_ROIs
-    PPA = np.load("../output/rdms/subj01_places_PPA.npy")
-    OPA = np.load("../output/rdms/subj01_places_OPA.npy")
-    RSC = np.load("../output/rdms/subj01_places_RSC.npy")
-    FFA1 = np.load("../output/rdms/subj01_faces_FFA-1.npy")
-    FFA2 = np.load("../output/rdms/subj01_faces_FFA-1.npy")
+    PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
+    OPA = np.load("%s/subj%02d_places_OPA.npy" % (proj_output_dir, args.subj))
+    RSC = np.load("%s/subj%02d_places_RSC.npy" % (proj_output_dir, args.subj))
+    FFA1 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
+    FFA2 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
 
     brains = [PPA, OPA, RSC, FFA1, FFA2]
 
@@ -219,7 +221,7 @@ if __name__ == "__main__":
 
 
     # bert_caption
-    bert = np.load("../features/NSD_bert_all_layer_emb_subj1.npy")
+    bert = np.load("../features/NSD_bert_all_layer_emb_subj%d.npy" % args.subj)
     bert = np.reshape(bert, (10000, 5 * 13 * 768))
     
     from util.util import zscore
@@ -231,7 +233,7 @@ if __name__ == "__main__":
 
     # all_rois
     all_rois = np.load(
-        "../output/rdms/subj01_floc-words_floc-faces_floc-places_prf-visualrois.npy"
+        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy" % (args.subj, proj_output_dir)
     )
 
 
