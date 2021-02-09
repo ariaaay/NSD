@@ -127,13 +127,11 @@ if __name__ == "__main__":
         "indoor",
     ]
 
-    
     nsd_output_dir = "/user_data/yuanw3/project_outputs/NSD/output"
-    proj_output_dir = nsd_output_dir + "/rdms
+    proj_output_dir = nsd_output_dir + "/rdms"
 
     image_cat = np.load("../data/NSD_cat_feat.npy")
     image_supercat = np.load("../data/NSD_supcat_feat.npy")
-
 
     # # text_embedding_of_labels
     # import gensim.downloader as api
@@ -160,18 +158,18 @@ if __name__ == "__main__":
     # random_img_ind = np.random.choice(np.arange(image_supercat.shape[0]), 10000)
 
     # load subj's 10000 image id
-    cocoId_subj = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj))
+    cocoId_subj = np.load(
+        "%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj)
+    )
     nsd2coco = np.load("%s/output/NSD2cocoId.npy" % nsd_output_dir)
     img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
     assert len(img_ind) == 10000
-
 
     # sort the images arrays with the order of maximum super cat
     image_supercat_subsample = image_supercat[img_ind, :]
     max_cat = np.argmax(image_supercat_subsample, axis=1)
     max_cat_order = np.argsort(max_cat)
     # plt.hist(max_cat)
-
 
     # object_areas
     sorted_image_supercat = image_supercat_subsample[max_cat_order, :]
@@ -181,9 +179,7 @@ if __name__ == "__main__":
     sorted_image_cat = image_cat_subsample[np.argsort(max_cat), :]
     sorted_image_cat_sim_by_image = cosine_similarity(sorted_image_cat)
 
-    sorted_image_supercat_sim_by_categories = cosine_similarity(
-        sorted_image_supercat.T
-    )
+    sorted_image_supercat_sim_by_categories = cosine_similarity(sorted_image_supercat.T)
     # normalize across categories?
 
     plt.figure(figsize=(40, 20))
@@ -196,7 +192,6 @@ if __name__ == "__main__":
     plt.title("COCO basic categories")
     plt.colorbar()
     plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
-
 
     # individua_ROIs
     PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
@@ -211,31 +206,27 @@ if __name__ == "__main__":
     for i, b in enumerate(brains):
         plt.subplot(1, 5, i + 1)
         plt.imshow(
-            b[:, max_cat_order][max_cat_order, :],
-            cmap="RdBu_r",
-            vmin=-0.5,
-            vmax=0.5,
+            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
         )
 
     plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
-
     # bert_caption
     bert = np.load("../features/NSD_bert_all_layer_emb_subj%d.npy" % args.subj)
     bert = np.reshape(bert, (10000, 5 * 13 * 768))
-    
+
     from util.util import zscore
+
     bert = zscore(bert, axis=1)
 
     bert_sim = cosine_similarity(bert)
     sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
 
-
     # all_rois
     all_rois = np.load(
-        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy" % (args.subj, proj_output_dir)
+        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
+        % (args.subj, proj_output_dir)
     )
-
 
     # plot comparison
     plt.figure(figsize=(40, 20))
