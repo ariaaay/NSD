@@ -257,19 +257,20 @@ if __name__ == "__main__":
 
     plt.savefig("../Cats/figures/rsm/comparison.png")
 
-
     # plot imagenet
     plt.figure(figsize=(60, 20))
-    layers = [["conv"]*5  + ["fc"]*2]
+    layers = [["conv"] * 5 + ["fc"] * 2]
     for i in range(7):
 
-        plt.subplot(2, 4, i+1)
-        imgnet_sim = np.load("%s/subj%02d_convnet_alexnet_%s%01d_avgpool.npy" % (proj_output_dir, args.subj, layers[i], i))
-        plt.imshow(
-            imgnet_sim[max_cat_order, :][:, max_cat_order],
-            cmap"YlOrRd",
+        plt.subplot(2, 4, i + 1)
+        imgnet_sim = np.load(
+            "%s/subj%02d_convnet_alexnet_%s%01d_avgpool.npy"
+            % (proj_output_dir, args.subj, layers[i], i)
         )
-        plt.title("Layer " + str(i+1))
+        plt.imshow(
+            imgnet_sim[max_cat_order, :][:, max_cat_order], cmap="YlOrRd",
+        )
+        plt.title("Layer " + str(i + 1))
         plt.colorbar()
     plt.savefig("../Cats/figures/rsm/convnet.png")
 
