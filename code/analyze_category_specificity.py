@@ -129,6 +129,7 @@ if __name__ == "__main__":
 
     nsd_output_dir = "/user_data/yuanw3/project_outputs/NSD/output"
     proj_output_dir = nsd_output_dir + "/rdms"
+    features_output_dir = nsd_output_dir + "/features"
 
     image_cat = np.load("data/NSD_cat_feat.npy")
     image_supercat = np.load("data/NSD_supcat_feat.npy")
@@ -212,7 +213,7 @@ if __name__ == "__main__":
     plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
     # bert_caption
-    bert = np.load("../features/NSD_bert_all_layer_emb_subj%d.npy" % args.subj)
+    bert = np.load("%s/NSD_bert_all_layer_emb_subj%d.npy" % (features_output_dir, args.subj))
     bert = np.reshape(bert, (10000, 5 * 13 * 768))
 
     from util.util import zscore
