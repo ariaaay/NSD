@@ -130,8 +130,8 @@ if __name__ == "__main__":
     nsd_output_dir = "/user_data/yuanw3/project_outputs/NSD/output"
     proj_output_dir = nsd_output_dir + "/rdms"
 
-    image_cat = np.load("../data/NSD_cat_feat.npy")
-    image_supercat = np.load("../data/NSD_supcat_feat.npy")
+    image_cat = np.load("data/NSD_cat_feat.npy")
+    image_supercat = np.load("data/NSD_supcat_feat.npy")
 
     # # text_embedding_of_labels
     # import gensim.downloader as api
