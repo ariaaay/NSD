@@ -213,7 +213,10 @@ if __name__ == "__main__":
     plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
     # bert_caption
-    bert = np.load("%s/NSD_bert_all_layer_emb_subj%d.npy" % (features_output_dir, args.subj))
+    bert = np.load(
+        "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
+        % (args.subj)
+    )
     bert = np.reshape(bert, (10000, 5 * 13 * 768))
 
     from util.util import zscore
