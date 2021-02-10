@@ -13,13 +13,7 @@ from featureprep.feature_prep import (
 
 
 def run(
-    fm,
-    br,
-    model_name,
-    test,
-    fix_testing,
-    cv,
-    output_dir,
+    fm, br, model_name, test, fix_testing, cv, output_dir,
 ):
     if test:
         print("Running Permutation Test")
@@ -90,13 +84,19 @@ if __name__ == "__main__":
         "--get_features_only",
         action="store_true",
         default=False,
-        help="only generate and save the feature matrix but not running the encoding models",
+        help="only generate and save the feature matrix but not running the encoding models (for preloaded features)",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         default="output",
         help="Specify the path to the output directory",
+    )
+    parser.add_argument(
+        "--features_dir",
+        type=str,
+        default="features",
+        help="Specify the path to the features directory",
     )
     parser.add_argument(
         "--feature_matrix",
@@ -146,16 +146,12 @@ if __name__ == "__main__":
             model_name_to_save = args.model[0]
 
         feature_mat = get_preloaded_features(
-            args.subj, stimulus_list, args.model[0], layer=args.layer
+            args.subj, stimulus_list, args.model[0], layer=args.layer, features_dir=args.features_dir
         )
 
         if len(args.model) > 1:
             for model in args.model[1:]:
-                more_feature = get_preloaded_features(
-                    args.subj,
-                    stimulus_list,
-                    model,
-                )
+                more_feature = get_preloaded_features(args.subj, stimulus_list, model, features_dir=args.features_dir)
                 feature_mat = np.hstack((feature_mat, more_feature))
 
                 model_name_to_save += "_" + model
