@@ -183,44 +183,60 @@ if __name__ == "__main__":
     sorted_image_supercat_sim_by_categories = cosine_similarity(sorted_image_supercat.T)
     # normalize across categories?
 
-    plt.figure(figsize=(40, 20))
-    plt.subplot(1, 2, 1)
-    plt.imshow(sorted_image_supercat_sim_by_image, cmap="YlOrRd")
-    plt.colorbar()
-    plt.title("COCO super categories")
-    plt.subplot(1, 2, 2)
-    plt.imshow(sorted_image_cat_sim_by_image, cmap="YlOrRd")
-    plt.title("COCO basic categories")
-    plt.colorbar()
-    plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
+    # plt.figure(figsize=(40, 20))
+    # plt.subplot(1, 2, 1)
+    # plt.imshow(sorted_image_supercat_sim_by_image, cmap="YlOrRd")
+    # plt.colorbar()
+    # plt.title("COCO super categories")
+    # plt.subplot(1, 2, 2)
+    # plt.imshow(sorted_image_cat_sim_by_image, cmap="YlOrRd")
+    # plt.title("COCO basic categories")
+    # plt.colorbar()
+    # plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
 
     # individua_ROIs
-    PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
-    OPA = np.load("%s/subj%02d_places_OPA.npy" % (proj_output_dir, args.subj))
-    RSC = np.load("%s/subj%02d_places_RSC.npy" % (proj_output_dir, args.subj))
-    FFA1 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
-    FFA2 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
+    # PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
+    # OPA = np.load("%s/subj%02d_places_OPA.npy" % (proj_output_dir, args.subj))
+    # RSC = np.load("%s/subj%02d_places_RSC.npy" % (proj_output_dir, args.subj))
+    # FFA1 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
+    # FFA2 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
 
-    brains = [PPA, OPA, RSC, FFA1, FFA2]
+    # brains = [PPA, OPA, RSC, FFA1, FFA2]
 
-    plt.figure(figsize=(10, 50))
-    for i, b in enumerate(brains):
-        plt.subplot(1, 5, i + 1)
-        plt.imshow(
-            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
+    # plt.figure(figsize=(50, 10))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(1, 5, i + 1)
+    #     plt.imshow(
+    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
 
-    plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
+    # plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
     # bert_caption
+    from util.util import zscore
+
     bert = np.load(
         "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
         % (args.subj)
     )
-    bert = np.reshape(bert, (10000, 5 * 13 * 768))
 
-    from util.util import zscore
+    # layers
+    bert_layer_sim = []
+    for i in range(bert.shape[2]):
+        blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
+        blayer = zscore(blayer, axis=1)
+        bsim = cosine_similarity(blayer)
+        bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
 
+    plt.figure(figsize=(50, 10))
+    for i in range(13):
+        plt.subplot(2, 7, i+1)
+        plt.imshow(bert_layer_sim[i])
+        plt.title("Layer " + str(i+1))
+        plt.colorbar()
+    plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
+
+    bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
     bert = zscore(bert, axis=1)
 
     bert_sim = cosine_similarity(bert)
@@ -229,7 +245,7 @@ if __name__ == "__main__":
     # all_rois
     all_rois = np.load(
         "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
-        % (args.subj, proj_output_dir)
+        % (proj_output_dir, args.subj)
     )
 
     # plot comparison
