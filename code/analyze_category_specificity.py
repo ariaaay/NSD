@@ -289,7 +289,7 @@ if __name__ == "__main__":
             % (features_output_dir, args.subj, layers[i], i+1)
         ).squeeze()
         print(imgnet.shape)
-        sim = cosine_similarity(imgnet, imgnet)
+        sim = cosine_similarity(imgnet)
         
         plt.imshow(
             sim[max_cat_order, :][:, max_cat_order],
