@@ -287,7 +287,7 @@ if __name__ == "__main__":
         imgnet = np.load(
             "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
             % (features_output_dir, args.subj, layers[i], i+1)
-        )
+        ).squeeze()
         print(imgnet.shape)
         sim = cosine_similarity(imgnet, imgnet)
         
