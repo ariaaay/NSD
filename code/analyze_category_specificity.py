@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     nsd_output_dir = "/user_data/yuanw3/project_outputs/NSD/output"
     proj_output_dir = nsd_output_dir + "/rdms"
-    features_output_dir = nsd_output_dir + "/features"
+    features_output_dir = "/user_data/yuanw3/project_outputs/NSD/features"
 
     image_cat = np.load("data/NSD_cat_feat.npy")
     image_supercat = np.load("data/NSD_supcat_feat.npy")
@@ -289,7 +289,8 @@ if __name__ == "__main__":
             % (features_output_dir, args.subj, layers[i], i)
         )
         plt.imshow(
-            imgnet_sim[max_cat_order, :][:, max_cat_order], cmap="YlOrRd",
+            imgnet_sim[max_cat_order, :][:, max_cat_order],
+            cmap="YlOrRd",
         )
         plt.title("Layer " + str(i + 1))
         plt.colorbar()
