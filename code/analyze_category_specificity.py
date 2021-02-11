@@ -220,21 +220,21 @@ if __name__ == "__main__":
         % (args.subj)
     )
 
-    # layers
-    bert_layer_sim = []
-    for i in range(bert.shape[2]):
-        blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
-        blayer = zscore(blayer, axis=1)
-        bsim = cosine_similarity(blayer)
-        bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
+    # # layers
+    # bert_layer_sim = []
+    # for i in range(bert.shape[2]):
+    #     blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
+    #     blayer = zscore(blayer, axis=1)
+    #     bsim = cosine_similarity(blayer)
+    #     bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
 
-    plt.figure(figsize=(50, 10))
-    for i in range(13):
-        plt.subplot(2, 7, i+1)
-        plt.imshow(bert_layer_sim[i])
-        plt.title("Layer " + str(i+1))
-        plt.colorbar()
-    plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
+    # plt.figure(figsize=(50, 10))
+    # for i in range(13):
+    #     plt.subplot(2, 7, i+1)
+    #     plt.imshow(bert_layer_sim[i])
+    #     plt.title("Layer " + str(i+1))
+    #     plt.colorbar()
+    # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
 
     bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
     bert = zscore(bert, axis=1)
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
     # plot imagenet
     plt.figure(figsize=(60, 20))
-    layers = [["conv"] * 5 + ["fc"] * 2]
+    layers = ["conv"] * 5 + ["fc"] * 2
     for i in range(7):
 
         plt.subplot(2, 4, i + 1)
