@@ -284,12 +284,15 @@ if __name__ == "__main__":
     for i in range(7):
 
         plt.subplot(2, 4, i + 1)
-        imgnet_sim = np.load(
+        imgnet = np.load(
             "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
             % (features_output_dir, args.subj, layers[i], i+1)
         )
+        print(imgnet.shape)
+        sim = cosine_similarity(imgnet, imgnet)
+        
         plt.imshow(
-            imgnet_sim[max_cat_order, :][:, max_cat_order],
+            sim[max_cat_order, :][:, max_cat_order],
             cmap="YlOrRd",
         )
         plt.title("Layer " + str(i + 1))
