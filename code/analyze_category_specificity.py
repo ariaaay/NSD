@@ -286,7 +286,7 @@ if __name__ == "__main__":
         plt.subplot(2, 4, i + 1)
         imgnet_sim = np.load(
             "%s/subj%02d_convnet_alexnet_%s%01d_avgpool.npy"
-            % (features_output_dir, args.subj, layers[i], i)
+            % (features_output_dir, args.subj, layers[i]+1, i)
         )
         plt.imshow(
             imgnet_sim[max_cat_order, :][:, max_cat_order],
