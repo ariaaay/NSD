@@ -212,13 +212,13 @@ if __name__ == "__main__":
 
     # plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
-    # bert_caption
-    from util.util import zscore
+    # # bert_caption
+    # from util.util import zscore
 
-    bert = np.load(
-        "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
-        % (args.subj)
-    )
+    # bert = np.load(
+    #     "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
+    #     % (args.subj)
+    # )
 
     # # layers
     # bert_layer_sim = []
@@ -236,47 +236,47 @@ if __name__ == "__main__":
     #     plt.colorbar()
     # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
 
-    bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
-    bert = zscore(bert, axis=1)
+    # bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
+    # bert = zscore(bert, axis=1)
 
-    bert_sim = cosine_similarity(bert)
-    sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
+    # bert_sim = cosine_similarity(bert)
+    # sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
 
-    # all_rois
-    all_rois = np.load(
-        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
-        % (proj_output_dir, args.subj)
-    )
+    # # all_rois
+    # all_rois = np.load(
+    #     "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
+    #     % (proj_output_dir, args.subj)
+    # )
 
-    # plot comparison
-    plt.figure(figsize=(40, 20))
+    # # plot comparison
+    # plt.figure(figsize=(40, 20))
 
-    plt.subplot(2, 2, 1)
-    plt.imshow(sorted_image_supercat_sim_by_image, cmap="YlOrRd")
-    plt.title("COCO super categories")
-    plt.colorbar()
+    # plt.subplot(2, 2, 1)
+    # plt.imshow(sorted_image_supercat_sim_by_image, cmap="YlOrRd")
+    # plt.title("COCO super categories")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 2)
-    plt.imshow(sorted_image_cat_sim_by_image, cmap="YlOrRd")
-    plt.title("COCO basic categories")
-    plt.colorbar()
+    # plt.subplot(2, 2, 2)
+    # plt.imshow(sorted_image_cat_sim_by_image, cmap="YlOrRd")
+    # plt.title("COCO basic categories")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 3)
-    plt.imshow(sorted_bert_sim, "YlOrRd")
-    plt.title("BERT features of captions")
-    plt.colorbar()
+    # plt.subplot(2, 2, 3)
+    # plt.imshow(sorted_bert_sim, "YlOrRd")
+    # plt.title("BERT features of captions")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 4)
-    plt.imshow(
-        all_rois[max_cat_order, :][:, max_cat_order],
-        cmap="RdBu_r",
-        vmin=-0.3,
-        vmax=0.3,
-    )
-    plt.title("All ROIs")
-    plt.colorbar()
+    # plt.subplot(2, 2, 4)
+    # plt.imshow(
+    #     all_rois[max_cat_order, :][:, max_cat_order],
+    #     cmap="RdBu_r",
+    #     vmin=-0.3,
+    #     vmax=0.3,
+    # )
+    # plt.title("All ROIs")
+    # plt.colorbar()
 
-    plt.savefig("../Cats/figures/rsm/comparison.png")
+    # plt.savefig("../Cats/figures/rsm/comparison.png")
 
     # plot imagenet
     plt.figure(figsize=(60, 20))
