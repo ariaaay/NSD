@@ -30,7 +30,7 @@ while read p; do
 	echo "$p $i/10000"
 	file_name=$p
 	store_name="$p.jpg"
-	img_file="$STIMULI_DIR/$store_name"
+	imgfile="$STIMULI_DIR/$store_name"
 	if [ ! -e $target_DIR/${file_name}_input_layer0.npy ]; then
 		python /home/yuanw3/taskonomy/taskbank/tools/run_img_task.py --task $task --img $imgfile --store "$target_DIR/$store_name" --store-all-rep
 	fi
