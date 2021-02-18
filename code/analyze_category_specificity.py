@@ -9,6 +9,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 def make_text_sim_matrix(vocab):
+    # text_embedding_of_labels
+    import gensim.downloader as api
+    import ssl
+
+    ssl._create_default_https_context = ssl._create_unverified_context
+    glove_twitter = api.load("glove-twitter-200")
     embs, vocab_in_use = [], []
     for w in vocab:
         try:
@@ -23,6 +29,17 @@ def make_text_sim_matrix(vocab):
     emb_sim = cosine_similarity(np.array(embs))
     return emb_sim, vocab_in_use
 
+def make_supercat_similarity_matrix(sim, cat):
+    supercat = list(set(list(cat)))
+    cat_sim = np.zeros((len(supercat), len(supercat)))
+    counter = cat_sim.copy()
+    for i in range(sim.shape[0]):
+        for j in range(sim.shape[0]):
+            ci, cj = supercat.index(cat[i]), supercat.index(cat[j])
+            cat_sim[ci, cj] += sim[i, j]
+            counter[ci, cj] += 1
+    cat_sim = cat_sim / counter
+    return cat_sim
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -134,12 +151,7 @@ if __name__ == "__main__":
     image_cat = np.load("data/NSD_cat_feat.npy")
     image_supercat = np.load("data/NSD_supcat_feat.npy")
 
-    # # text_embedding_of_labels
-    # import gensim.downloader as api
-    # import ssl
-
-    # ssl._create_default_https_context = ssl._create_unverified_context
-    # glove_twitter = api.load("glove-twitter-200")
+   
 
     # # here the rsm is either 80 by 80 or 12 by 12
     # emb_cat_sim, _ = make_text_sim_matrix(COCO_cat)
@@ -212,21 +224,22 @@ if __name__ == "__main__":
 
     # plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
 
-    # # bert_caption
-    # from util.util import zscore
+    # bert_caption
+    from util.util import zscore
 
-    # bert = np.load(
-    #     "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
-    #     % (args.subj)
-    # )
+    bert = np.load(
+        "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
+        % (args.subj)
+    )
 
-    # # layers
-    # bert_layer_sim = []
-    # for i in range(bert.shape[2]):
-    #     blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
-    #     blayer = zscore(blayer, axis=1)
-    #     bsim = cosine_similarity(blayer)
-    #     bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
+    # layers
+    bert_layer_sim, bert_layer_sim_supercat = [], []
+    for i in range(bert.shape[2]):
+        blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
+        blayer = zscore(blayer, axis=1)
+        bsim = cosine_similarity(blayer)
+        # bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
+        bert_layer_sim_supercat.append(make_supercat_similarity_matrix(bsim[max_cat_order,:][:, max_cat_order],max_cat[max_cat_order]))
 
     # plt.figure(figsize=(50, 10))
     # for i in range(13):
@@ -235,20 +248,27 @@ if __name__ == "__main__":
     #     plt.title("Layer " + str(i+1))
     #     plt.colorbar()
     # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
+    plt.figure(figsize=(50, 10))
+    for i in range(13):
+        plt.subplot(2, 7, i+1)
+        plt.imshow(bert_layer_sim_supercat[i])
+        plt.title("Layer " + str(i+1))
+        plt.colorbar()
+    plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers_supercat.png")
 
-    # bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
-    # bert = zscore(bert, axis=1)
+    bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
+    bert = zscore(bert, axis=1)
 
-    # bert_sim = cosine_similarity(bert)
-    # sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
+    bert_sim = cosine_similarity(bert)
+    sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
 
-    # # all_rois
-    # all_rois = np.load(
-    #     "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
-    #     % (proj_output_dir, args.subj)
-    # )
+    # all_rois
+    all_rois = np.load(
+        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
+        % (proj_output_dir, args.subj)
+    )
 
-    # # plot comparison
+    # plot comparison
     # plt.figure(figsize=(40, 20))
 
     # plt.subplot(2, 2, 1)
@@ -278,11 +298,63 @@ if __name__ == "__main__":
 
     # plt.savefig("../Cats/figures/rsm/comparison.png")
 
-    # plot imagenet
+    plt.figure(figsize=(40, 20))
+
+    plt.subplot(2, 2, 1)
+    sorted_image_supercat_sim_by_image_supercat = make_supercat_similarity_matrix(sorted_image_supercat_sim_by_image, max_cat[max_cat_order])
+    plt.imshow(sorted_image_supercat_sim_by_image_supercat, cmap="YlOrRd")
+    plt.title("COCO super categories")
+    plt.colorbar()
+
+    plt.subplot(2, 2, 2)
+    sorted_image_cat_sim_by_image_supercat = make_supercat_similarity_matrix(sorted_image_cat_sim_by_image, max_cat[max_cat_order])
+    plt.imshow(sorted_image_cat_sim_by_image_supercat, cmap="YlOrRd")
+    plt.title("COCO basic categories")
+    plt.colorbar()
+
+    plt.subplot(2, 2, 3)
+    sorted_bert_sim_supercat = make_supercat_similarity_matrix(sorted_bert_sim, max_cat[max_cat_order])
+    plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
+    plt.title("BERT features of captions")
+    plt.colorbar()
+
+    plt.subplot(2, 2, 4)
+    all_rois_supercat = make_supercat_similarity_matrix(all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order])
+    plt.imshow(
+        all_rois[max_cat_order, :][:, max_cat_order],
+        cmap="RdBu_r",
+        vmin=-0.3,
+        vmax=0.3,
+    )
+    plt.title("All ROIs")
+    plt.colorbar()
+
+    plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
+
+    # # plot imagenet
+    # plt.figure(figsize=(60, 20))
+    # layers = ["conv"] * 5 + ["fc"] * 2
+    # for i in range(7):
+    #     plt.subplot(2, 4, i + 1)
+    #     imgnet = np.load(
+    #         "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
+    #         % (features_output_dir, args.subj, layers[i], i+1)
+    #     ).squeeze()
+    #     print(imgnet.shape)
+    #     sim = cosine_similarity(imgnet)
+        
+    #     plt.imshow(
+    #         sim[max_cat_order, :][:, max_cat_order],
+    #         cmap="YlOrRd",
+    #     )
+    #     plt.title("Layer " + str(i + 1))
+    #     plt.colorbar()
+    # plt.savefig("../Cats/figures/rsm/convnet.png")
+
+    #plot imagenet within cat
     plt.figure(figsize=(60, 20))
     layers = ["conv"] * 5 + ["fc"] * 2
     for i in range(7):
-
         plt.subplot(2, 4, i + 1)
         imgnet = np.load(
             "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
@@ -290,15 +362,17 @@ if __name__ == "__main__":
         ).squeeze()
         print(imgnet.shape)
         sim = cosine_similarity(imgnet)
-        
+        supercat_sim = make_supercat_similarity_matrix(sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order])
         plt.imshow(
-            sim[max_cat_order, :][:, max_cat_order],
+            supercat_sim,
             cmap="YlOrRd",
         )
         plt.title("Layer " + str(i + 1))
         plt.colorbar()
-    plt.savefig("../Cats/figures/rsm/convnet.png")
+    plt.savefig("../Cats/figures/rsm/convnet_supercat.png")
 
+
+    # print category order
     labels = [COCO_super_cat[c] for c in max_cat[max_cat_order]]
     counter = Counter(labels)
     i0 = 0
