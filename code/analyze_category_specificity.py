@@ -344,25 +344,25 @@ if __name__ == "__main__":
 
     # plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
 
-    # # ROI dendrogram
-    # plt.figure()
-    # linked = linkage(all_rois_supercat, 'single')
-    # dendrogram(linked,
-    #         orientation='top',
-    #         labels=COCO_super_cat,
-    #         distance_sort='descending',
-    #         show_leaf_counts=True)
-    # plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
+    # ROI dendrogram
+    plt.figure(figsize=(20, 10))
+    linked = linkage(all_rois_supercat, 'single')
+    dendrogram(linked,
+            orientation='top',
+            labels=COCO_super_cat,
+            distance_sort='descending',
+            show_leaf_counts=True)
+    plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
 
-    # # BERT dendrogram
-    # plt.figure()
-    # linked = linkage(sorted_bert_sim_supercat, 'single')
-    # dendrogram(linked,
-    #         orientation='top',
-    #         labels=COCO_super_cat,
-    #         distance_sort='descending',
-    #         show_leaf_counts=True)
-    # plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
+    # BERT dendrogram
+    plt.figure(figsize=(20, 10))
+    linked = linkage(sorted_bert_sim_supercat, 'single')
+    dendrogram(linked,
+            orientation='top',
+            labels=COCO_super_cat,
+            distance_sort='descending',
+            show_leaf_counts=True)
+    plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
 
     # # plot imagenet
     # plt.figure(figsize=(60, 20))
