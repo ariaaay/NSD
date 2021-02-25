@@ -308,61 +308,61 @@ if __name__ == "__main__":
 
     # plt.savefig("../Cats/figures/rsm/comparison.png")
 
-    plt.figure(figsize=(40, 20))
+    # plt.figure(figsize=(40, 20))
 
-    plt.subplot(2, 2, 1)
-    sorted_image_supercat_sim_by_image_supercat = make_supercat_similarity_matrix(
-        sorted_image_supercat_sim_by_image, max_cat[max_cat_order]
-    )
-    plt.imshow(sorted_image_supercat_sim_by_image_supercat, cmap="YlOrRd")
-    plt.title("COCO super categories")
-    plt.colorbar()
+    # plt.subplot(2, 2, 1)
+    # sorted_image_supercat_sim_by_image_supercat = make_supercat_similarity_matrix(
+    #     sorted_image_supercat_sim_by_image, max_cat[max_cat_order]
+    # )
+    # plt.imshow(sorted_image_supercat_sim_by_image_supercat, cmap="YlOrRd")
+    # plt.title("COCO super categories")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 2)
-    sorted_image_cat_sim_by_image_supercat = make_supercat_similarity_matrix(
-        sorted_image_cat_sim_by_image, max_cat[max_cat_order]
-    )
-    plt.imshow(sorted_image_cat_sim_by_image_supercat, cmap="YlOrRd")
-    plt.title("COCO basic categories")
-    plt.colorbar()
+    # plt.subplot(2, 2, 2)
+    # sorted_image_cat_sim_by_image_supercat = make_supercat_similarity_matrix(
+    #     sorted_image_cat_sim_by_image, max_cat[max_cat_order]
+    # )
+    # plt.imshow(sorted_image_cat_sim_by_image_supercat, cmap="YlOrRd")
+    # plt.title("COCO basic categories")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 3)
-    sorted_bert_sim_supercat = make_supercat_similarity_matrix(
-        sorted_bert_sim, max_cat[max_cat_order]
-    )
-    plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
-    plt.title("BERT features of captions")
-    plt.colorbar()
+    # plt.subplot(2, 2, 3)
+    # sorted_bert_sim_supercat = make_supercat_similarity_matrix(
+    #     sorted_bert_sim, max_cat[max_cat_order]
+    # )
+    # plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
+    # plt.title("BERT features of captions")
+    # plt.colorbar()
 
-    plt.subplot(2, 2, 4)
-    all_rois_supercat = make_supercat_similarity_matrix(
-        all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-    )
-    plt.imshow(all_rois_supercat, cmap="YlOrRd")
-    plt.title("All ROIs")
-    plt.colorbar()
+    # plt.subplot(2, 2, 4)
+    # all_rois_supercat = make_supercat_similarity_matrix(
+    #     all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+    # )
+    # plt.imshow(all_rois_supercat, cmap="YlOrRd")
+    # plt.title("All ROIs")
+    # plt.colorbar()
 
-    plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
+    # plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
 
-    # ROI dendrogram
-    plt.figure()
-    linked = linkage(all_rois_supercat, 'single')
-    dendrogram(linked,
-            orientation='top',
-            labels=COCO_super_cat,
-            distance_sort='descending',
-            show_leaf_counts=True)
-    plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
+    # # ROI dendrogram
+    # plt.figure()
+    # linked = linkage(all_rois_supercat, 'single')
+    # dendrogram(linked,
+    #         orientation='top',
+    #         labels=COCO_super_cat,
+    #         distance_sort='descending',
+    #         show_leaf_counts=True)
+    # plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
 
-    # BERT dendrogram
-    plt.figure()
-    linked = linkage(sorted_bert_sim_supercat, 'single')
-    dendrogram(linked,
-            orientation='top',
-            labels=COCO_super_cat,
-            distance_sort='descending',
-            show_leaf_counts=True)
-    plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
+    # # BERT dendrogram
+    # plt.figure()
+    # linked = linkage(sorted_bert_sim_supercat, 'single')
+    # dendrogram(linked,
+    #         orientation='top',
+    #         labels=COCO_super_cat,
+    #         distance_sort='descending',
+    #         show_leaf_counts=True)
+    # plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
 
     # # plot imagenet
     # plt.figure(figsize=(60, 20))
@@ -409,15 +409,7 @@ if __name__ == "__main__":
                 distance_sort='descending',
                 show_leaf_counts=True)
         plt.title("Layer " + str(i + 1))
-        plt.colorbar()
     plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
-    
-
-    
-
-    
-
-
 
     # print category order
     labels = [COCO_super_cat[c] for c in max_cat[max_cat_order]]
