@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.metrics.pairwise import cosine_similarity
+from scipy.cluster.hierarchy import dendrogram, linkage
 
 
 def make_text_sim_matrix(vocab):
@@ -29,6 +30,7 @@ def make_text_sim_matrix(vocab):
     emb_sim = cosine_similarity(np.array(embs))
     return emb_sim, vocab_in_use
 
+
 def make_supercat_similarity_matrix(sim, cat):
     supercat = list(set(list(cat)))
     cat_sim = np.zeros((len(supercat), len(supercat)))
@@ -40,6 +42,7 @@ def make_supercat_similarity_matrix(sim, cat):
             counter[ci, cj] += 1
     cat_sim = cat_sim / counter
     return cat_sim
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -151,8 +154,6 @@ if __name__ == "__main__":
     image_cat = np.load("data/NSD_cat_feat.npy")
     image_supercat = np.load("data/NSD_supcat_feat.npy")
 
-   
-
     # # here the rsm is either 80 by 80 or 12 by 12
     # emb_cat_sim, _ = make_text_sim_matrix(COCO_cat)
     # emb_supercat_sim, super_vocab = make_text_sim_matrix(COCO_super_cat)
@@ -235,11 +236,17 @@ if __name__ == "__main__":
     # layers
     bert_layer_sim, bert_layer_sim_supercat = [], []
     for i in range(bert.shape[2]):
-        blayer = np.reshape(bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3]))
+        blayer = np.reshape(
+            bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3])
+        )
         blayer = zscore(blayer, axis=1)
         bsim = cosine_similarity(blayer)
         # bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
-        bert_layer_sim_supercat.append(make_supercat_similarity_matrix(bsim[max_cat_order,:][:, max_cat_order],max_cat[max_cat_order]))
+        bert_layer_sim_supercat.append(
+            make_supercat_similarity_matrix(
+                bsim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+            )
+        )
 
     # plt.figure(figsize=(50, 10))
     # for i in range(13):
@@ -248,15 +255,18 @@ if __name__ == "__main__":
     #     plt.title("Layer " + str(i+1))
     #     plt.colorbar()
     # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers.png")
-    plt.figure(figsize=(50, 10))
-    for i in range(13):
-        plt.subplot(2, 7, i+1)
-        plt.imshow(bert_layer_sim_supercat[i])
-        plt.title("Layer " + str(i+1))
-        plt.colorbar()
-    plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers_supercat.png")
 
-    bert = np.reshape(bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3]))
+    # plt.figure(figsize=(50, 10))
+    # for i in range(13):
+    #     plt.subplot(2, 7, i + 1)
+    #     plt.imshow(bert_layer_sim_supercat[i])
+    #     plt.title("Layer " + str(i + 1))
+    #     plt.colorbar()
+    # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers_supercat.png")
+
+    bert = np.reshape(
+        bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3])
+    )
     bert = zscore(bert, axis=1)
 
     bert_sim = cosine_similarity(bert)
@@ -301,35 +311,58 @@ if __name__ == "__main__":
     plt.figure(figsize=(40, 20))
 
     plt.subplot(2, 2, 1)
-    sorted_image_supercat_sim_by_image_supercat = make_supercat_similarity_matrix(sorted_image_supercat_sim_by_image, max_cat[max_cat_order])
+    sorted_image_supercat_sim_by_image_supercat = make_supercat_similarity_matrix(
+        sorted_image_supercat_sim_by_image, max_cat[max_cat_order]
+    )
     plt.imshow(sorted_image_supercat_sim_by_image_supercat, cmap="YlOrRd")
     plt.title("COCO super categories")
     plt.colorbar()
 
     plt.subplot(2, 2, 2)
-    sorted_image_cat_sim_by_image_supercat = make_supercat_similarity_matrix(sorted_image_cat_sim_by_image, max_cat[max_cat_order])
+    sorted_image_cat_sim_by_image_supercat = make_supercat_similarity_matrix(
+        sorted_image_cat_sim_by_image, max_cat[max_cat_order]
+    )
     plt.imshow(sorted_image_cat_sim_by_image_supercat, cmap="YlOrRd")
     plt.title("COCO basic categories")
     plt.colorbar()
 
     plt.subplot(2, 2, 3)
-    sorted_bert_sim_supercat = make_supercat_similarity_matrix(sorted_bert_sim, max_cat[max_cat_order])
+    sorted_bert_sim_supercat = make_supercat_similarity_matrix(
+        sorted_bert_sim, max_cat[max_cat_order]
+    )
     plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
     plt.title("BERT features of captions")
     plt.colorbar()
 
     plt.subplot(2, 2, 4)
-    all_rois_supercat = make_supercat_similarity_matrix(all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order])
-    plt.imshow(
-        all_rois[max_cat_order, :][:, max_cat_order],
-        cmap="RdBu_r",
-        vmin=-0.3,
-        vmax=0.3,
+    all_rois_supercat = make_supercat_similarity_matrix(
+        all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
     )
+    plt.imshow(all_rois_supercat, cmap="YlOrRd")
     plt.title("All ROIs")
     plt.colorbar()
 
     plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
+
+    # ROI dendrogram
+    plt.figure()
+    linked = linkage(all_rois_supercat, 'single')
+    dendrogram(linked,
+            orientation='top',
+            labels=COCO_super_cat,
+            distance_sort='descending',
+            show_leaf_counts=True)
+    plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
+
+    # BERT dendrogram
+    plt.figure()
+    linked = linkage(sorted_bert_sim_supercat, 'single')
+    dendrogram(linked,
+            orientation='top',
+            labels=COCO_super_cat,
+            distance_sort='descending',
+            show_leaf_counts=True)
+    plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
 
     # # plot imagenet
     # plt.figure(figsize=(60, 20))
@@ -342,7 +375,7 @@ if __name__ == "__main__":
     #     ).squeeze()
     #     print(imgnet.shape)
     #     sim = cosine_similarity(imgnet)
-        
+
     #     plt.imshow(
     #         sim[max_cat_order, :][:, max_cat_order],
     #         cmap="YlOrRd",
@@ -351,25 +384,39 @@ if __name__ == "__main__":
     #     plt.colorbar()
     # plt.savefig("../Cats/figures/rsm/convnet.png")
 
-    #plot imagenet within cat
+    # plot imagenet within cat
     plt.figure(figsize=(60, 20))
     layers = ["conv"] * 5 + ["fc"] * 2
     for i in range(7):
         plt.subplot(2, 4, i + 1)
         imgnet = np.load(
             "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
-            % (features_output_dir, args.subj, layers[i], i+1)
+            % (features_output_dir, args.subj, layers[i], i + 1)
         ).squeeze()
         print(imgnet.shape)
         sim = cosine_similarity(imgnet)
-        supercat_sim = make_supercat_similarity_matrix(sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order])
-        plt.imshow(
-            supercat_sim,
-            cmap="YlOrRd",
+        supercat_sim = make_supercat_similarity_matrix(
+            sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
         )
+        # plt.imshow(
+        #     supercat_sim,
+        #     cmap="YlOrRd",
+        # )
+        linked = linkage(supercat_sim, 'single')
+        dendrogram(linked,
+                orientation='top',
+                labels=COCO_super_cat,
+                distance_sort='descending',
+                show_leaf_counts=True)
         plt.title("Layer " + str(i + 1))
         plt.colorbar()
-    plt.savefig("../Cats/figures/rsm/convnet_supercat.png")
+    plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
+    
+
+    
+
+    
+
 
 
     # print category order
