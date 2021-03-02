@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from cka import cca_core
-from CKA.cka import linear_CKA, kernel_CKA
+from cka.CKA import linear_CKA, kernel_CKA
 
 def make_sym_matrix(X):
     X = X + X.T - np.diag(np.diag(X))
