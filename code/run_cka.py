@@ -39,7 +39,7 @@ def imshow_cka_results(out, labels, figname):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fearture_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features/subj1")
+    parser.add_argument("--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features/subj1")
     parser.add_argument("--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output/cka/subj1")
     parser.add_argument("--figure_dir", type=str, default="/home/yuanw3/NSD/figures/CKA/subj1")
     args = parser.parse_args()
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     for task in tasks:
         reps = list()
         for layer in layers:
-            reps.append(np.load("%s/taskrepr_%s%s.npy" % (args.task, layer)))
+            reps.append(np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer)))
             lcka, kcka = pairwise_cka(reps)
             np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
             np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
