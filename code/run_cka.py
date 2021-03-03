@@ -75,7 +75,7 @@ if __name__ == "__main__":
     subj1 = stim["subject1"].copy()
     subj1[~stim["shared1000"]] = 0
     subj1_idx = subj1[stim["subject1"]]
-    subset_idx = np.array(subj1).astype(bool)
+    subset_idx = np.array(subj1_idx).astype(bool)
 
     assert len(subset_idx) == 10000
     assert np.sum(subset_idx) == 1000
