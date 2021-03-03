@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features/subj1")
     parser.add_argument("--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output/cka")
     parser.add_argument("--figure_dir", type=str, default="/home/yuanw3/NSD/figures/CKA")
-    parser.add_argument("--cka_across_layers", action="store_true")
+    parser.add_argument("--cka_across_layers", action="store_true", default=True)
     parser.add_argument("--cka_across_layers_and_brain", type=str)
     args = parser.parse_args()
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     
     # experiment 1 - across all layers for a network
     if args.cka_across_layers:
-        for task in tasks:
+        for task in task_layer_dict.keys():
             print("Running CKA for task %s..." % task)
             layer_labels = task_layer_dict[task].copy()
             layer_labels[4] = "_bottle_neck"
