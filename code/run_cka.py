@@ -77,6 +77,7 @@ if __name__ == "__main__":
     subj1_idx = subj1[stim["subject1"]]
     subset_idx = np.array(subj1_idx).astype(bool)
 
+    print(len(subset_idx))
     assert len(subset_idx) == 10000
     assert np.sum(subset_idx) == 1000
 
