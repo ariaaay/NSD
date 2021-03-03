@@ -1,9 +1,11 @@
 import argparse
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from cka import cca_core
-from cka.CKA import linear_CKA, kernel_CKA
+from cka.CKA import kernel_CKA, linear_CKA
+
 
 def make_sym_matrix(X):
     X = X + X.T - np.diag(np.diag(X))
@@ -37,6 +39,20 @@ def imshow_cka_results(out, labels, figname):
     plt.savefig(figname)
 
 
+def run_cka_for_layers(task, layers, layer_labels):
+    reps = list()
+    for layer in layers:
+        reps.append(np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer)))
+        lcka, kcka = pairwise_cka(reps)
+        np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
+        np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
+
+    figname = "%s/%s_linear_cka.png" % (args.figure_dir, task)
+    imshow_cka_results(lcka, layer_labels, figname=figname)
+
+    figname = "%s/%s_kernal_cka.png" % (args.figure_dir, task)
+    imshow_cka_results(kcka, layer_labels, figname=figname)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features/subj1")
@@ -46,22 +62,21 @@ if __name__ == "__main__":
 
     # experiment 1 - across all layers for a network
     tasks = ["class_1000", "class_places"]
+    layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", ""]
+    layer_labels = layers.copy()
+    layer_labels[4] = "_bottle_neck"
+
+    for task in tasks:
+        run_cka_for_layers(task, layers, layer_labels)
+
+    tasks = ["edge2d", "edge3d"]
     layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", "", "_output_layer1"]
     layer_labels = layers.copy()
     layer_labels[4] = "_bottle_neck"
     
     for task in tasks:
-        reps = list()
-        for layer in layers:
-            reps.append(np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer)))
-            lcka, kcka = pairwise_cka(reps)
-            np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
-            np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
+        run_cka_for_layers(task, layers, layer_labels)
 
-        figname = "%s/%s_linear_cka.png" % (args.figure_dir, task)
-        imshow_cka_results(lcka, layer_labels, figname=figname)
-
-        figname = "%s/%s_kernal_cka.png" % (args.figure_dir, task)
-        imshow_cka_results(kcka, layer_labels, figname=figname)
+    
 
     
