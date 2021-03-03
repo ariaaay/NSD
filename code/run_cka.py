@@ -2,6 +2,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from cka import cca_core
 from cka.CKA import kernel_CKA, linear_CKA
@@ -39,10 +40,15 @@ def imshow_cka_results(out, labels, figname):
     plt.savefig(figname)
 
 
-def run_cka_for_layers(task, layers, layer_labels):
+def run_cka_for_layers(task, layers, layer_labels, subset_idx=None):
     reps = list()
     for layer in layers:
-        reps.append(np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer)))
+        print("Running CKA for Layers %s..." % layer)
+        feature = np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer))
+        if subset_idx is None:
+            reps.append(feature)
+        else:
+            reps.append(feature[subset_idx, :])
         lcka, kcka = pairwise_cka(reps)
         np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
         np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
@@ -56,27 +62,45 @@ def run_cka_for_layers(task, layers, layer_labels):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features/subj1")
-    parser.add_argument("--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output/cka/subj1")
-    parser.add_argument("--figure_dir", type=str, default="/home/yuanw3/NSD/figures/CKA/subj1")
+    parser.add_argument("--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output/cka")
+    parser.add_argument("--figure_dir", type=str, default="/home/yuanw3/NSD/figures/CKA")
+    parser.add_argument("--cka_across_layers", action="store_true")
+    parser.add_argument("--cka_across_layers_and_brain", type=str)
     args = parser.parse_args()
 
-    # experiment 1 - across all layers for a network
+    # select the common 1000 images from subject 1
+    stim = pd.read_pickle(
+        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+    )
+    subj1 = stim["subject1"].copy()
+    subj1[~stim["shared1000"]] = 0
+    subset_idx = np.array(subj1).astype(bool)
+    assert np.sum(subset_idx) == 1000
+
+
+    # construct task to layer dictionary
+    task_layer_dict = dict()
     tasks = ["class_1000", "class_places"]
-    layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", ""]
-    layer_labels = layers.copy()
-    layer_labels[4] = "_bottle_neck"
-
+    basic_layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", ""]
     for task in tasks:
-        run_cka_for_layers(task, layers, layer_labels)
-
-    tasks = ["edge2d", "edge3d"]
-    layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", "", "_output_layer1"]
-    layer_labels = layers.copy()
-    layer_labels[4] = "_bottle_neck"
+        task_layer_dict[task] = basic_layers
     
+    tasks = ["edge2d", "edge3d"]
+    layers = basic_layers + ["_output_layer1"]
     for task in tasks:
-        run_cka_for_layers(task, layers, layer_labels)
+        task_layer_dict[task] = layers
+    
+    # experiment 1 - across all layers for a network
+    if args.cka_across_layers:
+        for task in tasks:
+            print("Running CKA for task %s..." % task)
+            layer_labels = task_layer_dict[task].copy()
+            layer_labels[4] = "_bottle_neck"
+            run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
 
+    # # experiment 2 - across layer and the brain
+    # if args.cka_across_layers_and_brain:
+    #     for task
     
 
     
