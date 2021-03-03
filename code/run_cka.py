@@ -74,7 +74,7 @@ if __name__ == "__main__":
     )
     subj1 = stim["subject1"].copy()
     subj1[~stim["shared1000"]] = 0
-    subj1_idx = subj1[stim["subject1"]]
+    subj1_idx = subj1[np.array(stim["subject1"]).astype(bool)]
     subset_idx = np.array(subj1_idx).astype(bool)
 
     print(len(subset_idx))
