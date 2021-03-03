@@ -97,6 +97,7 @@ if __name__ == "__main__":
     if args.cka_across_layers:
         for task in task_layer_dict.keys():
             print("Running CKA for task %s..." % task)
+            layers = task_layer_dict[task]
             layer_labels = task_layer_dict[task].copy()
             layer_labels[4] = "_bottle_neck"
             run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
