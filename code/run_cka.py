@@ -46,9 +46,9 @@ def run_cka_for_layers(task, layers, layer_labels, subset_idx=None):
         print("Running CKA for Layers %s..." % layer)
         feature = np.load("%s/%s%s.npy" % (args.feature_dir, task, layer))
         if subset_idx is None:
-            reps.append(feature)
+            reps.append(feature.squeeze())
         else:
-            reps.append(feature[subset_idx, :])
+            reps.append(feature[subset_idx, :].squeeze())
         lcka, kcka = pairwise_cka(reps)
         np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
         np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
