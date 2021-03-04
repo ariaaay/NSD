@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # for task in tasks:
     #     task_layer_dict[task] = layers
 
-    tasks = ["convnet_alexnet_", "place_alexnet"]
+    tasks = ["convnet_alexnet", "place_alexnet"]
     layers = ["_conv1_avgpool", "_conv2_avgpool", "_conv3_avgpool", "_conv4_avgpool", "_conv5_avgpool", "_fc6_avgpool", "_fc7_avgpool"]
     for task in tasks:
         task_layer_dict[task] = layers
