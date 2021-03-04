@@ -77,7 +77,6 @@ if __name__ == "__main__":
     subj1_idx = subj1[np.array(stim["subject1"]).astype(bool)]
     subset_idx = np.array(subj1_idx).astype(bool)
 
-    print(len(subset_idx))
     assert len(subset_idx) == 10000
     assert np.sum(subset_idx) == 1000
 
@@ -93,21 +92,21 @@ if __name__ == "__main__":
     # for task in tasks:
     #     task_layer_dict[task] = layers
 
-    tasks = ["alexnet_convnet"]
+    tasks = ["alexnet_convnet", "place_alexnet"]
     layers = ["_conv1_avgpool", "_conv2_avgpool", "_conv3_avgpool", "_conv4_avgpool", "_conv5_avgpool", "_fc6_avgpool", "_fc7_avgpool"]
     for task in tasks:
         task_layer_dict[task] = layers
     
 
     
-    # # experiment 1 - across all layers for a network
-    # if args.cka_across_layers:
-    #     for task in task_layer_dict.keys():
-    #         print("Running CKA for task %s..." % task)
-    #         layers = task_layer_dict[task]
-    #         layer_labels = task_layer_dict[task].copy()
-    #         layer_labels[4] = "_bottle_neck"
-    #         run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
+    # experiment 1 - across all layers for a network
+    if args.cka_across_layers:
+        for task in task_layer_dict.keys():
+            print("Running CKA for task %s..." % task)
+            layers = task_layer_dict[task]
+            layer_labels = task_layer_dict[task].copy()
+            layer_labels[4] = "_bottle_neck"
+            run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
 
     # # experiment 2 - across layer and the brain
     # if args.cka_across_layers_and_brain:
