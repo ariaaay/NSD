@@ -109,9 +109,9 @@ if __name__ == "__main__":
     #         layer_labels[4] = "_bottle_neck"
     #         run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
 
-    # experiment 2 - across layer and the brain
-    if args.cka_across_layers_and_brain:
-        for task
+    # # experiment 2 - across layer and the brain
+    # if args.cka_across_layers_and_brain:
+    #     for task
     
 
     
