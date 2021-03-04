@@ -135,8 +135,8 @@ def run_cka_across_brain_and_networks(
 
 def load_roi_mask(roi_name, roi_dict):
     roi_mask = np.load(
-        "%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-        % (args.output_dir, args.subj, args.subj, roi_name)
+        "/user_data/yuanw3/project_outputs/NSD/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.subj, args.subj, roi_name)
     )
     masks, labels = list(), list()
     for i, v in roi_dict.items():
