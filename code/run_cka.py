@@ -46,7 +46,7 @@ def imshow_cka_results(out, figname, labels, labels2 = None):
     if labels2 is None:
         plt.xticks(range(0, n2), labels=labels)
     else:
-        plt.xticks(range(0, n2), labels=labels2)
+        plt.xticks(range(0, n2), labels=labels2, rotation = 45)
     plt.colorbar()
 
     for i in range(n1):
