@@ -152,7 +152,7 @@ def load_roi_mask(roi_name, roi_dict):
 def load_roi_data(roi_names, subset_idx=None):
     brain_data_list = list()
     brain_path = (
-        "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
+        "/user_data/yuanw3/project_outputs/NSD/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
         % (args.output_dir, args.subj)
     )
 
