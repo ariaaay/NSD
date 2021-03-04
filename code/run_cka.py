@@ -256,21 +256,22 @@ if __name__ == "__main__":
         )
 
     if args.cka_across_networks_and_brain:
-        tasks = args.cka_across_networks_and_brain
-
+        task = args.cka_across_networks_and_brain
+        layers = task_layer_dict[task]
+        layer_labels = layers.copy()
+        layer_labels[4] = "_bottle_neck"
         roi_names = ["prf-visualrois", "prf-eccrois", "floc-faces", "floc-places"]
         roi_data, brain_labels = list(), list()
         for roi_name in roi_names:
             data, labels = load_roi_data(roi_names)
             roi_data += data
             brain_labels += labels
-        for task in tasks:
-            print("Running CKA for task %s and the brain..." % task)
-            run_cka_across_brain_and_networks(
-                task,
-                layers1,
-                roi_data,
-                layer_labels,
-                brain_labels,
-                subset_idx=subset_idx,
-            )
+        print("Running CKA for task %s and the brain..." % task)
+        run_cka_across_brain_and_networks(
+            task,
+            layers,
+            roi_data,
+            layer_labels,
+            brain_labels,
+            subset_idx=subset_idx,
+        )
