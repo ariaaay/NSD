@@ -112,28 +112,26 @@ def run_cka_across_networks(
     figname = "%s/%s_vs_%s_kernal_cka.png" % (args.figure_dir, tasks[0], tasks[1])
     imshow_cka_results(kcka, figname, layer_labels1, layer_labels2)
 
-def run_cka_across_brain_and_networks(task, layers, brain_data, layer_labels, brain_labels, subset_idx):
+
+def run_cka_across_brain_and_networks(
+    task, layers, brain_data, layer_labels, brain_labels, subset_idx
+):
     reps = list()
     for layer in layers:
-        feature = np.load(
-            "%s/%s%s.npy" % (args.feature_dir, task, layer)
-        ).squeeze()
+        feature = np.load("%s/%s%s.npy" % (args.feature_dir, task, layer)).squeeze()
         if subset_idx is not None:
             feature = feature[subset_idx, :]
         reps.append(feature)
 
         lcka, kcka = cross_cka(reps, brain_data)
-        np.save(
-            "%s/%s_vs_brain_linear_cka.npy" % (args.output_dir, task), lcka
-        )
-        np.save(
-            "%s/%s_vs_brain_kernel_cka.npy" % (args.output_dir, task), kcka
-        )
+        np.save("%s/%s_vs_brain_linear_cka.npy" % (args.output_dir, task), lcka)
+        np.save("%s/%s_vs_brain_kernel_cka.npy" % (args.output_dir, task), kcka)
     figname = "%s/%s_vs_brain_linear_cka.png" % (args.figure_dir, task)
     imshow_cka_results(lcka, figname, layers, layer_labels, brain_labels)
 
     figname = "%s/%s_vs_brain_kernel_cka.png" % (args.figure_dir, task)
     imshow_cka_results(kcka, figname, layers, layer_labels, brain_labels)
+
 
 def load_roi_mask(roi_name, roi_dict):
     roi_mask = np.load(
@@ -141,7 +139,7 @@ def load_roi_mask(roi_name, roi_dict):
         % (args.output_dir, args.subj, args.subj, roi_name)
     )
     masks, labels = list(), list()
-    for i, v in roi_dict.items():        
+    for i, v in roi_dict.items():
         if i > 0:
             mask = roi_mask == i
             labels.append(v)
@@ -153,7 +151,7 @@ def load_roi_data(roi_names, subset_idx=None):
     brain_data_list = list()
     brain_path = (
         "/user_data/yuanw3/project_outputs/NSD/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
-        % (args.output_dir, args.subj)
+        % args.subj
     )
 
     br_data = np.load(brain_path)
@@ -259,7 +257,7 @@ if __name__ == "__main__":
 
     if args.cka_across_networks_and_brain:
         tasks = args.cka_across_networks_and_brain
-        
+
         roi_names = ["prf-visualrois", "prf-eccrois", "floc-faces", "floc-places"]
         roi_data, brain_labels = list(), list()
         for roi_name in roi_names:
@@ -269,6 +267,10 @@ if __name__ == "__main__":
         for task in tasks:
             print("Running CKA for task %s and the brain..." % task)
             run_cka_across_brain_and_networks(
-                task, layers1, roi_data, layer_labels, brain_labels, subset_idx=subset_idx
+                task,
+                layers1,
+                roi_data,
+                layer_labels,
+                brain_labels,
+                subset_idx=subset_idx,
             )
-
