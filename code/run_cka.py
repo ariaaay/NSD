@@ -263,7 +263,7 @@ if __name__ == "__main__":
         roi_names = ["prf-visualrois", "prf-eccrois", "floc-faces", "floc-places"]
         roi_data, brain_labels = list(), list()
         for roi_name in roi_names:
-            data, labels = load_roi_data(roi_names)
+            data, labels = load_roi_data(roi_names, subset_idx=subset_idx)
             roi_data += data
             brain_labels += labels
         print("Running CKA for task %s and the brain..." % task)
