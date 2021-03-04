@@ -44,7 +44,7 @@ def run_cka_for_layers(task, layers, layer_labels, subset_idx=None):
     reps = list()
     for layer in layers:
         print("Running CKA for Layers %s..." % layer)
-        feature = np.load("%s/taskrepr_%s%s.npy" % (args.feature_dir, task, layer))
+        feature = np.load("%s/%s%s.npy" % (args.feature_dir, task, layer))
         if subset_idx is None:
             reps.append(feature)
         else:
@@ -83,28 +83,35 @@ if __name__ == "__main__":
 
     # construct task to layer dictionary
     task_layer_dict = dict()
-    tasks = ["class_1000", "class_places"]
-    basic_layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", ""]
-    for task in tasks:
-        task_layer_dict[task] = basic_layers
+    # tasks = ["taskrepr_class_1000", "taskrepr_class_places"]
+    # basic_layers = ["_input_layer1", "_input_layer2", "_input_layer3", "_input_layer5", ""]
+    # for task in tasks:
+    #     task_layer_dict[task] = basic_layers
     
-    tasks = ["edge2d", "edge3d"]
-    layers = basic_layers + ["_output_layer1"]
+    # tasks = ["taskrepr_edge2d", "taskrepr_edge3d"]
+    # layers = basic_layers + ["_output_layer1"]
+    # for task in tasks:
+    #     task_layer_dict[task] = layers
+
+    tasks = ["alexnet_convnet"]
+    layers = ["_conv1_avgpool", "_conv2_avgpool", "_conv3_avgpool", "_conv4_avgpool", "_conv5_avgpool", "_fc6_avgpool", "_fc7_avgpool"]
     for task in tasks:
         task_layer_dict[task] = layers
     
-    # experiment 1 - across all layers for a network
-    if args.cka_across_layers:
-        for task in task_layer_dict.keys():
-            print("Running CKA for task %s..." % task)
-            layers = task_layer_dict[task]
-            layer_labels = task_layer_dict[task].copy()
-            layer_labels[4] = "_bottle_neck"
-            run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
 
-    # # experiment 2 - across layer and the brain
-    # if args.cka_across_layers_and_brain:
-    #     for task
+    
+    # # experiment 1 - across all layers for a network
+    # if args.cka_across_layers:
+    #     for task in task_layer_dict.keys():
+    #         print("Running CKA for task %s..." % task)
+    #         layers = task_layer_dict[task]
+    #         layer_labels = task_layer_dict[task].copy()
+    #         layer_labels[4] = "_bottle_neck"
+    #         run_cka_for_layers(task, layers, layer_labels, subset_idx=subset_idx)
+
+    # experiment 2 - across layer and the brain
+    if args.cka_across_layers_and_brain:
+        for task
     
 
     
