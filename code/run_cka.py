@@ -17,7 +17,7 @@ def make_sym_matrix(X):
 def pairwise_cka(reps):
     lcka = np.zeros((len(reps), len(reps)))
     kcka = lcka.copy()
-    for i, rep1 in enumerate(reps[:-1]):
+    for i, rep1 in enumerate(reps):
         for k, rep2 in enumerate(reps[i:]):
             lcka[i, k + i] = linear_CKA(rep1, rep2)
             kcka[i, k + i] = kernel_CKA(rep1, rep2)
