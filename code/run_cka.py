@@ -37,19 +37,20 @@ def cross_cka(reps1, reps2):
     return lcka, kcka
 
 def imshow_cka_results(out, figname, labels, labels2 = None):
-    n = out.shape[0]
+    n1 = out.shape[0]
+    n2 = out.shape[1]
 
     plt.figure()
     plt.imshow(out)
-    plt.yticks(range(0, n), labels=labels)
+    plt.yticks(range(0, n1), labels=labels)
     if labels2 is None:
-        plt.xticks(range(0, n), labels=labels)
+        plt.xticks(range(0, n2), labels=labels)
     else:
-        plt.xticks(range(0, n), labels=labels2)
+        plt.xticks(range(0, n2), labels=labels2)
     plt.colorbar()
 
-    for i in range(n):
-        for j in range(n):
+    for i in range(n1):
+        for j in range(n2):
             text = plt.text(
                 j, i, round(out[i, j], 2), ha="center", va="center", color="w"
             )
