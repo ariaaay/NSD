@@ -32,8 +32,8 @@ def cross_cka(reps1, reps2):
     kcka = lcka.copy()
     for i, rep1 in enumerate(reps1):
         for k, rep2 in enumerate(reps2):
-            lcka[i, k + i] = linear_CKA(rep1, rep2)
-            kcka[i, k + i] = kernel_CKA(rep1, rep2)
+            lcka[i, k] = linear_CKA(rep1, rep2)
+            kcka[i, k] = kernel_CKA(rep1, rep2)
     return lcka, kcka
 
 def imshow_cka_results(out, figname, labels, labels2 = None):
