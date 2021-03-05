@@ -163,6 +163,7 @@ def load_roi_data(roi_names, subset_idx=None):
             if subset_idx is None:
                 brain_data_list.append(br_data[:, mask])
             else:
+                print(br_data.shape)
                 print(subset_idx.shape)
                 print(mask.shape)
                 br_data = br_data[subset_idx,: ]
