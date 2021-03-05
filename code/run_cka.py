@@ -127,10 +127,10 @@ def run_cka_across_brain_and_networks(
         np.save("%s/%s_vs_brain_linear_cka.npy" % (args.output_dir, task), lcka)
         np.save("%s/%s_vs_brain_kernel_cka.npy" % (args.output_dir, task), kcka)
     figname = "%s/%s_vs_brain_linear_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(lcka, figname, layers, layer_labels, brain_labels)
+    imshow_cka_results(lcka, figname, layer_labels, brain_labels)
 
     figname = "%s/%s_vs_brain_kernel_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(kcka, figname, layers, layer_labels, brain_labels)
+    imshow_cka_results(kcka, figname, layer_labels, brain_labels)
 
 
 def load_roi_mask(roi_name, roi_dict):
@@ -157,7 +157,7 @@ def load_roi_data(roi_names, subset_idx=None):
     br_data = np.load(brain_path)
     if subset_idx is not None:
         br_data = br_data[subset_idx,: ]
-        
+
     for roi_name in roi_names:
         roi_label_dict = roi_name_dict[roi_name]
         voxel_masks, labels = load_roi_mask(roi_name, roi_label_dict)
