@@ -155,19 +155,15 @@ def load_roi_data(roi_names, subset_idx=None):
     )
 
     br_data = np.load(brain_path)
+    if subset_idx is not None:
+        br_data = br_data[subset_idx,: ]
+        
     for roi_name in roi_names:
         roi_label_dict = roi_name_dict[roi_name]
         voxel_masks, labels = load_roi_mask(roi_name, roi_label_dict)
 
         for mask in voxel_masks:
-            if subset_idx is None:
-                brain_data_list.append(br_data[:, mask])
-            else:
-                print(br_data.shape)
-                print(subset_idx.shape)
-                print(mask.shape)
-                br_data = br_data[subset_idx,: ]
-                brain_data_list.append(br_data[:, mask])
+            brain_data_list.append(br_data[:, mask])
 
     return brain_data_list, labels
 
