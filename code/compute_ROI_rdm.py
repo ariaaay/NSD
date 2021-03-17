@@ -23,7 +23,7 @@ def extract_single_roi(roi_name):
             % (args.output_dir, args.subj, args.subj, roi_name)
         )
     roi_dict = roi_name_dict[roi_name]
-    for k, v in roi_dict:
+    for k, v in roi_dict.items():
         if k > 0:
             output_masks.append(roi_mask == k)
             roi_labels.append(v)
