@@ -209,57 +209,57 @@ if __name__ == "__main__":
     # plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
 
     ##### individual ROIs #####
-    roi_name = ["PPA", "OPA", "RSC", "FFA-1", "FFA-2"]
-    brains = list()
-    for roi in roi_name:
-        brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
+    # roi_name = ["PPA", "OPA", "RSC", "FFA-1", "FFA-2"]
+    # brains = list()
+    # for roi in roi_name:
+    #     brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
 
-    plt.figure(figsize=(50, 10))
-    for i, b in enumerate(brains):
-        plt.subplot(1, 5, i + 1)
-        plt.imshow(
-            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
-        plt.title(roi_name[i])
+    # plt.figure(figsize=(50, 10))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(1, 5, i + 1)
+    #     plt.imshow(
+    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+    #     plt.title(roi_name[i])
 
-    plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
 
-    plt.figure(figsize=(50, 10))
-    for i, b in enumerate(brains):
-        plt.subplot(1, 5, i + 1)
-        b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
-        plt.imshow(
-            b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
-        plt.title(roi_name[i])
-        np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
-    plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs_supercat.png")
+    # plt.figure(figsize=(50, 10))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(1, 5, i + 1)
+    #     b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
+    #     plt.imshow(
+    #         b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+    #     plt.title(roi_name[i])
+    #     np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs_supercat.png")
 
-    roi_name = list(visual_roi_names.values())[2:]
-    brains = list()
-    for roi in roi_name:
-        brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
+    # roi_name = list(visual_roi_names.values())[2:]
+    # brains = list()
+    # for roi in roi_name:
+    #     brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
 
-    plt.figure(figsize=(50, 10))
-    for i, b in enumerate(brains):
-        plt.subplot(2, 4, i + 1)
-        plt.imshow(
-            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
-        plt.title(roi_name[i])
+    # plt.figure(figsize=(50, 10))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(2, 4, i + 1)
+    #     plt.imshow(
+    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+    #     plt.title(roi_name[i])
 
-    plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs.png")
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs.png")
 
-    plt.figure(figsize=(50, 10))
-    for i, b in enumerate(brains):
-        plt.subplot(2, 4, i + 1)
-        b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
-        plt.imshow(
-            b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
-        plt.title(roi_name[i])
-        np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
-    plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs_supercat.png")
+    # plt.figure(figsize=(50, 10))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(2, 4, i + 1)
+    #     b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
+    #     plt.imshow(
+    #         b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+    #     plt.title(roi_name[i])
+    #     np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs_supercat.png")
 
     
     ##### bert_caption #####
@@ -424,33 +424,33 @@ if __name__ == "__main__":
     # plt.savefig("../Cats/figures/rsm/convnet.png")
 
     ###### plot imagenet within cat #####
-    # plt.figure(figsize=(60, 20))
-    # layers = ["conv"] * 5 + ["fc"] * 2
-    # for i in range(7):
-    #     plt.subplot(2, 4, i + 1)
-    #     imgnet = np.load(
-    #         "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
-    #         % (features_output_dir, args.subj, layers[i], i + 1)
-    #     ).squeeze()
-    #     print(imgnet.shape)
-    #     sim = cosine_similarity(imgnet)
-    #     supercat_sim = make_supercat_similarity_matrix(
-    #         sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-    #     )
-    #     np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % i+1)
-    #     # plt.imshow(
-    #     #     supercat_sim,
-    #     #     cmap="YlOrRd",
-    #     # )
-    #     linked = linkage(supercat_sim, 'single')
-    #     dendrogram(linked,
-    #             orientation='top',
-    #             leaf_rotation=45, 
-    #             labels=COCO_super_cat,
-    #             distance_sort='descending',
-    #             show_leaf_counts=True)
-    #     plt.title("Layer " + str(i + 1))
-    # plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
+    plt.figure(figsize=(60, 20))
+    layers = ["conv"] * 5 + ["fc"] * 2
+    for i in range(7):
+        plt.subplot(2, 4, i + 1)
+        imgnet = np.load(
+            "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
+            % (features_output_dir, args.subj, layers[i], i + 1)
+        ).squeeze()
+        print(imgnet.shape)
+        sim = cosine_similarity(imgnet)
+        supercat_sim = make_supercat_similarity_matrix(
+            sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+        )
+        np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % (i+1))
+        # plt.imshow(
+        #     supercat_sim,
+        #     cmap="YlOrRd",
+        # )
+        linked = linkage(supercat_sim, 'single')
+        dendrogram(linked,
+                orientation='top',
+                leaf_rotation=45, 
+                labels=COCO_super_cat,
+                distance_sort='descending',
+                show_leaf_counts=True)
+        plt.title("Layer " + str(i + 1))
+    plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
 
     # print category order
     labels = [COCO_super_cat[c] for c in max_cat[max_cat_order]]
