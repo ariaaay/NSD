@@ -336,7 +336,7 @@ if __name__ == "__main__":
     sorted_bert_sim_supercat = make_supercat_similarity_matrix(
         sorted_bert_sim, max_cat[max_cat_order]
     )
-    np.save("../Cats/output/rsm_bert_supercat.npy", sorted_bert_sim_supercat)
+    np.save("../Cats/outputs/rsm_bert_supercat.npy", sorted_bert_sim_supercat)
     # plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
     # plt.title("BERT features of captions")
     # plt.colorbar()
