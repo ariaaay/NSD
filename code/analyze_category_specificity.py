@@ -211,7 +211,7 @@ if __name__ == "__main__":
     roi_name = ["PPA", "OPA", "RSC", "FFA-1", "FFA-2"]
     brains = list()
     for roi in roi_name:
-        brains.append(np.load("%s/subj%02d_places_%s.npy" % (proj_output_dir, args.subj, roi)))
+        brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
 
     plt.figure(figsize=(10, 50))
     for i, b in enumerate(brains):
