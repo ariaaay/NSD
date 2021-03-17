@@ -8,6 +8,8 @@ from collections import Counter
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.cluster.hierarchy import dendrogram, linkage
 
+from util.util import zscore
+
 
 def make_text_sim_matrix(vocab):
     # text_embedding_of_labels
@@ -168,9 +170,6 @@ if __name__ == "__main__":
 
     # Sample images
 
-    # # load random 1000 images idb
-    # random_img_ind = np.random.choice(np.arange(image_supercat.shape[0]), 10000)
-
     # load subj's 10000 image id
     cocoId_subj = np.load(
         "%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj)
@@ -207,46 +206,47 @@ if __name__ == "__main__":
     # plt.colorbar()
     # plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
 
-    # individua_ROIs
-    # PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
-    # OPA = np.load("%s/subj%02d_places_OPA.npy" % (proj_output_dir, args.subj))
-    # RSC = np.load("%s/subj%02d_places_RSC.npy" % (proj_output_dir, args.subj))
-    # FFA1 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
-    # FFA2 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
+    ##### individual ROIs #####
+    PPA = np.load("%s/subj%02d_places_PPA.npy" % (proj_output_dir, args.subj))
+    OPA = np.load("%s/subj%02d_places_OPA.npy" % (proj_output_dir, args.subj))
+    RSC = np.load("%s/subj%02d_places_RSC.npy" % (proj_output_dir, args.subj))
+    FFA1 = np.load("%s/subj%02d_faces_FFA-1.npy" % (proj_output_dir, args.subj))
+    FFA2 = np.load("%s/subj%02d_faces_FFA-2.npy" % (proj_output_dir, args.subj))
 
-    # brains = [PPA, OPA, RSC, FFA1, FFA2]
+    brains = [PPA, OPA, RSC, FFA1, FFA2]
 
-    # plt.figure(figsize=(50, 10))
-    # for i, b in enumerate(brains):
-    #     plt.subplot(1, 5, i + 1)
-    #     plt.imshow(
-    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-    #     )
+    plt.figure(figsize=(10, 50))
+    for i, b in enumerate(brains):
+        plt.subplot(1, 5, i + 1)
+        plt.imshow(
+            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+        )
 
-    # plt.savefig("../Cats/figures/rsm_COCOsupercat_individual_ROIs.png")
+    plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
 
-    # bert_caption
-    from util.util import zscore
+    # TODO: plot super cat
 
+
+    ##### bert_caption #####
     bert = np.load(
         "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
         % (args.subj)
     )
 
-    # layers
-    bert_layer_sim, bert_layer_sim_supercat = [], []
-    for i in range(bert.shape[2]):
-        blayer = np.reshape(
-            bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3])
-        )
-        blayer = zscore(blayer, axis=1)
-        bsim = cosine_similarity(blayer)
-        # bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
-        bert_layer_sim_supercat.append(
-            make_supercat_similarity_matrix(
-                bsim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-            )
-        )
+    # # layers
+    # bert_layer_sim, bert_layer_sim_supercat = [], []
+    # for i in range(bert.shape[2]):
+    #     blayer = np.reshape(
+    #         bert[:, :, i, :].squeeze(), (bert.shape[0], bert.shape[1] * bert.shape[3])
+    #     )
+    #     blayer = zscore(blayer, axis=1)
+    #     bsim = cosine_similarity(blayer)
+    #     # bert_layer_sim.append(bsim[max_cat_order,:][:, max_cat_order])
+    #     bert_layer_sim_supercat.append(
+    #         make_supercat_similarity_matrix(
+    #             bsim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+    #         )
+    #     )
 
     # plt.figure(figsize=(50, 10))
     # for i in range(13):
@@ -272,13 +272,13 @@ if __name__ == "__main__":
     bert_sim = cosine_similarity(bert)
     sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
 
-    # all_rois
+    ###### all_rois #####
     all_rois = np.load(
         "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
         % (proj_output_dir, args.subj)
     )
 
-    # plot comparison
+    ###### plot comparison #####
     # plt.figure(figsize=(40, 20))
 
     # plt.subplot(2, 2, 1)
@@ -327,28 +327,29 @@ if __name__ == "__main__":
     # plt.colorbar()
 
     # plt.subplot(2, 2, 3)
-    # sorted_bert_sim_supercat = make_supercat_similarity_matrix(
-    #     sorted_bert_sim, max_cat[max_cat_order]
-    # )
+    sorted_bert_sim_supercat = make_supercat_similarity_matrix(
+        sorted_bert_sim, max_cat[max_cat_order]
+    )
     # plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
     # plt.title("BERT features of captions")
     # plt.colorbar()
 
     # plt.subplot(2, 2, 4)
-    # all_rois_supercat = make_supercat_similarity_matrix(
-    #     all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-    # )
+    all_rois_supercat = make_supercat_similarity_matrix(
+        all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+    )
     # plt.imshow(all_rois_supercat, cmap="YlOrRd")
     # plt.title("All ROIs")
     # plt.colorbar()
 
     # plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
 
-    # ROI dendrogram
+    ##### ROI dendrogram #####
     plt.figure(figsize=(20, 10))
     linked = linkage(all_rois_supercat, 'single')
     dendrogram(linked,
             orientation='top',
+            leaf_rotation=90, 
             labels=COCO_super_cat,
             distance_sort='descending',
             show_leaf_counts=True)
@@ -359,6 +360,7 @@ if __name__ == "__main__":
     linked = linkage(sorted_bert_sim_supercat, 'single')
     dendrogram(linked,
             orientation='top',
+            leaf_rotation=90,
             labels=COCO_super_cat,
             distance_sort='descending',
             show_leaf_counts=True)
@@ -405,6 +407,7 @@ if __name__ == "__main__":
         linked = linkage(supercat_sim, 'single')
         dendrogram(linked,
                 orientation='top',
+                leaf_rotation=45, 
                 labels=COCO_super_cat,
                 distance_sort='descending',
                 show_leaf_counts=True)
