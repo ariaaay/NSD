@@ -10,6 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 from util.util import zscore
+from util.model_config import *
 
 
 def make_text_sim_matrix(vocab):
@@ -208,36 +209,50 @@ if __name__ == "__main__":
     # plt.savefig("../Cats/figures/rsm_COCOsupercat_object_areas.png")
 
     ##### individual ROIs #####
-    roi_name = ["PPA", "OPA", "RSC", "FFA-1", "FFA-2"]
-    brains = list()
-    for roi in roi_name:
-        brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
+    # roi_name = ["PPA", "OPA", "RSC", "FFA-1", "FFA-2"]
+    # brains = list()
+    # for roi in roi_name:
+    #     brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
 
-    plt.figure(figsize=(10, 50))
-    for i, b in enumerate(brains):
-        plt.subplot(1, 5, i + 1)
-        plt.imshow(
-            b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
+    # plt.figure(figsize=(10, 50))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(1, 5, i + 1)
+    #     plt.imshow(
+    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
 
-    plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
+
+    # roi_name = list(visual_roi_names.values())[2:]
+    # brains = list()
+    # for roi in roi_name:
+    #     brains.append(np.load("%s/subj%02d_%s.npy" % (proj_output_dir, args.subj, roi)))
+
+    # plt.figure(figsize=(10, 50))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(2, 4, i + 1)
+    #     plt.imshow(
+    #         b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs.png")
 
     # TODO: plot super cat
-    plt.figure(figsize=(10, 50))
-    for i, b in enumerate(brains):
-        plt.subplot(1, 5, i + 1)
-        b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
-        plt.imshow(
-            b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
-        )
-        np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
-    plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs_supercat.png")
+    # plt.figure(figsize=(10, 50))
+    # for i, b in enumerate(brains):
+    #     plt.subplot(1, 5, i + 1)
+    #     b_supercat = make_supercat_similarity_matrix(b[:, max_cat_order][max_cat_order, :], max_cat[max_cat_order])
+    #     plt.imshow(
+    #         b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
+    #     )
+    #     np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
+    # plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs_supercat.png")
     
-    ##### bert_caption #####
-    bert = np.load(
-        "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
-        % (args.subj)
-    )
+    # ##### bert_caption #####
+    # bert = np.load(
+    #     "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
+    #     % (args.subj)
+    # )
 
     # # layers
     # bert_layer_sim, bert_layer_sim_supercat = [], []
@@ -270,19 +285,19 @@ if __name__ == "__main__":
     #     plt.colorbar()
     # plt.savefig("../Cats/figures/rsm/rsm_bert_by_layers_supercat.png")
 
-    bert = np.reshape(
-        bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3])
-    )
-    bert = zscore(bert, axis=1)
+    # bert = np.reshape(
+    #     bert, (bert.shape[0], bert.shape[1] * bert.shape[2] * bert.shape[3])
+    # )
+    # bert = zscore(bert, axis=1)
 
-    bert_sim = cosine_similarity(bert)
-    sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
+    # bert_sim = cosine_similarity(bert)
+    # sorted_bert_sim = bert_sim[max_cat_order, :][:, max_cat_order]
 
     ###### all_rois #####
-    all_rois = np.load(
-        "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
-        % (proj_output_dir, args.subj)
-    )
+    # all_rois = np.load(
+    #     "%s/subj%02d_floc-words_floc-faces_floc-places_prf-visualrois.npy"
+    #     % (proj_output_dir, args.subj)
+    # )
 
     ###### plot comparison #####
     # plt.figure(figsize=(40, 20))
@@ -333,19 +348,19 @@ if __name__ == "__main__":
     # plt.colorbar()
 
     # plt.subplot(2, 2, 3)
-    sorted_bert_sim_supercat = make_supercat_similarity_matrix(
-        sorted_bert_sim, max_cat[max_cat_order]
-    )
-    np.save("../Cats/outputs/rsm_bert_supercat.npy", sorted_bert_sim_supercat)
+    # sorted_bert_sim_supercat = make_supercat_similarity_matrix(
+    #     sorted_bert_sim, max_cat[max_cat_order]
+    # )
+    # np.save("../Cats/outputs/rsm_bert_supercat.npy", sorted_bert_sim_supercat)
     # plt.imshow(sorted_bert_sim_supercat, "YlOrRd")
     # plt.title("BERT features of captions")
     # plt.colorbar()
 
     # plt.subplot(2, 2, 4)
-    all_rois_supercat = make_supercat_similarity_matrix(
-        all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-    )
-    np.save("../Cats/outputs/rsm_all_rois_supercat.npy", all_rois_supercat)
+    # all_rois_supercat = make_supercat_similarity_matrix(
+    #     all_rois[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+    # )
+    # np.save("../Cats/outputs/rsm_all_rois_supercat.npy", all_rois_supercat)
     # plt.imshow(all_rois_supercat, cmap="YlOrRd")
     # plt.title("All ROIs")
     # plt.colorbar()
@@ -353,26 +368,26 @@ if __name__ == "__main__":
     # plt.savefig("../Cats/figures/rsm/comparison_supercat.png")
 
     ##### ROI dendrogram #####
-    plt.figure(figsize=(20, 10))
-    linked = linkage(all_rois_supercat, 'single')
-    dendrogram(linked,
-            orientation='top',
-            leaf_rotation=90, 
-            labels=COCO_super_cat,
-            distance_sort='descending',
-            show_leaf_counts=True)
-    plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
+    # plt.figure(figsize=(20, 10))
+    # linked = linkage(all_rois_supercat, 'single')
+    # dendrogram(linked,
+    #         orientation='top',
+    #         leaf_rotation=90, 
+    #         labels=COCO_super_cat,
+    #         distance_sort='descending',
+    #         show_leaf_counts=True)
+    # plt.savefig("../Cats/figures/rsm/dendrogram_roi.png")
 
-    # BERT dendrogram
-    plt.figure(figsize=(20, 10))
-    linked = linkage(sorted_bert_sim_supercat, 'single')
-    dendrogram(linked,
-            orientation='top',
-            leaf_rotation=90,
-            labels=COCO_super_cat,
-            distance_sort='descending',
-            show_leaf_counts=True)
-    plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
+    # # BERT dendrogram
+    # plt.figure(figsize=(20, 10))
+    # linked = linkage(sorted_bert_sim_supercat, 'single')
+    # dendrogram(linked,
+    #         orientation='top',
+    #         leaf_rotation=90,
+    #         labels=COCO_super_cat,
+    #         distance_sort='descending',
+    #         show_leaf_counts=True)
+    # plt.savefig("../Cats/figures/rsm/dendrogram_BERT.png")
 
     # # plot imagenet
     # plt.figure(figsize=(60, 20))
@@ -408,7 +423,7 @@ if __name__ == "__main__":
         supercat_sim = make_supercat_similarity_matrix(
             sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
         )
-        np.save("../Cats/outputs/imgnet_layer%d_supercat.npy" % i+1)
+        np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % i+1)
         # plt.imshow(
         #     supercat_sim,
         #     cmap="YlOrRd",
