@@ -65,4 +65,4 @@ if __name__ == "__main__":
             for i, m in enumerate(roi_masks):
                 brain_data = br_data[:, m]
                 rdm = np.corrcoef(brain_data)
-                np.save("%s/rdms/subj%02d_%s" % (args.output_dir, args.subj, roi_labels), rdm)
+                np.save("%s/rdms/subj%02d_%s" % (args.output_dir, args.subj, roi_labels[i]), rdm)
