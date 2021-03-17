@@ -220,6 +220,7 @@ if __name__ == "__main__":
         plt.imshow(
             b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
         )
+        plt.title(roi_name[i])
 
     plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs.png")
 
@@ -230,6 +231,7 @@ if __name__ == "__main__":
         plt.imshow(
             b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
         )
+        plt.title(roi_name[i])
         np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
     plt.savefig("../Cats/figures/rsm/rsm_individual_ROIs_supercat.png")
 
@@ -244,6 +246,7 @@ if __name__ == "__main__":
         plt.imshow(
             b[:, max_cat_order][max_cat_order, :], cmap="RdBu_r", vmin=-0.5, vmax=0.5,
         )
+        plt.title(roi_name[i])
 
     plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs.png")
 
@@ -254,6 +257,7 @@ if __name__ == "__main__":
         plt.imshow(
             b_supercat, cmap="RdBu_r", vmin=-0.5, vmax=0.5,
         )
+        plt.title(roi_name[i])
         np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
     plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs_supercat.png")
 
