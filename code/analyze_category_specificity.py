@@ -437,7 +437,7 @@ if __name__ == "__main__":
         supercat_sim = make_supercat_similarity_matrix(
             sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
         )
-        np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % (i+1))
+        np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % (i+1), supercat_sim)
         # plt.imshow(
         #     supercat_sim,
         #     cmap="YlOrRd",
