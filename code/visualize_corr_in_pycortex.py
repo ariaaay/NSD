@@ -7,11 +7,11 @@ import argparse
 from util.model_config import model_features
 
 
-def load_data(model, task, subj=1, measure="corr"):
+def load_data(model, task, output_root, subj=1, measure="corr"):
     output = pickle.load(
         open(
-            "output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-            % (subj, measure, model, task),
+            "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
+            % (output_root, subj, measure, model, task),
             "rb",
         )
     )
@@ -35,7 +35,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
     )
 
     # load correlation scores of cortical voxels
-    vals = load_data(model, task, subj=subj)
+    vals = load_data(model, task, output_root, subj=subj)
     try:
         cortical_mask = np.load(
             "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
@@ -170,10 +170,16 @@ if __name__ == "__main__":
     parser.add_argument("--sig_method", default="negtail_fdr")
     parser.add_argument("--alpha", default=0.05)
     parser.add_argument("--show_pcs", default=False, action="store_true")
+    parser.add_argument("--on_cluster", action="store_true")
 
     args = parser.parse_args()
 
-    vroi = nib.load("output/voxels_masks/subj%d/prf-visualrois.nii.gz" % args.subj)
+    if args.on_cluster:
+        output_root = "/user_data/yuanw3/project_outputs/NSD"
+    else:
+        output_root = "."
+
+    vroi = nib.load("%s/output/voxels_masks/subj%d/prf-visualrois.nii.gz" % (output_root, args.subj))
     vroi_data = vroi.get_fdata()
     vroi_data = np.swapaxes(vroi_data, 0, 2)
 
@@ -186,7 +192,7 @@ if __name__ == "__main__":
         ),
     )
 
-    ecc_roi = nib.load("output/voxels_masks/subj%d/prf-eccrois.nii.gz" % args.subj)
+    ecc_roi = nib.load("%s/output/voxels_masks/subj%d/prf-eccrois.nii.gz" % (output_root, args.subj))
     ecc_roi_data = ecc_roi.get_fdata()
     ecc_roi_data = np.swapaxes(ecc_roi_data, 0, 2)
 
@@ -199,7 +205,7 @@ if __name__ == "__main__":
         ),
     )
 
-    place_roi = nib.load("output/voxels_masks/subj%d/floc-places.nii.gz" % args.subj)
+    place_roi = nib.load("%s/output/voxels_masks/subj%d/floc-places.nii.gz" % (output_root, args.subj))
     place_roi_data = place_roi.get_fdata()
     place_roi_data = np.swapaxes(place_roi_data, 0, 2)
 
@@ -351,7 +357,7 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         pc_vols = []
-        PCs = np.load("output/pca/subj%d/pca_components.npy" % args.subj)
+        PCs = np.load("%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj))
         # Normalize the PCs
 
         from util.util import zscore

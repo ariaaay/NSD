@@ -48,19 +48,19 @@ if __name__ == "__main__":
         )
     
     if args.ID:
-        subsample_idx = np.random.choice(np.arange(10000), size=20, replace=False)
+        subsample_idx = np.random.choice(np.arange(10000), size=1000, replace=False)
         ID_dict = {}
         feat_names = os.listdir("%s/subj%d" % (args.feature_dir, args.subj))
         for fname in tqdm(feat_names):
             if ("avgpool" in fname) or ("layer" in fname):
                 print(fname)
                 feature = np.load("%s/subj%d/%s" % (args.feature_dir, args.subj, fname))
-                if feature.shape[-1] < 6000:
-                    r = feature.squeeze()[subsample_idx,:]
-                    mean, error = computeID(feature.squeeze())
-                    print(fname)
-                    print("Mean ID is: %d Error of ID is: %d" % (mean, error))
-                    ID_dict[fname] = (mean, error)
+                # if feature.shape[-1] < 6000:
+                r = feature.squeeze()[subsample_idx,:]
+                mean, error = computeID(feature.squeeze())
+                print(fname)
+                print("Mean ID is: %d Error of ID is: %d" % (mean, error))
+                ID_dict[fname] = (mean, error)
         with open("../Cats/outputs/ID_dict.json", "w") as f: 
             json.dump(ID_dict, f)
 
