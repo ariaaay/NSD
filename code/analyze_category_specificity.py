@@ -50,7 +50,9 @@ def make_supercat_similarity_matrix(sim, cat):
 
 
 def make_scree_plot(A, figname):
+    # center A
 
+    A = A - np.mean(A, axis=0)
     U, S, V = np.linalg.svd(A) 
     eigvals = S**2 / np.sum(S**2)  
     num_vars = len(eigvals)
@@ -482,9 +484,17 @@ if __name__ == "__main__":
     #     i0 += counter[k]
 
     # eigenvalue decomposition
+    # cats_output_path = "../Cats/outputs/"
+    # for f in os.listdir(cats_output_path):
+    #     if "json" not in f:
+    #         fname = f.split(".")[0]
+    #         rsm = np.load("../Cats/outputs/" + f)
+    #         make_scree_plot(rsm, fname)
 
-    cats_output_path = "../Cats/outputs/"
-    for f in os.listdir(cats_output_path):
-        fname = f.split(".")[0]
-        rsm = np.load("../Cats/outputs/" + f)
-        make_scree_plot(rsm, fname)
+    rsm_output_path = "%s/rdms/" % nsd_output_dir
+    for f in os.listdir(rsm_output_path):
+        if ("avgpool" not in f):
+            rsm = np.load(rsm_output_path + f)
+            fname = f.split(".")[0].strip("subj01_")
+            fname = "rsm_" + fname
+            make_scree_plot(rsm, fname)
