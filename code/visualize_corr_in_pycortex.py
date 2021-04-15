@@ -218,6 +218,19 @@ if __name__ == "__main__":
         ),
     )
 
+    face_roi = nib.load("%s/output/voxels_masks/subj%d/floc-faces.nii.gz" % (output_root, args.subj))
+    face_roi_data = face_roi.get_fdata()
+    face_roi_data = np.swapaxes(face_roi_data, 0, 2)
+
+    face_roi_volume = cortex.Volume(
+        face_roi_data,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+    )
+
     # subjport = int("1111{}".format(args.subj))
 
     volumes = {
@@ -353,6 +366,7 @@ if __name__ == "__main__":
         "Visual ROIs": visual_roi_volume,
         "Eccentricity ROIs": ecc_roi_volume,
         "Places ROIs": place_roi_volume,
+        "Faces ROIs": face_roi_volume,
     }
 
     if args.show_pcs:
