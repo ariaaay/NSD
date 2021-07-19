@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import os
 import argparse
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from collections import Counter
 from numpy.core import machar
@@ -46,6 +47,28 @@ def make_supercat_similarity_matrix(sim, cat):
             counter[ci, cj] += 1
     cat_sim = cat_sim / counter
     return cat_sim
+
+
+def make_scree_plot(A, figname):
+    # center A
+
+    A = A - np.mean(A, axis=0)
+    U, S, V = np.linalg.svd(A) 
+    eigvals = S**2 / np.sum(S**2)  
+    num_vars = len(eigvals)
+
+    fig = plt.figure(figsize=(8,5))
+    sing_vals = np.arange(num_vars) + 1
+    plt.plot(sing_vals, eigvals, 'ro-', linewidth=2)
+    plt.title('Scree Plot')
+    plt.xlabel('Principal Component')
+    plt.ylabel('Eigenvalue')
+    # leg = plt.legend(['Eigenvalues from SVD'], loc='best', borderpad=0.3, 
+    #                 shadow=False, prop=matplotlib.font_manager.FontProperties(size='small'),
+    #                 markerscale=0.4)
+    # leg.get_frame().set_alpha(0.4)
+    # leg.draggable(state=True)
+    plt.savefig("../Cats/figures/scree_plots/%s.png" % figname)
 
 
 if __name__ == "__main__":
@@ -155,8 +178,8 @@ if __name__ == "__main__":
     proj_output_dir = nsd_output_dir + "/rdms"
     features_output_dir = "/user_data/yuanw3/project_outputs/NSD/features"
 
-    image_cat = np.load("data/NSD_cat_feat.npy")
-    image_supercat = np.load("data/NSD_supcat_feat.npy")
+    # image_cat = np.load("data/NSD_cat_feat.npy")
+    # image_supercat = np.load("data/NSD_supcat_feat.npy")
 
     # # here the rsm is either 80 by 80 or 12 by 12
     # emb_cat_sim, _ = make_text_sim_matrix(COCO_cat)
@@ -172,29 +195,29 @@ if __name__ == "__main__":
 
     # Sample images
 
-    # load subj's 10000 image id
-    cocoId_subj = np.load(
-        "%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj)
-    )
-    nsd2coco = np.load("%s/NSD2cocoId.npy" % nsd_output_dir)
-    img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
-    assert len(img_ind) == 10000
+    # # load subj's 10000 image id
+    # cocoId_subj = np.load(
+    #     "%s/coco_ID_of_repeats_subj%02d.npy" % (nsd_output_dir, args.subj)
+    # )
+    # nsd2coco = np.load("%s/NSD2cocoId.npy" % nsd_output_dir)
+    # img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
+    # assert len(img_ind) == 10000
 
-    # sort the images arrays with the order of maximum super cat
-    image_supercat_subsample = image_supercat[img_ind, :]
-    max_cat = np.argmax(image_supercat_subsample, axis=1)
-    max_cat_order = np.argsort(max_cat)
-    # plt.hist(max_cat)
+    # # sort the images arrays with the order of maximum super cat
+    # image_supercat_subsample = image_supercat[img_ind, :]
+    # max_cat = np.argmax(image_supercat_subsample, axis=1)
+    # max_cat_order = np.argsort(max_cat)
+    # # plt.hist(max_cat)
 
-    # object_areas
-    sorted_image_supercat = image_supercat_subsample[max_cat_order, :]
-    sorted_image_supercat_sim_by_image = cosine_similarity(sorted_image_supercat)
+    # # object_areas
+    # sorted_image_supercat = image_supercat_subsample[max_cat_order, :]
+    # sorted_image_supercat_sim_by_image = cosine_similarity(sorted_image_supercat)
 
-    image_cat_subsample = image_cat[img_ind, :]
-    sorted_image_cat = image_cat_subsample[np.argsort(max_cat), :]
-    sorted_image_cat_sim_by_image = cosine_similarity(sorted_image_cat)
+    # image_cat_subsample = image_cat[img_ind, :]
+    # sorted_image_cat = image_cat_subsample[np.argsort(max_cat), :]
+    # sorted_image_cat_sim_by_image = cosine_similarity(sorted_image_cat)
 
-    sorted_image_supercat_sim_by_categories = cosine_similarity(sorted_image_supercat.T)
+    # sorted_image_supercat_sim_by_categories = cosine_similarity(sorted_image_supercat.T)
     # normalize across categories?
 
     # plt.figure(figsize=(40, 20))
@@ -424,38 +447,54 @@ if __name__ == "__main__":
     # plt.savefig("../Cats/figures/rsm/convnet.png")
 
     ###### plot imagenet within cat #####
-    plt.figure(figsize=(60, 20))
-    layers = ["conv"] * 5 + ["fc"] * 2
-    for i in range(7):
-        plt.subplot(2, 4, i + 1)
-        imgnet = np.load(
-            "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
-            % (features_output_dir, args.subj, layers[i], i + 1)
-        ).squeeze()
-        print(imgnet.shape)
-        sim = cosine_similarity(imgnet)
-        supercat_sim = make_supercat_similarity_matrix(
-            sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
-        )
-        np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % (i+1), supercat_sim)
-        # plt.imshow(
-        #     supercat_sim,
-        #     cmap="YlOrRd",
-        # )
-        linked = linkage(supercat_sim, 'single')
-        dendrogram(linked,
-                orientation='top',
-                leaf_rotation=45, 
-                labels=COCO_super_cat,
-                distance_sort='descending',
-                show_leaf_counts=True)
-        plt.title("Layer " + str(i + 1))
-    plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
+    # plt.figure(figsize=(60, 20))
+    # layers = ["conv"] * 5 + ["fc"] * 2
+    # for i in range(7):
+    #     plt.subplot(2, 4, i + 1)
+    #     imgnet = np.load(
+    #         "%s/subj%01d/convnet_alexnet_%s%01d_avgpool.npy"
+    #         % (features_output_dir, args.subj, layers[i], i + 1)
+    #     ).squeeze()
+    #     print(imgnet.shape)
+    #     sim = cosine_similarity(imgnet)
+    #     supercat_sim = make_supercat_similarity_matrix(
+    #         sim[max_cat_order, :][:, max_cat_order], max_cat[max_cat_order]
+    #     )
+    #     np.save("../Cats/outputs/imgnet_layer%01d_supercat.npy" % (i+1), supercat_sim)
+    #     # plt.imshow(
+    #     #     supercat_sim,
+    #     #     cmap="YlOrRd",
+    #     # )
+    #     linked = linkage(supercat_sim, 'single')
+    #     dendrogram(linked,
+    #             orientation='top',
+    #             leaf_rotation=45, 
+    #             labels=COCO_super_cat,
+    #             distance_sort='descending',
+    #             show_leaf_counts=True)
+    #     plt.title("Layer " + str(i + 1))
+    # plt.savefig("../Cats/figures/rsm/convnet_supercat_dendrogram.png")
 
-    # print category order
-    labels = [COCO_super_cat[c] for c in max_cat[max_cat_order]]
-    counter = Counter(labels)
-    i0 = 0
-    for k in counter:
-        print("Category: %s [%d - %d]" % (k, i0, counter[k] + i0))
-        i0 += counter[k]
+    # # print category order
+    # labels = [COCO_super_cat[c] for c in max_cat[max_cat_order]]
+    # counter = Counter(labels)
+    # i0 = 0
+    # for k in counter:
+    #     print("Category: %s [%d - %d]" % (k, i0, counter[k] + i0))
+    #     i0 += counter[k]
+
+    # eigenvalue decomposition
+    # cats_output_path = "../Cats/outputs/"
+    # for f in os.listdir(cats_output_path):
+    #     if "json" not in f:
+    #         fname = f.split(".")[0]
+    #         rsm = np.load("../Cats/outputs/" + f)
+    #         make_scree_plot(rsm, fname)
+
+    rsm_output_path = "%s/rdms/" % nsd_output_dir
+    for f in os.listdir(rsm_output_path):
+        if ("avgpool" not in f):
+            rsm = np.load(rsm_output_path + f)
+            fname = f.split(".")[0].strip("subj01_")
+            fname = "rsm_" + fname
+            make_scree_plot(rsm, fname)
