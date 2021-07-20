@@ -87,7 +87,7 @@ def extract_feature_by_imgs(
         if featmat.shape[1] > 6000:
             from sklearn.decomposition import PCA
 
-            pca = PCA(n_components=1000)  # TODO:test this dimension later 500d --> 44%
+            pca = PCA(n_components=500)  # TODO:test this dimension later 500d --> 44%
             featmat = pca.fit_transform(featmat.astype(np.float16))
             print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
 
@@ -118,6 +118,27 @@ def extract_feature_by_imgs(
             except IndexError:
                 print("COCO Id Not Found: " + str(img_id))
         featmat = np.array(featmat).squeeze()
+
+    if "clip" in model:
+        try:
+            all_feat = np.load("%s/clip.npy" % (features_dir))
+        except FileNotFoundError:
+            all_feat = np.load(
+                "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy")
+        stim = pd.read_pickle(
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
+        featmat = []
+        for img_id in tqdm(stim_list):
+            try:
+                # extract the nsd ID corresponding to the coco ID in the stimulus list
+                stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
+                # extract the repective features for that nsd ID
+                featmat.append(all_feat[stim_ind, :])
+            except IndexError:
+                print("COCO Id Not Found: " + str(img_id))
+        featmat = np.array(featmat).squeeze()
+
     else:
         print("Unknown feature spaces...")
 
