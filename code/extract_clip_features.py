@@ -32,6 +32,7 @@ for p in tqdm(all_images_paths):
         # text_features = model.encode_text(text)
         # logits_per_image, logits_per_text = model(image, text)
         # probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+        print(image_features.shape)
 
     all_features.append(image_features)
 all_features = np.array(all_features)
