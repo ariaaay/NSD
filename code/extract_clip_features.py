@@ -36,4 +36,4 @@ for p in tqdm(all_images_paths):
     all_features.append(image_features)
 all_features = np.array(all_features)
 print(all_features.shape)
-np.save(all_features, "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy")
+np.save("/lab_data/tarrlab/common/datasets/features/NSD/clip.npy", all_features)
