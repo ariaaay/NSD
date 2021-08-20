@@ -8,13 +8,22 @@ from util.model_config import model_features
 
 
 def load_data(model, task, output_root, subj=1, measure="corr"):
-    output = pickle.load(
-        open(
-            "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-            % (output_root, subj, measure, model, task),
-            "rb",
+    if task is None:
+        output = pickle.load(
+            open(
+                "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+                % (output_root, subj, measure, model),
+                "rb",
+            )
         )
-    )
+    else:
+        output = pickle.load(
+            open(
+                "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
+                % (output_root, subj, measure, model, task),
+                "rb",
+            )
+        )
     if measure == "corr":
         out = np.array(output)[:, 0]
     else:
@@ -29,7 +38,7 @@ def project_vals_to_3d(vals, mask):
     return all_vals
 
 
-def make_volume(subj, model, task, mask_with_significance=False):
+def make_volume(subj, model, task=None, mask_with_significance=False):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
@@ -218,18 +227,18 @@ if __name__ == "__main__":
         ),
     )
 
-    face_roi = nib.load("%s/output/voxels_masks/subj%d/floc-faces.nii.gz" % (output_root, args.subj))
-    face_roi_data = face_roi.get_fdata()
-    face_roi_data = np.swapaxes(face_roi_data, 0, 2)
+    # face_roi = nib.load("%s/output/voxels_masks/subj%d/floc-faces.nii.gz" % (output_root, args.subj))
+    # face_roi_data = face_roi.get_fdata()
+    # face_roi_data = np.swapaxes(face_roi_data, 0, 2)
 
-    face_roi_volume = cortex.Volume(
-        face_roi_data,
-        "subj%02d" % args.subj,
-        "func1pt8_to_anat0pt8_autoFSbbr",
-        mask=cortex.utils.get_cortical_mask(
-            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
-        ),
-    )
+    # face_roi_volume = cortex.Volume(
+    #     face_roi_data,
+    #     "subj%02d" % args.subj,
+    #     "func1pt8_to_anat0pt8_autoFSbbr",
+    #     mask=cortex.utils.get_cortical_mask(
+    #         "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+    #     ),
+    # )
 
     # subjport = int("1111{}".format(args.subj))
 
@@ -300,6 +309,10 @@ if __name__ == "__main__":
             task="class_places",
             mask_with_significance=args.mask_sig,
         ),
+        "clip": make_volume(
+            subj=args.subj,
+            model="clip",
+        ),
         # "Autoencoder": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",
@@ -366,7 +379,7 @@ if __name__ == "__main__":
         "Visual ROIs": visual_roi_volume,
         "Eccentricity ROIs": ecc_roi_volume,
         "Places ROIs": place_roi_volume,
-        "Faces ROIs": face_roi_volume,
+        # "Faces ROIs": face_roi_volume,
     }
 
     if args.show_pcs:
