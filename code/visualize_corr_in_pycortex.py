@@ -5,30 +5,7 @@ import numpy as np
 
 import argparse
 from util.model_config import model_features
-
-
-def load_data(model, task, output_root, subj=1, measure="corr"):
-    if task is None:
-        output = pickle.load(
-            open(
-                "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model),
-                "rb",
-            )
-        )
-    else:
-        output = pickle.load(
-            open(
-                "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model, task),
-                "rb",
-            )
-        )
-    if measure == "corr":
-        out = np.array(output)[:, 0]
-    else:
-        out = np.array(output)
-    return out
+from util.data_util import load_data
 
 
 def project_vals_to_3d(vals, mask):
@@ -313,6 +290,10 @@ if __name__ == "__main__":
             subj=args.subj,
             model="clip",
         ),
+        "clip-text": make_volume(
+            subj=args.subj,
+            model="clip_text",
+        ),
         # "Autoencoder": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",
@@ -331,42 +312,42 @@ if __name__ == "__main__":
         #     task="segment25d",
         #     mask_with_significance=args.mask_sig,
         # ),
-        "2D Segm.": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="segment2d",
-            mask_with_significance=args.mask_sig,
-        ),
+        # "2D Segm.": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="segment2d",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         # "Semantic Segm": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",
         #     task="segmentsemantic",
         #     mask_with_significance=args.mask_sig,
         # ),
-        "Vanishing Point": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="vanishing_point",
-            mask_with_significance=args.mask_sig,
-        ),
-        "Room Layout": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="room_layout",
-            mask_with_significance=args.mask_sig,
-        ),
+        # "Vanishing Point": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="vanishing_point",
+        #     mask_with_significance=args.mask_sig,
+        # ),
+        # "Room Layout": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="room_layout",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         # "Color": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",
         #     task="colorization",
         #     mask_with_significance=args.mask_sig,
         # ),
-        "Inpainting Whole": make_volume(
-            subj=args.subj,
-            model="taskrepr",
-            task="inpainting_whole",
-            mask_with_significance=args.mask_sig,
-        ),
+        # "Inpainting Whole": make_volume(
+        #     subj=args.subj,
+        #     model="taskrepr",
+        #     task="inpainting_whole",
+        #     mask_with_significance=args.mask_sig,
+        # ),
         # "Jigsaw": make_volume(
         #     subj=args.subj,
         #     model="taskrepr",

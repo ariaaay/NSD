@@ -5,21 +5,7 @@ import numpy as np
 
 import argparse
 from util.model_config import model_features
-
-
-def load_data(model, task, subj=1, measure="corr"):
-    output = pickle.load(
-        open(
-            "output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-            % (subj, measure, model, task),
-            "rb",
-        )
-    )
-    if measure == "corr":
-        out = np.array(output)[:, 0]
-    else:
-        out = np.array(output)
-    return out
+from util.data_util import load_data
 
 
 def make_volume(subj, model, task, mask_with_significance=False):
