@@ -89,13 +89,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="output",
+        default="/user_data/yuanw3/project_outputs/NSD/output",
         help="Specify the path to the output directory",
     )
     parser.add_argument(
         "--features_dir",
         type=str,
-        default="features",
+        default="/user_data/yuanw3/project_outputs/NSD/features",
         help="Specify the path to the features directory",
     )
     parser.add_argument(

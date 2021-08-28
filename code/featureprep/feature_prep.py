@@ -19,10 +19,10 @@ def get_preloaded_features(
     :return featmat: a matrix of features that matches with the order of brain data
     """
     subj = int(subj)
-    if layer is not "":
-        layer_modifier = "_" + layer
-    else:
+    if layer is None:
         layer_modifier = ""
+    else:
+        layer_modifier = "_" + layer
 
     print("Getting features for %s%s, for subject %d" % (model, layer_modifier, subj))
 
