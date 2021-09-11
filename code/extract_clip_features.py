@@ -1,7 +1,8 @@
-import json
+import copy
 
 import pandas as pd
 import numpy as np
+from torch._C import Value
 from tqdm import tqdm
 from PIL import Image
 
@@ -92,8 +93,11 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 LOI_vision = ["visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
-model = tx.Extractor(model, LOI_vision + LOI_text)
-compressed_features = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
+# model = tx.Extractor(model, LOI_vision + LOI_text)
+# compressed_features = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
+model = tx.Extractor(model, LOI_text)
+compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
+
 for cid in tqdm(all_coco_ids):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
@@ -112,16 +116,21 @@ for cid in tqdm(all_coco_ids):
 for i, x in enumerate(compressed_features):
     x = np.array(x)
     pca = PCA(n_components=min(x.shape[0], 512), whiten=True, svd_solver="full")
-    pca.fit(x)
+    try:
+        pca.fit(x)
+    except ValueError:
+        print(i)
+        print(type(x))
+        print(x.shape)
     xp = pca.transform(x)
     
     print("Feature %01d has shape of:" % i)
     print(xp.shape)
 
-    if i < 12:
-        np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
-    else:
-        np.save("%s/text_layer_%01d.npy" % (feature_output_dir, subj, i-12), xp)
+    # if i < 12:
+    #     np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
+    # else:
+    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
 
         # feature_shapes = {name: f.shape for name, f in features.items()}
         # print(feature_shapes)
