@@ -112,50 +112,37 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
 # for text features
 for layer in LOI_text:
-    model = tx.Extractor(model, layer)
-    compressed_feature_per_caption = [copy.copy(e) for _ in range(12) for e in [[]]]
-    compressed_text_features = []
-    for cid in tqdm(all_coco_ids[:2]):
+    f_model = tx.Extractor(model, layer)
+    text_features = []
+    for cid in tqdm(all_coco_ids[:10]):
         with torch.no_grad():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
             captions = load_captions(cid)
+            layer_features = []
             for caption in captions:
-                text = clip.tokenize(captions).to(device)
+                text = clip.tokenize(caption).to(device)
+                _, features = f_model(image, text)
 
-                _, features = model(image, text)
+                layer_features.append(features[layer].cpu().data.numpy().squeeze().flatten())
+            layer_features = np.array(layer_features)
+            print(layer_features.shape)
+            avg_features = np.mean(layer_features, axis=0)
+            text_features.append(avg_features)
 
-                for i, f in enumerate(features.values()):
-                    feat = f.squeeze().cpu().data.numpy().flatten()
-                    print(feat.shape)
-                    compressed_feature_per_caption[i].append(feat)
-            compressed_text_features.append(compressed_feature_per_caption)
+    text_features = np.array(text_features)
+    print(text_features.shape)
 
-    compressed_text_features = np.array(compressed_text_features)
-    print(compressed_text_features.shape)
-
-# output_dir = "/lab_data/tarrlab/common/datasets/features/NSD/CLIP"
-
-for i, x in enumerate(compressed_text_features):
-    x = np.array(x)
-    pca = PCA(n_components=min(x.shape[0], 512), whiten=True, svd_solver="full")
+    pca = PCA(n_components=min(text_features.shape[0], 512), whiten=True, svd_solver="full")
     try:
-        xp = pca.fit_transform(x)
+        fp = pca.fit_transform(text_features)
     except ValueError:
-        print(i)
-        print(type(x))
-        print(x.shape)
+        print(fp.shape)
     
-    print("Feature %01d has shape of:" % i)
-    print(xp.shape)
-
-    # if i < 12:
-    #     np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
-    # else:
-    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, i), xp)
-
-        # feature_shapes = {name: f.shape for name, f in features.items()}
-        # print(feature_shapes)
+    print("Feature %01d has shape of:" % layer)
+    print(fp.shape)
+    
+    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, layer), fp)
 
         
