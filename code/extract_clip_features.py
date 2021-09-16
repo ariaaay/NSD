@@ -93,27 +93,48 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 LOI_vision = ["visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
-# model = tx.Extractor(model, LOI_vision + LOI_text)
-# compressed_features = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
-model = tx.Extractor(model, LOI_text)
-compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
+# For visual features
+# model = tx.Extractor(model, LOI_vision)
+# compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 
-for cid in tqdm(all_coco_ids):
+# for cid in tqdm(all_coco_ids):
+#     with torch.no_grad():
+#         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+#         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+
+#         captions = load_captions(cid)
+#         text = clip.tokenize(captions).to(device)
+
+#         _, features = model(image, text)
+
+#         for i, f in enumerate(features.values()):
+#             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
+
+# for text features
+model = tx.Extractor(model, LOI_text)
+compressed_feature_per_caption = [copy.copy(e) for _ in range(12) for e in [[]]]
+compressed_text_features = []
+for cid in tqdm(all_coco_ids[:10]):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
         captions = load_captions(cid)
-        text = clip.tokenize(captions).to(device)
+        for caption in captions:
+            text = clip.tokenize(captions).to(device)
 
-        logits, features = model(image, text)
+            _, features = model(image, text)
 
-        for i, f in enumerate(features.values()):
-            compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
+            for i, f in enumerate(features.values()):
+                compressed_feature_per_caption[i].append(f.squeeze().cpu().data.numpy().flatten())
+        compressed_text_features.append(compressed_feature_per_caption)
+
+compressed_text_features = np.array(compressed_text_features)
+print(compressed_text_features.shape)
 
 # output_dir = "/lab_data/tarrlab/common/datasets/features/NSD/CLIP"
 
-for i, x in enumerate(compressed_features):
+for i, x in enumerate(compressed_text_features):
     x = np.array(x)
     pca = PCA(n_components=min(x.shape[0], 512), whiten=True, svd_solver="full")
     try:
