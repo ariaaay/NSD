@@ -111,7 +111,7 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 #             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
 
 # for text features
-for layer in LOI_text:
+for l, layer in enumerate(LOI_text):
     f_model = tx.Extractor(model, layer)
     text_features = []
     for cid in tqdm(all_coco_ids[:10]):
@@ -126,23 +126,19 @@ for layer in LOI_text:
                 _, features = f_model(image, text)
 
                 layer_features.append(features[layer].cpu().data.numpy().squeeze().flatten())
-            layer_features = np.array(layer_features)
-            print(layer_features.shape)
-            avg_features = np.mean(layer_features, axis=0)
+            avg_features = np.mean(np.array(layer_features), axis=0)
             text_features.append(avg_features)
 
     text_features = np.array(text_features)
-    print(text_features.shape)
-
     pca = PCA(n_components=min(text_features.shape[0], 512), whiten=True, svd_solver="full")
     try:
         fp = pca.fit_transform(text_features)
     except ValueError:
         print(fp.shape)
     
-    print("Feature %01d has shape of:" % layer)
+    print("Feature %s has shape of:" % layer)
     print(fp.shape)
     
-    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, layer), fp)
+    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, i), fp)
 
         
