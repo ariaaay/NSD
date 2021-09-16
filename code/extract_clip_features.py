@@ -14,7 +14,7 @@ import torchvision
 from pycocotools.coco import COCO
 import torchextractor as tx
 
-import CLIP.clip as clip
+import clip
 from util.util import pytorch_pca
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -138,12 +138,11 @@ for i, x in enumerate(compressed_text_features):
     x = np.array(x)
     pca = PCA(n_components=min(x.shape[0], 512), whiten=True, svd_solver="full")
     try:
-        pca.fit(x)
+        xp = pca.fit_transform(x)
     except ValueError:
         print(i)
         print(type(x))
         print(x.shape)
-    xp = pca.transform(x)
     
     print("Feature %01d has shape of:" % i)
     print(xp.shape)
@@ -151,7 +150,7 @@ for i, x in enumerate(compressed_text_features):
     # if i < 12:
     #     np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
     # else:
-    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, subj, i), xp)
+    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, i), xp)
 
         # feature_shapes = {name: f.shape for name, f in features.items()}
         # print(feature_shapes)
