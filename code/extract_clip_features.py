@@ -111,26 +111,29 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 #             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
 
 # for text features
-model = tx.Extractor(model, LOI_text)
-compressed_feature_per_caption = [copy.copy(e) for _ in range(12) for e in [[]]]
-compressed_text_features = []
-for cid in tqdm(all_coco_ids[:10]):
-    with torch.no_grad():
-        image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-        image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+for layer in LOI_text:
+    model = tx.Extractor(model, layer)
+    compressed_feature_per_caption = [copy.copy(e) for _ in range(12) for e in [[]]]
+    compressed_text_features = []
+    for cid in tqdm(all_coco_ids[:2]):
+        with torch.no_grad():
+            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
-        captions = load_captions(cid)
-        for caption in captions:
-            text = clip.tokenize(captions).to(device)
+            captions = load_captions(cid)
+            for caption in captions:
+                text = clip.tokenize(captions).to(device)
 
-            _, features = model(image, text)
+                _, features = model(image, text)
 
-            for i, f in enumerate(features.values()):
-                compressed_feature_per_caption[i].append(f.squeeze().cpu().data.numpy().flatten())
-        compressed_text_features.append(compressed_feature_per_caption)
+                for i, f in enumerate(features.values()):
+                    feat = f.squeeze().cpu().data.numpy().flatten()
+                    print(feat.shape)
+                    compressed_feature_per_caption[i].append(feat)
+            compressed_text_features.append(compressed_feature_per_caption)
 
-compressed_text_features = np.array(compressed_text_features)
-print(compressed_text_features.shape)
+    compressed_text_features = np.array(compressed_text_features)
+    print(compressed_text_features.shape)
 
 # output_dir = "/lab_data/tarrlab/common/datasets/features/NSD/CLIP"
 
