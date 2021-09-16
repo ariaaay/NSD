@@ -114,7 +114,7 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 for l, layer in enumerate(LOI_text):
     f_model = tx.Extractor(model, layer)
     text_features = []
-    for cid in tqdm(all_coco_ids[:10]):
+    for cid in tqdm(all_coco_ids):
         with torch.no_grad():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
@@ -139,6 +139,6 @@ for l, layer in enumerate(LOI_text):
     print("Feature %s has shape of:" % layer)
     print(fp.shape)
     
-    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, i), fp)
+    np.save("%s/text_layer_%01d.npy" % (feature_output_dir, l), fp)
 
         
