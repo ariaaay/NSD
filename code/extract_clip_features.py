@@ -113,7 +113,7 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 # for text features
 text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 model = tx.Extractor(model, LOI_text)
-for cid in tqdm(all_coco_ids[:3]):
+for cid in tqdm(all_coco_ids):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
@@ -128,14 +128,14 @@ for cid in tqdm(all_coco_ids[:3]):
             for i, layer in enumerate(LOI_text):
                 layer_features[i].append(features[layer].cpu().data.numpy().squeeze().flatten())
 
-            print(np.array(layer_features).shape)
+            # print(np.array(layer_features).shape)
         avg_features = np.mean(np.array(layer_features), axis=1) # 12 x m
 
     for i in range(len(LOI_text)):  
         text_features[i].append(avg_features[i])
 
 text_features = np.array(text_features)
-print(text_features.shape) # 12 x 10000 x m
+# print(text_features.shape) # 12 x 10000 x m
 
 for l, f in enumerate(text_features):
     pca = PCA(n_components=min(f.shape[0], 512), whiten=True, svd_solver="full")
