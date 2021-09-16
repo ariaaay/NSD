@@ -111,34 +111,43 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 #             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
 
 # for text features
-for l, layer in enumerate(LOI_text):
-    f_model = tx.Extractor(model, layer)
-    text_features = []
-    for cid in tqdm(all_coco_ids):
-        with torch.no_grad():
-            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
+model = tx.Extractor(model, LOI_text)
+for cid in tqdm(all_coco_ids):
+    with torch.no_grad():
+        image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+        image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
-            captions = load_captions(cid)
-            layer_features = []
-            for caption in captions:
-                text = clip.tokenize(caption).to(device)
-                _, features = f_model(image, text)
+        captions = load_captions(cid)
 
-                layer_features.append(features[layer].cpu().data.numpy().squeeze().flatten())
-            avg_features = np.mean(np.array(layer_features), axis=0)
-            text_features.append(avg_features)
+        for caption in captions:
+            text = clip.tokenize(caption).to(device)
+            _, features = model(image, text)
+            # features is a feature dictionary for all layers, each image, each caption
 
-    text_features = np.array(text_features)
-    pca = PCA(n_components=min(text_features.shape[0], 512), whiten=True, svd_solver="full")
+            layer_features = [copy.copy(e) for _ in range(12) for e in [[]]] # layer_features is 12 x 5 x m
+            for i, layer in enumerate(LOI_text):
+                layer_features[i].append(features[layer].cpu().data.numpy().squeeze().flatten())
+
+            print(np.array(layer_features).shape)
+        avg_features = np.mean(np.array(layer_features), axis=1) # 12 x m
+
+    for i in range(len(LOI_text)):  
+        text_features[i].append(avg_features[i])
+
+text_features = np.array(text_features)
+print(text_features.shape) # 12 x 10000 x m
+
+for l, f in enumerate(text_features):
+    pca = PCA(n_components=min(f.shape[0], 512), whiten=True, svd_solver="full")
     try:
-        fp = pca.fit_transform(text_features)
+        fp = pca.fit_transform(f)
     except ValueError:
         print(fp.shape)
-    
-    print("Feature %s has shape of:" % layer)
+
+    print("Feature %01d has shape of:" % l)
     print(fp.shape)
-    
+
     np.save("%s/text_layer_%01d.npy" % (feature_output_dir, l), fp)
 
         
