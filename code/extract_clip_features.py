@@ -113,7 +113,7 @@ LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 # for text features
 text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 model = tx.Extractor(model, LOI_text)
-for cid in tqdm(all_coco_ids[:5]):
+for cid in tqdm(all_coco_ids[:3]):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
