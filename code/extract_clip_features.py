@@ -94,21 +94,34 @@ LOI_vision = ["visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
 # For visual features
-# model = tx.Extractor(model, LOI_vision)
-# compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
+model = tx.Extractor(model, LOI_vision)
+compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 
-# for cid in tqdm(all_coco_ids):
-#     with torch.no_grad():
-#         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-#         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+for cid in tqdm(all_coco_ids):
+    with torch.no_grad():
+        image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+        image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+        captions = load_captions(cid)
+        text = clip.tokenize(captions).to(device)
 
-#         captions = load_captions(cid)
-#         text = clip.tokenize(captions).to(device)
+        _, features = model(image, text)
 
-#         _, features = model(image, text)
+        for i, f in enumerate(features.values()):
+            compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
+            
+compressed_features = np.array(compressed_features)
 
-#         for i, f in enumerate(features.values()):
-#             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
+for l, f in enumerate(compressed_features):
+    pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="full")
+    try:
+        fp = pca.fit_transform(f)
+    except ValueError:
+        print(fp.shape)
+
+    print("Feature %01d has shape of:" % l)
+    print(fp.shape)
+
+    np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, l), fp)
 
 # for text features
 text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
@@ -138,7 +151,7 @@ text_features = np.array(text_features)
 # print(text_features.shape) # 12 x 10000 x m
 
 for l, f in enumerate(text_features):
-    pca = PCA(n_components=min(f.shape[0], 512), whiten=True, svd_solver="full")
+    pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="full")
     try:
         fp = pca.fit_transform(f)
     except ValueError:
