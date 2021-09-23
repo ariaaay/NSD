@@ -15,13 +15,13 @@ def project_vals_to_3d(vals, mask):
     return all_vals
 
 
-def make_volume(subj, model, task=None, mask_with_significance=False):
+def make_volume(subj, model, task=None, mask_with_significance=False, output_root="."):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
     # load correlation scores of cortical voxels
-    vals = load_data(model, task, output_root=".", subj=subj)
+    vals = load_data(model, task, output_root=output_root, subj=subj)
     try:
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
@@ -258,12 +258,14 @@ if __name__ == "__main__":
             model="taskrepr",
             task="edge2d",
             mask_with_significance=args.mask_sig,
+            output_root=output_root
         ),
         "3D Edges": make_volume(
             subj=args.subj,
             model="taskrepr",
             task="edge3d",
             mask_with_significance=args.mask_sig,
+            output_root=output_root
         ),
         # "2D Keypoint": make_volume(
         #     subj=args.subj,
@@ -306,20 +308,24 @@ if __name__ == "__main__":
             model="taskrepr",
             task="class_1000",
             mask_with_significance=args.mask_sig,
+            output_root=output_root
         ),
         "Scene Class": make_volume(
             subj=args.subj,
             model="taskrepr",
             task="class_places",
             mask_with_significance=args.mask_sig,
+            output_root=output_root
         ),
         "clip": make_volume(
             subj=args.subj,
             model="clip",
+            output_root=output_root
         ),
         "clip-text": make_volume(
             subj=args.subj,
             model="clip_text",
+            output_root=output_root
         ),
         # "Autoencoder": make_volume(
         #     subj=args.subj,
@@ -391,10 +397,10 @@ if __name__ == "__main__":
     }
 
     for i in range(12):
-        volumes["clip-vision-%d" % i+1] = make_volume(subj=args.subj, model="visual_layer_%d" % i)
+        volumes["clip-vision-%d" % i+1] = make_volume(subj=args.subj, model="visual_layer_%d" % i, output_root=output_root)
     
     for i in range(12):
-        volumes["clip-text-%d" % i+1] = make_volume(subj=args.subj, model="text_layer_%d" % i)
+        volumes["clip-text-%d" % i+1] = make_volume(subj=args.subj, model="text_layer_%d" % i, output_root=output_root)
 
     if args.show_pcs:
         pc_vols = []
@@ -409,11 +415,11 @@ if __name__ == "__main__":
         for i in range(PCs.shape[0]):
             key = "PC" + str(i)
             volumes[key] = make_pc_volume(
-                args.subj, PCs_zscore[i, :], mask_with_significance=args.mask_sig
+                args.subj, PCs_zscore[i, :], mask_with_significance=args.mask_sig, output_root=output_root
             )
 
         volumes["3PC"] = make_3pc_volume(
-            args.subj, PCs_zscore, mask_with_significance=args.mask_sig
+            args.subj, PCs_zscore, mask_with_significance=args.mask_sig, output_root=output_root
         )
 
     cortex.webgl.show(data=volumes, autoclose=False, port=24124)
