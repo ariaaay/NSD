@@ -23,13 +23,15 @@ def make_volume(subj, model, task=None, mask_with_significance=False, output_roo
     # load correlation scores of cortical voxels
     vals = load_data(model, task, output_root=output_root, subj=subj)
     try:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
-        )
-    except FileNotFoundError:
+    #     cortical_mask = np.load(
+    #         "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
+    #     )
+    # except FileNotFoundError:
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
+    except:
+        pass
     if mask_with_significance:
         sig_mask = np.load(
             "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
