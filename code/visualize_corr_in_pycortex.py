@@ -217,6 +217,33 @@ if __name__ == "__main__":
         ),
     )
 
+    body_roi = nib.load("%s/output/voxels_masks/subj%d/floc-bodies.nii.gz" % (output_root, args.subj))
+    body_roi_data = body_roi.get_fdata()
+    body_roi_data = np.swapaxes(body_roi_data, 0, 2)
+
+    body_roi_volume = cortex.Volume(
+        body_roi_data,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+    )
+
+    word_roi = nib.load("%s/output/voxels_masks/subj%d/floc-words.nii.gz" % (output_root, args.subj))
+    word_roi_data = word_roi.get_fdata()
+    word_roi_data = np.swapaxes(word_roi_data, 0, 2)
+
+    word_roi_volume = cortex.Volume(
+        word_roi_data,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+    )
+
+
     # subjport = int("1111{}".format(args.subj))
 
     volumes = {
