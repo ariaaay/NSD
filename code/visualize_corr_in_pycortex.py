@@ -21,19 +21,19 @@ def make_volume(subj, model, task=None, mask_with_significance=False):
     )
 
     # load correlation scores of cortical voxels
-    vals = load_data(model, task, output_root, subj=subj)
+    vals = load_data(model, task, output_root=".", subj=subj)
     try:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
     except FileNotFoundError:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
     if mask_with_significance:
         sig_mask = np.load(
-            "output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
-            % (subj, model, task, "negtail_fdr", 0.05)
+            "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
+            % (output_root, subj, model, task, "negtail_fdr", 0.05)
         )
         vals[~sig_mask] = 0
     # projecting value back to 3D space
@@ -51,24 +51,24 @@ def make_volume(subj, model, task=None, mask_with_significance=False):
     return vol_data
 
 
-def make_pc_volume(subj, vals, mask_with_significance=False):
+def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
     try:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
     except FileNotFoundError:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
 
     if mask_with_significance:
         sig_mask = np.load(
-            "output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
-            % (subj, "negtail_fdr", 0.05)
+            "%s/output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
+            % (output_root, subj, "negtail_fdr", 0.05)
         )
         vals[~sig_mask] = -999
     # projecting value back to 3D space
@@ -86,18 +86,18 @@ def make_pc_volume(subj, vals, mask_with_significance=False):
     return vol_data
 
 
-def make_3pc_volume(subj, PCs, mask_with_significance=False):
+def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
     try:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
     except FileNotFoundError:
         cortical_mask = np.load(
-            "output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (subj, subj)
+            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
 
     pc_3d = []
@@ -105,8 +105,8 @@ def make_3pc_volume(subj, PCs, mask_with_significance=False):
         tmp = PCs[i, :] / np.max(PCs_zscore[i, :]) * 255
         if mask_with_significance:
             sig_mask = np.load(
-                "output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
-                % (subj, "negtail_fdr", 0.05)
+                "%s/output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
+                % (output_root, subj, "negtail_fdr", 0.05)
             )
             tmp[~sig_mask] = 0
         # projecting value back to 3D space
