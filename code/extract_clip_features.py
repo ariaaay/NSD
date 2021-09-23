@@ -93,39 +93,39 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 LOI_vision = ["visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 LOI_text  = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
-# For visual features
-model = tx.Extractor(model, LOI_vision)
-compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
+# # For visual features
+# model_visual = tx.Extractor(model, LOI_vision)
+# compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 
-for cid in tqdm(all_coco_ids):
-    with torch.no_grad():
-        image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-        image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
-        captions = load_captions(cid)
-        text = clip.tokenize(captions).to(device)
+# for cid in tqdm(all_coco_ids):
+#     with torch.no_grad():
+#         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+#         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+#         captions = load_captions(cid)
+#         text = clip.tokenize(captions).to(device)
 
-        _, features = model(image, text)
+#         _, features = model_visual(image, text)
 
-        for i, f in enumerate(features.values()):
-            compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
+#         for i, f in enumerate(features.values()):
+#             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
             
-compressed_features = np.array(compressed_features)
+# compressed_features = np.array(compressed_features)
 
-for l, f in enumerate(compressed_features):
-    pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="full")
-    try:
-        fp = pca.fit_transform(f)
-    except ValueError:
-        print(fp.shape)
+# for l, f in enumerate(compressed_features):
+#     pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="full")
+#     try:
+#         fp = pca.fit_transform(f)
+#     except ValueError:
+#         print(fp.shape)
 
-    print("Feature %01d has shape of:" % l)
-    print(fp.shape)
+#     print("Feature %01d has shape of:" % l)
+#     print(fp.shape)
 
-    np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, l), fp)
+#     np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, l), fp)
 
 # for text features
 text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
-model = tx.Extractor(model, LOI_text)
+model_text = tx.Extractor(model, LOI_text)
 for cid in tqdm(all_coco_ids):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
@@ -136,7 +136,7 @@ for cid in tqdm(all_coco_ids):
         layer_features = [copy.copy(e) for _ in range(12) for e in [[]]] # layer_features is 12 x 5 x m
         for caption in captions:
             text = clip.tokenize(caption).to(device)
-            _, features = model(image, text)
+            _, features = model_text(image, text)
             # features is a feature dictionary for all layers, each image, each caption
             for i, layer in enumerate(LOI_text):
                 layer_features[i].append(features[layer].cpu().data.numpy().squeeze().flatten())
