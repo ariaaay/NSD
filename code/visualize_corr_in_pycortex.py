@@ -23,10 +23,10 @@ def make_volume(subj, model, task=None, mask_with_significance=False, output_roo
     # load correlation scores of cortical voxels
     vals = load_data(model, task, output_root=output_root, subj=subj)
     try:
-    #     cortical_mask = np.load(
-    #         "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
-    #     )
-    # except FileNotFoundError:
+        cortical_mask = np.load(
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
+        )
+    except FileNotFoundError:
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
@@ -395,14 +395,14 @@ if __name__ == "__main__":
         "Visual ROIs": visual_roi_volume,
         "Eccentricity ROIs": ecc_roi_volume,
         "Places ROIs": place_roi_volume,
-        "Faces ROIs": face_roi_volume,
+        # "Faces ROIs": face_roi_volume,
     }
 
     for i in range(12):
-        volumes["clip-vision-%d" % i+1] = make_volume(subj=args.subj, model="visual_layer_%d" % i, output_root=output_root)
+        volumes["clip-vision-%s" % str(i+1)] = make_volume(subj=args.subj, model="visual_layer_%d" % i, output_root=output_root)
     
     for i in range(12):
-        volumes["clip-text-%d" % i+1] = make_volume(subj=args.subj, model="text_layer_%d" % i, output_root=output_root)
+        volumes["clip-text-%s" % str(i+1)] = make_volume(subj=args.subj, model="text_layer_%d" % i, output_root=output_root)
 
     if args.show_pcs:
         pc_vols = []
