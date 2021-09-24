@@ -27,6 +27,7 @@ def make_volume(subj, model, task=None, mask_with_significance=False, output_roo
             "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
     except FileNotFoundError:
+        print("loading old mask...")
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy" % (output_root, subj, subj)
         )
