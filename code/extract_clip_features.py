@@ -59,21 +59,21 @@ all_features = []
 # model, preprocess = clip.load("ViT-B/32", device=device)
 model, preprocess = clip.load("RN50", device=device)
 
-# extract image features
-all_images_paths = list()
-all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
-print("Number of Images: {}".format(len(all_images_paths)))
-for p in tqdm(all_images_paths):
-    image = preprocess(Image.open(p)).unsqueeze(0).to(device)
-        # text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
+# # extract image features
+# all_images_paths = list()
+# all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
+# print("Number of Images: {}".format(len(all_images_paths)))
+# for p in tqdm(all_images_paths):
+#     image = preprocess(Image.open(p)).unsqueeze(0).to(device)
+#         # text = clip.tokenize(["a diagram", "a dog", "a cat"]).to(device)
 
-    with torch.no_grad():
-        image_features = model.encode_image(image)
+#     with torch.no_grad():
+#         image_features = model.encode_image(image)
 
-    all_features.append(image_features.cpu().data.numpy())
-all_features = np.array(all_features)
-print(all_features.shape)
-np.save("/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_resnet.npy", all_features)
+#     all_features.append(image_features.cpu().data.numpy())
+# all_features = np.array(all_features)
+# print(all_features.shape)
+# np.save("/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_resnet.npy", all_features)
 
 # extract text feature of image titles
 # all_text_features = []
@@ -95,7 +95,6 @@ LOI_vision = ["visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 LOI_ResNet_vision = [
     "visual.bn1",
     "visual.avgpool",
-    "visual.avgpool",
     "visual.layer1.2.bn3",
     "visual.layer2.3.bn3",
     "visual.layer3.5.bn3",
@@ -108,7 +107,7 @@ LOI_text = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 model_visual = tx.Extractor(model, LOI_ResNet_vision)
 compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
 
-for cid in tqdm(all_coco_ids):
+for cid in tqdm(all_coco_ids[:20]):
     with torch.no_grad():
         image_path = "%s/%s.jpg" % (stimuli_dir, cid)
         image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
@@ -120,19 +119,25 @@ for cid in tqdm(all_coco_ids):
         for i, f in enumerate(features.values()):
             compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
 
-compressed_features = np.array(compressed_features)
+compressed_features_array = [np.array(l) for l in compressed_features]
 
-for l, f in enumerate(compressed_features):
+# compressed_features = np.array(compressed_features)
+
+for l, f in enumerate(compressed_features_array):
     pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="full")
     try:
         fp = pca.fit_transform(f)
-    except ValueError:
+        print("Feature %01d has shape of:" % l)
         print(fp.shape)
 
-    print("Feature %01d has shape of:" % l)
-    print(fp.shape)
+        np.save("%s/visual_layer_resnet_%01d.npy" % (feature_output_dir, l), fp)
+    except np.linalg.LinAlgError:
+        print("PCA error")
+        print(l)
+        print(fp.shape)
+        continue
 
-    np.save("%s/visual_layer_resnet_%01d.npy" % (feature_output_dir, l), fp)
+    
 
 # # for text features
 # text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
