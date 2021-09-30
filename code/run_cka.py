@@ -275,3 +275,35 @@ if __name__ == "__main__":
             brain_labels,
             subset_idx=subset_idx,
         )
+
+    # cka between clip and other networks"
+    task = ["visual", "convnet_alexnet"]
+    layers1 = ["_layer_" + i for i in range(12)]
+    layer_labels1 = layers1
+
+    layers2 = [
+        "_conv1_avgpool",
+        "_conv2_avgpool",
+        "_conv3_avgpool",
+        "_conv4_avgpool",
+        "_conv5_avgpool",
+        "_fc6_avgpool",
+        "_fc7_avgpool",
+    ]
+    layer_labels2 = layers2
+
+    run_cka_across_networks(
+            tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )
+
+    task = ["visual", "taskrepr_class_1000"]
+    layers1 = ["_layer_" + i for i in range(12)]
+    layer_labels1 = layers1.copy()
+    
+    layers2 = task_layer_dict[tasks[1]]
+    layer_labels2 = layers2.copy()
+    layer_labels2[4] = "_bottle_neck"
+    
+    run_cka_across_networks(
+            tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )
