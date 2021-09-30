@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 
 import torch
 import torchvision
+import torch.nn as nn
 
 from pycocotools.coco import COCO
 import torchextractor as tx
@@ -38,6 +39,33 @@ def load_captions(cid):
     captions = [d["caption"] for d in anns]
     return captions
 
+
+def extract_visual_resnet_feature():
+    print("Extracting ResNet features")
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+            captions = load_captions(cid)
+            text = clip.tokenize(captions).to(device)
+
+            _, features = model_visual(image, text)
+
+            for i, f in enumerate(features.values()):
+                # print(f.size())
+                if len(f.size()) > 3:
+                    c = f.data.shape[1]  # number of channels
+                    k = int(np.floor(np.sqrt(subsampling_size / c)))
+                    tmp = nn.functional.adaptive_avg_pool2d(f.data, (k, k))
+                    # print(tmp.size())
+                    compressed_features[i].append(tmp.squeeze().cpu().numpy().flatten())
+                else:
+                    compressed_features[i].append(f.squeeze().data.cpu().numpy().flatten())
+
+    compressed_features_array = []
+    for l, f in enumerate(compressed_features):
+        np.save("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l), f)
+        # compressed_features_array.append(np.array(f))
 
 # Load Images
 subj = 1
@@ -105,39 +133,28 @@ LOI_text = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
 
 # For visual features
 model_visual = tx.Extractor(model, LOI_ResNet_vision)
-compressed_features = [copy.copy(e) for _ in range(12) for e in [[]]]
-
-for cid in tqdm(all_coco_ids[:100]):
-    with torch.no_grad():
-        image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-        image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
-        captions = load_captions(cid)
-        text = clip.tokenize(captions).to(device)
-
-        _, features = model_visual(image, text)
-
-        for i, f in enumerate(features.values()):
-            compressed_features[i].append(f.squeeze().cpu().data.numpy().flatten())
-
-compressed_features_array = [np.array(l) for l in compressed_features]
+compressed_features = [copy.copy(e) for _ in range(8) for e in [[]]]
+subsampling_size=5000
 
 
-print("Running PCA")
-for l, f in enumerate(compressed_features_array):
+
+for l in range(8):
+    try:
+        f = np.load("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
+    except FileNotFoundError:
+        extract_visual_resnet_feature()
+        f = np.load("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
+    
+    print("Running PCA")
     print("feature shape: ")
     print(f.shape)
-    pca = PCA(n_components=min(f.shape[0], 64), whiten=True, svd_solver="auto")
+    pca = PCA(n_components=min(f.shape[0], 64), svd_solver="auto")
 
     fp = pca.fit_transform(f)
     print("Feature %01d has shape of:" % l)
     print(fp.shape)
 
     np.save("%s/visual_layer_resnet_%01d.npy" % (feature_output_dir, l), fp)
-    # except Error:
-    #     print("PCA error")
-    #     print(l)
-    #     print(fp.shape)
-    #     continue
 
     
 
