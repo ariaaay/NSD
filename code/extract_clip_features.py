@@ -18,9 +18,13 @@ import torchextractor as tx
 import clip
 from util.util import pytorch_pca
 
+from util.model_config import COCO_cat, COCO_super_cat
+
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-def load_captions(cid):
+
+def load_captions(cid, train_caps, val_caps):
     annIds = train_caps.getAnnIds(imgIds=[cid])
     anns = train_caps.loadAnns(annIds)
     if anns == []:
@@ -32,6 +36,65 @@ def load_captions(cid):
 
     captions = [d["caption"] for d in anns]
     return captions
+
+
+def load_objects_in_COCO(cid, stim, cat, supcat):
+    # extract the nsd ID corresponding to the coco ID in the stimulus list
+    stim_ind = stim["nsdId"][stim["cocoId"] == cid]
+    # extract the repective features for that nsd ID
+    catID_of_trial = cat[stim_ind, :]
+    supcatID_of_trial = supcat[stim_ind, :]
+    catnms = []
+    for i, a in enumerate(catID_of_trial):
+        catnms += list(COCO_cat[a])
+        catnms += list(COCO_super_cat[supcatID_of_trial[i, :]])
+    return catnms
+
+
+def load_object_caption_overlap(cid):
+    caption = load_captions(cid)
+    objs = load_objects_in_COCO(cid)
+    all_caps = []
+    for c in caption:
+        all_caps += c
+    obj_intersect = [o for o in objs if o in all_caps]
+    return obj_intersect
+
+
+def extract_object_base_text_feature():
+    model, _ = clip.load("ViT-B/32", device=device)
+    all_features = []
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            objects = load_objects_in_COCO(cid)
+            text = clip.tokenize(objects).to(device)
+            cap_emb = model.encode_text(text).cpu().data.numpy()
+            all_features.append(cap_emb)
+
+    all_features = np.array(all_features)
+    print(all_features.shape)
+    np.save(
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object.npy", all_features,
+    )
+
+
+def extract_obj_cap_intersect_text_feature():
+    model, _ = clip.load("ViT-B/32", device=device)
+    all_features = []
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            overlaps = load_object_caption_overlap(cid)
+            text = clip.tokenize(overlaps).to(device)
+            cap_emb = model.encode_text(text).cpu().data.numpy()
+            all_features.append(cap_emb)
+
+    all_features = np.array(all_features)
+    print(all_features.shape)
+    np.save(
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object_caption_overlap.npy",
+        all_features,
+    )
+    return
 
 
 def extract_visual_resnet_prePCA_feature():
@@ -75,6 +138,7 @@ def extract_visual_resnet_prePCA_feature():
     for l, f in enumerate(compressed_features):
         np.save("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l), f)
         # compressed_features_array.append(np.array(f))
+
 
 def extract_visual_resnet_prePCA_feature():
     LOI_ResNet_vision = [
@@ -177,11 +241,12 @@ def extract_visual_transformer_feature():
         np.save("%s/visual_layer_%01d.npy" % (feature_output_dir, l), fp)
 
 
-
 def extract_text_layer_feature():
     from pycocotools.coco import COCO
 
-    trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+    trainFile = (
+        "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+    )
     valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
     train_caps = COCO(trainFile)
     val_caps = COCO(valFile)
@@ -195,7 +260,7 @@ def extract_text_layer_feature():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
-            captions = load_captions(cid)
+            captions = load_captions(cid, train_caps, val_caps)
 
             layer_features = [
                 copy.copy(e) for _ in range(12) for e in [[]]
@@ -250,7 +315,8 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_features = np.array(all_features)
     print(all_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_resnet.npy",
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_%s.npy"
+        % model_name,
         all_features,
     )
 
@@ -275,9 +341,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
 parser = argparse.ArgumentParser()
 parser.add_argument("--subj", default=1, type=int)
 parser.add_argument(
-    "--feature_dir",
-    type=str,
-    default="/user_data/yuanw3/project_outputs/NSD/features",
+    "--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features",
 )
 parser.add_argument(
     "--project_output_dir",
@@ -286,7 +350,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-
 stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
 
@@ -294,5 +357,11 @@ all_coco_ids = np.load(
     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
 )
 
+cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
+supcat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy")
+stim = pd.read_pickle(
+    "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+)
 
-extract_visual_resnet_feature()
+extract_obj_cap_intersect_text_feature()
+extract_object_base_text_feature()
