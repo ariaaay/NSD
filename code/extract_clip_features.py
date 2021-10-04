@@ -38,7 +38,7 @@ def load_captions(cid):
     return captions
 
 
-def load_objects_in_COCO(cid, stim, cat, supcat):
+def load_objects_in_COCO(cid):
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
     # extract the repective features for that nsd ID
