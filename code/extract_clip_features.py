@@ -46,8 +46,8 @@ def load_objects_in_COCO(cid):
     supcatID_of_trial = supcat[stim_ind, :]
     catnms = []
     for i, a in enumerate(catID_of_trial):
-        catnms += list(COCO_cat[a])
-        catnms += list(COCO_super_cat[supcatID_of_trial[i, :]])
+        catnms += list(COCO_cat[a>0])
+        catnms += list(COCO_super_cat[supcatID_of_trial[i, :]>0])
     return catnms
 
 
