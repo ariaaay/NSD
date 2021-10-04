@@ -24,7 +24,7 @@ from util.model_config import COCO_cat, COCO_super_cat
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def load_captions(cid, train_caps, val_caps):
+def load_captions(cid):
     annIds = train_caps.getAnnIds(imgIds=[cid])
     anns = train_caps.loadAnns(annIds)
     if anns == []:
@@ -242,15 +242,6 @@ def extract_visual_transformer_feature():
 
 
 def extract_text_layer_feature():
-    from pycocotools.coco import COCO
-
-    trainFile = (
-        "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-    )
-    valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-    train_caps = COCO(trainFile)
-    val_caps = COCO(valFile)
-
     model, preprocess = clip.load("ViT-B/32", device=device)
     LOI_text = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
     text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
@@ -260,7 +251,7 @@ def extract_text_layer_feature():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
-            captions = load_captions(cid, train_caps, val_caps)
+            captions = load_captions(cid)
 
             layer_features = [
                 copy.copy(e) for _ in range(12) for e in [[]]
@@ -362,6 +353,13 @@ supcat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat
 stim = pd.read_pickle(
     "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
 )
+from pycocotools.coco import COCO
 
+trainFile = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+)
+valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+train_caps = COCO(trainFile)
+val_caps = COCO(valFile)
 extract_obj_cap_intersect_text_feature()
 extract_object_base_text_feature()
