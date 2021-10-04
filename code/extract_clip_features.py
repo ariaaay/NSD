@@ -42,22 +42,40 @@ def load_objects_in_COCO(cid):
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
     # extract the repective features for that nsd ID
-    catID_of_trial = cat[stim_ind, :]
-    supcatID_of_trial = supcat[stim_ind, :]
+    catID_of_trial = cat[stim_ind, :].squeeze()
+    supcatID_of_trial = supcat[stim_ind, :].squeeze()
     catnms = []
-    for i, a in enumerate(catID_of_trial):
-        catnms += list(COCO_cat[a>0])
-        catnms += list(COCO_super_cat[supcatID_of_trial[i, :]>0])
+
+    assert len(catID_of_trial) == len(COCO_cat)
+    assert len(supcatID_of_trial) == len(COCO_super_cat)
+
+    catnms += list(COCO_cat[catID_of_trial>0])
+    catnms += list(COCO_super_cat[supcatID_of_trial>0])
     return catnms
+
+def load_top1_objects_in_COCO(cid):
+    # extract the nsd ID corresponding to the coco ID in the stimulus list
+    stim_ind = stim["nsdId"][stim["cocoId"] == cid]
+    # extract the respective features for that nsd ID
+    catID_of_trial = cat[stim_ind, :]
+    catnm = COCO_cat[np.argmax(catID_of_trial)]
+    return catnm
 
 
 def load_object_caption_overlap(cid):
     caption = load_captions(cid)
     objs = load_objects_in_COCO(cid)
-    all_caps = []
+    for k in expand_dict.keys():
+        if k in objs:
+            objs += expand_dict[k]
+    all_caps = ""
     for c in caption:
         all_caps += c
     obj_intersect = [o for o in objs if o in all_caps]
+
+    print(objs)
+    print(all_caps)
+    print(obj_intersect)
     return obj_intersect
 
 
@@ -67,16 +85,33 @@ def extract_object_base_text_feature():
     for cid in tqdm(all_coco_ids):
         with torch.no_grad():
             objects = load_objects_in_COCO(cid)
-            text = clip.tokenize(objects).to(device)
+            expression = "a photo of " + " ".join(objects)
+            text = clip.tokenize(expression).to(device)
             cap_emb = model.encode_text(text).cpu().data.numpy()
             all_features.append(cap_emb)
 
-    all_features = np.array(all_features)
-    print(all_features.shape)
+    all_features = np.array(all_features).squeeze()
+    print("Feature shape is: " + str(all_features.shape))
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_object.npy", all_features,
     )
+    
 
+def extract_top1_obejct_base_text_feature():
+    model, _ = clip.load("ViT-B/32", device=device)
+    all_features = []
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            obj = load_top1_objects_in_COCO(cid)
+            text = clip.tokenize("a photo of a " + obj).to(device)
+            cap_emb = model.encode_text(text).cpu().data.numpy()
+            all_features.append(cap_emb)
+
+    all_features = np.array(all_features).squeeze()
+    print("Feature shape is: " + str(all_features.shape))
+    np.save(
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_top1_object.npy", all_features,
+    )
 
 def extract_obj_cap_intersect_text_feature():
     model, _ = clip.load("ViT-B/32", device=device)
@@ -89,7 +124,7 @@ def extract_obj_cap_intersect_text_feature():
             all_features.append(cap_emb)
 
     all_features = np.array(all_features)
-    print(all_features.shape)
+    print("Feature shape is: " + str(all_features.shape))
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_object_caption_overlap.npy",
         all_features,
@@ -304,7 +339,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
 
         all_features.append(image_features.cpu().data.numpy())
     all_features = np.array(all_features)
-    print(all_features.shape)
+    # print(all_features.shape)
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_%s.npy"
         % model_name,
@@ -322,7 +357,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
             all_text_features.append(cap_emb)
 
     all_text_features = np.array(all_text_features)
-    print(all_text_features.shape)
+    # print(all_text_features.shape)
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_text.npy",
         all_text_features,
@@ -361,5 +396,13 @@ trainFile = (
 valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
-extract_obj_cap_intersect_text_feature()
+
+COCO_cat = np.array(COCO_cat)
+COCO_super_cat = np.array(COCO_super_cat)
+
+expand_dict = {}
+expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
+
 extract_object_base_text_feature()
+extract_top1_obejct_base_text_feature()
+# extract_obj_cap_intersect_text_feature()
