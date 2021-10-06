@@ -1,7 +1,13 @@
 import pickle
 import numpy as np
 
-def load_data(model, task, output_root, subj=1, measure="corr"):
+def load_data(model, task=None, output_root=".", subj=1, measure="corr"):
+    if measure == "pvalue":
+        measure = "corr"
+        pvalue = True
+    else:
+        pvalue = False
+
     if task is None:
         output = pickle.load(
             open(
@@ -20,6 +26,8 @@ def load_data(model, task, output_root, subj=1, measure="corr"):
         )
     if measure == "corr":
         out = np.array(output)[:, 0]
+        if pvalue:
+            out = np.array(output)[:, 1]
     else:
         out = np.array(output)
     return out
