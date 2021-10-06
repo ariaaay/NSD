@@ -5,6 +5,8 @@ from nibabel.volumeutils import working_type
 import numpy as np
 
 import argparse
+from tqdm import tqdm
+
 from util.model_config import model_features
 from util.data_util import load_data
 
@@ -18,13 +20,81 @@ def project_vals_to_3d(vals, mask):
     return all_vals
 
 
-def make_volume(subj, model, task=None, mask_with_significance=False, output_root="."):
+def visualize_layerwise_max_corr_results(
+    model, layer_num, subj=1, task=None, threshold=85, mask_with_significance=False
+):
+    val_array = list()
+    for i in range(layer_num):
+        val_array.append(
+            load_data(
+                model="%s_%d" % (model, i), output_root=output_root, subj=args.subj
+            )
+        )
+
+    val_array = np.array(val_array)
+
+    threshold_performance = np.max(val_array, axis=0) * (threshold / 100)
+    layeridx = np.zeros(threshold_performance.shape) - 1
+    for v in tqdm(range(len(threshold_performance))):
+        if threshold_performance[v] > 0:
+            layeridx[v] = (
+                int(np.nonzero(val_array[:, v] >= threshold_performance[v])[0][0]) + 1
+            )
+            # print(layeridx[i])
+    try:
+        cortical_mask = np.load(
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+            % (output_root, args.subj, args.subj)
+        )
+    except FileNotFoundError:
+        print("loading old mask...")
+        cortical_mask = np.load(
+            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
+            % (output_root, args.subj, args.subj)
+        )
+    except:
+        pass
+
+    if mask_with_significance:
+        if args.sig_method == "negtail_fdr":
+            sig_mask = np.load(
+                "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
+                % (output_root, subj, model, task, "negtail_fdr", 0.05)
+            )
+        elif args.sig_method == "pvalue":
+            pvalues = load_data(
+                model="%s_%d" % (model, layer_num-1),
+                output_root=output_root,
+                subj=args.subj,
+                measure="pvalue",
+            )
+            sig_mask = pvalues <= 0.05
+
+    layeridx[~sig_mask] = -1
+
+    # projecting value back to 3D space
+    all_vals = project_vals_to_3d(layeridx, cortical_mask)
+
+    layerwise_volume = cortex.Volume(
+        all_vals,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+        vmin=1,
+        vmax=layer_num,
+    )
+    return layerwise_volume
+
+
+def make_volume(subj, model, task=None, mask_with_significance=False, output_root=".", measure="corr"):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
     # load correlation scores of cortical voxels
-    vals = load_data(model, task, output_root=output_root, subj=subj)
+    vals = load_data(model, task, output_root=output_root, subj=subj, measure=measure)
     try:
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
@@ -39,10 +109,17 @@ def make_volume(subj, model, task=None, mask_with_significance=False, output_roo
     except:
         pass
     if mask_with_significance:
-        sig_mask = np.load(
-            "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
-            % (output_root, subj, model, task, "negtail_fdr", 0.05)
-        )
+        if args.sig_method == "negtail_fdr":
+            sig_mask = np.load(
+                "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
+                % (output_root, subj, model, task, "negtail_fdr", 0.05)
+            )
+        elif args.sig_method == "pvalue":
+            pvalues = load_data(
+                model, task, output_root=output_root, subj=subj, measure="pvalue"
+            )
+            sig_mask = pvalues <= 0.05
+
         vals[~sig_mask] = 0
     # projecting value back to 3D space
     all_vals = project_vals_to_3d(vals, cortical_mask)
@@ -424,22 +501,74 @@ if __name__ == "__main__":
     }
 
     for i in range(12):
-        volumes["clip-vision-%s" % str(i + 1)] = make_volume(
-            subj=args.subj, model="visual_layer_%d" % i, output_root=output_root
+        volumes["clip-ViT-%s" % str(i + 1)] = make_volume(
+            subj=args.subj,
+            model="visual_layer_%d" % i,
+            output_root=output_root,
+            mask_with_significance=args.mask_sig,
         )
 
-    volumes["clip-visual-last"] = make_volume(
-        subj=args.subj, model="clip", output_root=output_root
+    volumes["clip-ViT-last"] = make_volume(
+        subj=args.subj,
+        model="clip",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["clip-ViT-last-rsq"] = make_volume(
+        subj=args.subj,
+        model="clip",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+        measure="rsq"
     )
 
     for i in range(12):
         volumes["clip-text-%s" % str(i + 1)] = make_volume(
-            subj=args.subj, model="text_layer_%d" % i, output_root=output_root
+            subj=args.subj,
+            model="text_layer_%d" % i,
+            output_root=output_root,
+            mask_with_significance=args.mask_sig,
         )
 
     volumes["clip-text-last"] = make_volume(
-        subj=args.subj, model="clip_text", output_root=output_root
+        subj=args.subj,
+        model="clip_text",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
     )
+
+    volumes["clip_top1_object"] = make_volume(
+        subj=args.subj,
+        model="clip_top1_object",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    for i in range(7):
+        volumes["clip-RN-%s" % str(i + 1)] = make_volume(
+            subj=args.subj,
+            model="visual_layer_resnet_%d" % i,
+            output_root=output_root,
+            mask_with_significance=args.mask_sig,
+        )
+    volumes["clip-RN-last"] = make_volume(
+        subj=args.subj,
+        model="clip_visual_resnet",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["clip-ViT-layerwise"] = visualize_layerwise_max_corr_results(
+        "visual_layer", 12, threshold=85, mask_with_significance=args.mask_sig
+    )
+    volumes["clip-RN-layerwise"] = visualize_layerwise_max_corr_results(
+        "visual_layer_resnet", 7, threshold=85, mask_with_significance=args.mask_sig
+    )
+    volumes["clip-text-layerwise"] = visualize_layerwise_max_corr_results(
+        "text_layer", 12, threshold=85, mask_with_significance=args.mask_sig
+    )
+
     if args.show_pcs:
         pc_vols = []
         PCs = np.load(
