@@ -35,7 +35,7 @@ def get_preloaded_features(
             )
 
     except FileNotFoundError:
-        featmat = extract_feature_by_imgs(stim_list, model, layer=layer, features_dir=features_dir)
+        featmat = extract_feature_by_imgs(stim_list, model, layer=layer)
         if subj == 0:  # meaning it is features for all subjects
             np.save("%s/%s%s.npy" % (features_dir, model, layer_modifier), featmat)
         else:
@@ -121,10 +121,30 @@ def extract_feature_by_imgs(
 
     if "clip" in model:
         try:
-            all_feat = np.load("%s/clip.npy" % (features_dir))
+            all_feat = np.load("%s/%s.npy" % (features_dir, model))
         except FileNotFoundError:
             all_feat = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy")
+                "/lab_data/tarrlab/common/datasets/features/NSD/CLIP/%s.npy" % model)
+        stim = pd.read_pickle(
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
+        featmat = []
+        for img_id in tqdm(stim_list):
+            try:
+                # extract the nsd ID corresponding to the coco ID in the stimulus list
+                stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
+                # extract the repective features for that nsd ID
+                featmat.append(all_feat[stim_ind, :])
+            except IndexError:
+                print("COCO Id Not Found: " + str(img_id))
+        featmat = np.array(featmat).squeeze()
+    
+    if "cat" in model:
+        try:
+            all_feat = np.load("%s/%s.npy" % (features_dir, model))
+        except FileNotFoundError:
+            all_feat = np.load(
+                "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/%s.npy" % model)
         stim = pd.read_pickle(
             "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
         )
@@ -139,8 +159,9 @@ def extract_feature_by_imgs(
                 print("COCO Id Not Found: " + str(img_id))
         featmat = np.array(featmat).squeeze()
 
+
     else:
-        print("Unknown feature spaces...")
+        print("ERROR: Feature spaces unknown...")
 
     return featmat.squeeze()
 
