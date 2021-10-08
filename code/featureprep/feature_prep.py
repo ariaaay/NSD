@@ -35,7 +35,7 @@ def get_preloaded_features(
             )
 
     except FileNotFoundError:
-        featmat = extract_feature_by_imgs(stim_list, model, layer=layer)
+        featmat = extract_feature_by_imgs(stim_list, model, layer=layer, features_dir=features_dir)
         if subj == 0:  # meaning it is features for all subjects
             np.save("%s/%s%s.npy" % (features_dir, model, layer_modifier), featmat)
         else:
