@@ -21,10 +21,12 @@ def project_vals_to_3d(vals, mask):
 
 
 def visualize_layerwise_max_corr_results(
-    model, layer_num, subj=1, task=None, threshold=85, mask_with_significance=False
+    model, layer_num, subj=1, task=None, threshold=85, mask_with_significance=False, start_with_zero=True
 ):
     val_array = list()
     for i in range(layer_num):
+        if not start_with_zero: # layer starts with 1
+            continue
         val_array.append(
             load_data(
                 model="%s_%d" % (model, i), output_root=output_root, subj=args.subj
@@ -545,6 +547,27 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
+    volumes["clip_all_objects"] = make_volume(
+        subj=args.subj,
+        model="clip_object",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["COCO categories"] = make_volume(
+        subj=args.subj,
+        model="cat",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["COCO super categories"] = make_volume(
+        subj=args.subj,
+        model="supcat",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
     for i in range(7):
         volumes["clip-RN-%s" % str(i + 1)] = make_volume(
             subj=args.subj,
@@ -559,6 +582,14 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
+    for i in range(13):
+        volumes["bert-%s" % str(i + 1)] = make_volume(
+            subj=args.subj,
+            model="bert_layer_%d" % (i + 1),
+            output_root=output_root,
+            mask_with_significance=args.mask_sig,
+        )
+
     volumes["clip-ViT-layerwise"] = visualize_layerwise_max_corr_results(
         "visual_layer", 12, threshold=85, mask_with_significance=args.mask_sig
     )
@@ -568,6 +599,9 @@ if __name__ == "__main__":
     volumes["clip-text-layerwise"] = visualize_layerwise_max_corr_results(
         "text_layer", 12, threshold=85, mask_with_significance=args.mask_sig
     )
+    # volumes["bert-layerwise"] = visualize_layerwise_max_corr_results(
+    #     "bert_layer", 13, threshold=85, mask_with_significance=args.mask_sig, start_with_zero=False
+    # )
 
     if args.show_pcs:
         pc_vols = []
