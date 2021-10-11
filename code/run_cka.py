@@ -186,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--cka_across_layers", action="store_true", default=False)
     parser.add_argument("--cka_across_networks", type=str, nargs="+", default=None)
     parser.add_argument("--cka_across_networks_and_brain", type=str, default=None)
+    parser.add_argument("--comparison_with_clip", action="store_true", default=False)
     parser.add_argument("--subj", default=1, type=int)
     args = parser.parse_args()
 
