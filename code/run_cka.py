@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
     # cka between clip and other networks"
     if args.comparison_with_clip:
-        task = ["visual", "convnet_alexnet"]
+        tasks = ["visual", "convnet_alexnet"]
         layers1 = ["_layer_" + str(i) for i in range(12)]
         layer_labels1 = layers1
 
@@ -298,7 +298,7 @@ if __name__ == "__main__":
                 tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
             )
 
-        task = ["visual", "taskrepr_class_1000"]
+        tasks = ["visual", "taskrepr_class_1000"]
         layers1 = ["_layer_" + str(i) for i in range(12)]
         layer_labels1 = layers1.copy()
         
@@ -310,7 +310,7 @@ if __name__ == "__main__":
                 tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
             )
 
-        task = ["text", "BERT"]
+        tasks = ["text", "BERT"]
         layers1 = ["_layer_" + str(i) for i in range(12)]
         layer_labels1 = layers1.copy()
         
