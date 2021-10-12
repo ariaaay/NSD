@@ -279,38 +279,38 @@ if __name__ == "__main__":
 
     # cka between clip and other networks"
     if args.comparison_with_clip:
-        tasks = ["visual", "convnet_alexnet"]
-        layers1 = ["_layer_" + str(i) for i in range(12)]
-        layer_labels1 = layers1
+        # tasks = ["visual", "convnet_alexnet"]
+        # layers1 = ["_layer_" + str(i) for i in range(12)]
+        # layer_labels1 = layers1
 
-        layers2 = [
-            "_conv1_avgpool",
-            "_conv2_avgpool",
-            "_conv3_avgpool",
-            "_conv4_avgpool",
-            "_conv5_avgpool",
-            "_fc6_avgpool",
-            "_fc7_avgpool",
-        ]
-        layer_labels2 = layers2
+        # layers2 = [
+        #     "_conv1_avgpool",
+        #     "_conv2_avgpool",
+        #     "_conv3_avgpool",
+        #     "_conv4_avgpool",
+        #     "_conv5_avgpool",
+        #     "_fc6_avgpool",
+        #     "_fc7_avgpool",
+        # ]
+        # layer_labels2 = layers2
 
-        run_cka_across_networks(
-                tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-            )
+        # run_cka_across_networks(
+        #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        #     )
 
-        tasks = ["visual", "taskrepr_class_1000"]
-        layers1 = ["_layer_" + str(i) for i in range(12)]
-        layer_labels1 = layers1.copy()
+        # tasks = ["visual", "taskrepr_class_1000"]
+        # layers1 = ["_layer_" + str(i) for i in range(12)]
+        # layer_labels1 = layers1.copy()
         
-        layers2 = task_layer_dict[tasks[1]]
-        layer_labels2 = layers2.copy()
-        layer_labels2[4] = "_bottle_neck"
+        # layers2 = task_layer_dict[tasks[1]]
+        # layer_labels2 = layers2.copy()
+        # layer_labels2[4] = "_bottle_neck"
         
-        run_cka_across_networks(
-                tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-            )
+        # run_cka_across_networks(
+        #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        #     )
 
-        tasks = ["text", "BERT"]
+        tasks = ["text", "bert"]
         layers1 = ["_layer_" + str(i) for i in range(12)]
         layer_labels1 = layers1.copy()
         
