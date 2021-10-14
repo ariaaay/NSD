@@ -17,9 +17,8 @@ import torchextractor as tx
 
 import clip
 from util.util import pytorch_pca
-
+from util.data_util import load_top1_objects_in_COCO, load_objects_in_COCO
 from util.model_config import COCO_cat, COCO_super_cat
-
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -36,31 +35,6 @@ def load_captions(cid):
 
     captions = [d["caption"] for d in anns]
     return captions
-
-
-def load_objects_in_COCO(cid):
-    # extract the nsd ID corresponding to the coco ID in the stimulus list
-    stim_ind = stim["nsdId"][stim["cocoId"] == cid]
-    # extract the repective features for that nsd ID
-    catID_of_trial = cat[stim_ind, :].squeeze()
-    supcatID_of_trial = supcat[stim_ind, :].squeeze()
-    catnms = []
-
-    assert len(catID_of_trial) == len(COCO_cat)
-    assert len(supcatID_of_trial) == len(COCO_super_cat)
-
-    catnms += list(COCO_cat[catID_of_trial > 0])
-    catnms += list(COCO_super_cat[supcatID_of_trial > 0])
-    return catnms
-
-
-def load_top1_objects_in_COCO(cid):
-    # extract the nsd ID corresponding to the coco ID in the stimulus list
-    stim_ind = stim["nsdId"][stim["cocoId"] == cid]
-    # extract the respective features for that nsd ID
-    catID_of_trial = cat[stim_ind, :]
-    catnm = COCO_cat[np.argmax(catID_of_trial)]
-    return catnm
 
 
 def load_object_caption_overlap(cid):
@@ -388,9 +362,7 @@ all_coco_ids = np.load(
 
 cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
 supcat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy")
-stim = pd.read_pickle(
-    "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-)
+
 from pycocotools.coco import COCO
 
 trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"

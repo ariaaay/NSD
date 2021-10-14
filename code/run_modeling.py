@@ -10,6 +10,7 @@ from featureprep.feature_prep import (
     get_preloaded_features,
     extract_feature_with_image_order,
 )
+from util.data_util import load_subset_trials
 
 
 def run(
@@ -116,6 +117,13 @@ if __name__ == "__main__":
         default=None,
         help="Specify a name to save the performance with",
     )
+    parser.add_argument(
+        "--subset_data",
+        type=str,
+        default=None,
+        help="specify a category to subset training and testing data",
+    )
+
     args = parser.parse_args()
 
     brain_path = (
@@ -162,7 +170,14 @@ if __name__ == "__main__":
 
                 model_name_to_save += "_" + model
 
-    print("Running ridge on :")
+    if args.subset_data is not None:
+
+        subset_trial_id = load_subset_trials(stimulus_list, args.subset_data)
+        br_data = br_data[subset_trial_id, :]
+        feature_mat = feature_mat[subset_trial_id, :]
+        model_name_to_save += "_" + args.subset_data + "_subset"
+
+    print("Running ridge encoding model on :")
     print(model_name_to_save)
 
     print("Feature size is: " + str(feature_mat.shape))
