@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA
 
-from util.data_util import load_data
+from util.data_util import load_model_performance
 
 
 if __name__ == "__main__":
@@ -24,8 +24,8 @@ if __name__ == "__main__":
     )
 args = parser.parse_args()
 
-corr_i = load_data("clip", None, args.output_dir, subj=args.subj)
-corr_t = load_data("clip_text", None, args.output_dir, subj=args.subj)
+corr_i = load_model_performance("clip", None, args.output_dir, subj=args.subj)
+corr_t = load_model_performance("clip_text", None, args.output_dir, subj=args.subj)
 
 # Plotting text performance vs image performances
 # plt.scatter(corr_i, corr_t, alpha=0.05)
@@ -34,17 +34,25 @@ corr_t = load_data("clip_text", None, args.output_dir, subj=args.subj)
 # plt.ylabel("text")
 # plt.savefig("figures/CLIP/image_vs_text_acc.png")
 
-w_i = np.load("%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy" % (args.output_dir, args.subj))
-w_t = np.load("%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy" % (args.output_dir, args.subj))
+w_i = np.load(
+    "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
+    % (args.output_dir, args.subj)
+)
+w_t = np.load(
+    "%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy"
+    % (args.output_dir, args.subj)
+)
 
 pca_i = PCA(n_components=5)
 pca_i.fit(w_i)
-np.save("%s/pca/subj%d/clip_pca_components.npy" % (args.output_dir, args.subj), pca_i.components_)
+np.save(
+    "%s/pca/subj%d/clip_pca_components.npy" % (args.output_dir, args.subj),
+    pca_i.components_,
+)
 
 pca_t = PCA(n_components=5)
 pca_t.fit(w_t)
-np.save("%s/pca/subj%d/clip_text_pca_components.npy" % (args.output_dir, args.subj), pca_t.components_)
-
-
-
-
+np.save(
+    "%s/pca/subj%d/clip_text_pca_components.npy" % (args.output_dir, args.subj),
+    pca_t.components_,
+)

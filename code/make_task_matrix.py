@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from sklearn.cluster import AgglomerativeClustering
+from util.data_util import load_model_performance
 
 from util.model_config import task_label_NSD_tmp as task_label
 from util.model_config import task_label_in_Taskonomy19_matrix_order
-from visualize_corr_in_pycortex import load_data
 
 
 sns.set(style="whitegrid", font_scale=1)
@@ -32,7 +32,7 @@ sns.set(style="whitegrid", font_scale=1)
 def get_voxels(model_list, subj):
     datamat = list()
     for l in model_list:
-        data = load_data("taskrepr", task=l, subj=subj, measure="corr")
+        data = load_model_performance("taskrepr", task=l, subj=subj, measure="corr")
         datamat.append(data)
     datamat = np.array(datamat)
     return datamat
@@ -54,9 +54,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="please specify subject to show")
 
     parser.add_argument(
-        "--use_prediction",
-        default=False,
-        action="store_true",
+        "--use_prediction", default=False, action="store_true",
     )
     parser.add_argument(
         "--use_significance",

@@ -1,7 +1,8 @@
 import pickle
 import numpy as np
 
-def load_data(model, task=None, output_root=".", subj=1, measure="corr"):
+
+def load_model_performance(model, task=None, output_root=".", subj=1, measure="corr"):
     if measure == "pvalue":
         measure = "corr"
         pvalue = True

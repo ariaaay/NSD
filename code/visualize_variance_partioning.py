@@ -4,16 +4,7 @@ import numpy as np
 import cortex
 
 from visualize_corr_in_pycortex import project_vals_to_3d
-
-
-def load_data(model_name, subj=1, measure="rsq"):
-    output = pickle.load(
-        open(
-            "output/encoding_results/subj%d/rsq_%s_whole_brain.p" % (subj, model_name),
-            "rb",
-        )
-    )
-    return np.array(output)
+from util.data_util import load_model_performance
 
 
 def make_volume(vals, subj, mask_with_significance=False):
@@ -59,9 +50,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if len(args.tasks) == 2:
-        t1 = load_data("taskrepr_" + args.tasks[0], args.subj)
-        t2 = load_data("taskrepr_" + args.tasks[1], args.subj)
-        t12 = load_data(
+        t1 = load_model_performance("taskrepr_" + args.tasks[0], args.subj)
+        t2 = load_model_performance("taskrepr_" + args.tasks[1], args.subj)
+        t12 = load_model_performance(
             "taskrepr_" + args.tasks[0] + "_taskrepr_" + args.tasks[1], args.subj
         )
         print(max(t12))
@@ -71,21 +62,21 @@ if __name__ == "__main__":
         var_shared = t1 + t2 - t12
 
     elif len(args.tasks) == 3:
-        t1 = load_data("taskrepr_" + args.tasks[0], args.subj)
-        t2 = load_data("taskrepr_" + args.tasks[1], args.subj)
-        t3 = load_data("taskrepr_" + args.tasks[2], args.subj)
+        t1 = load_model_performance("taskrepr_" + args.tasks[0], args.subj)
+        t2 = load_model_performance("taskrepr_" + args.tasks[1], args.subj)
+        t3 = load_model_performance("taskrepr_" + args.tasks[2], args.subj)
 
-        t12 = load_data(
+        t12 = load_model_performance(
             "taskrepr_" + args.tasks[0] + "_taskrepr_" + args.tasks[1], args.subj
         )
-        t13 = load_data(
+        t13 = load_model_performance(
             "taskrepr_" + args.tasks[0] + "_taskrepr_" + args.tasks[2], args.subj
         )
-        t23 = load_data(
+        t23 = load_model_performance(
             "taskrepr_" + args.tasks[1] + "_taskrepr_" + args.tasks[2], args.subj
         )
 
-        t123 = load_data(
+        t123 = load_model_performance(
             "taskrepr_"
             + args.tasks[0]
             + "_taskrepr_"
@@ -103,24 +94,16 @@ if __name__ == "__main__":
 
     volumes = {
         "Unique Var - 2D Edges": make_volume(
-            var_unique1,
-            subj=args.subj,
-            mask_with_significance=args.mask_sig,
+            var_unique1, subj=args.subj, mask_with_significance=args.mask_sig,
         ),
         "Unique Var - 3D Edges": make_volume(
-            var_unique2,
-            subj=args.subj,
-            mask_with_significance=args.mask_sig,
+            var_unique2, subj=args.subj, mask_with_significance=args.mask_sig,
         ),
         "Unique Var - Semantic": make_volume(
-            var_unique3,
-            subj=args.subj,
-            mask_with_significance=args.mask_sig,
+            var_unique3, subj=args.subj, mask_with_significance=args.mask_sig,
         ),
         "Total Variance": make_volume(
-            t123,
-            subj=args.subj,
-            mask_with_significance=args.mask_sig,
+            t123, subj=args.subj, mask_with_significance=args.mask_sig,
         ),
     }
 

@@ -11,7 +11,7 @@ task_type["taskrepr"] = ["class_1000", "class_places", "edge2d", "edge3d"]
 task_type["alexnet"] = ["convnet", "place"]
 layers_type = {}
 layers_type["alexnet"] = conv_layers + fc_layers
-layers_type["taskrepr"] = [ "input_layer" + str(i) for i in [1,2,3,5]]
+layers_type["taskrepr"] = ["input_layer" + str(i) for i in [1, 2, 3, 5]]
 layers_type["taskrepr"] += ["output_layer1"]
 
 m = "alexnet"
@@ -45,4 +45,3 @@ plt.ylabel("Intrinsic Dimension")
 plt.xlabel("Layers")
 plt.legend()
 plt.savefig("%s/%s.png" % (output_dir, m))
-

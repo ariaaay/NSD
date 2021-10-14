@@ -146,12 +146,18 @@ if __name__ == "__main__":
             model_name_to_save = args.model[0]
 
         feature_mat = get_preloaded_features(
-            args.subj, stimulus_list, args.model[0], layer=args.layer, features_dir=args.features_dir
+            args.subj,
+            stimulus_list,
+            args.model[0],
+            layer=args.layer,
+            features_dir=args.features_dir,
         )
 
         if len(args.model) > 1:
             for model in args.model[1:]:
-                more_feature = get_preloaded_features(args.subj, stimulus_list, model, features_dir=args.features_dir)
+                more_feature = get_preloaded_features(
+                    args.subj, stimulus_list, model, features_dir=args.features_dir
+                )
                 feature_mat = np.hstack((feature_mat, more_feature))
 
                 model_name_to_save += "_" + model

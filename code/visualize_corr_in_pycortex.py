@@ -8,7 +8,7 @@ import argparse
 from tqdm import tqdm
 
 from util.model_config import model_features
-from util.data_util import load_data
+from util.data_util import load_model_performance
 
 
 def project_vals_to_3d(vals, mask):
@@ -21,14 +21,20 @@ def project_vals_to_3d(vals, mask):
 
 
 def visualize_layerwise_max_corr_results(
-    model, layer_num, subj=1, task=None, threshold=85, mask_with_significance=False, start_with_zero=True
+    model,
+    layer_num,
+    subj=1,
+    task=None,
+    threshold=85,
+    mask_with_significance=False,
+    start_with_zero=True,
 ):
     val_array = list()
     for i in range(layer_num):
-        if not start_with_zero: # layer starts with 1
+        if not start_with_zero:  # layer starts with 1
             continue
         val_array.append(
-            load_data(
+            load_model_performance(
                 model="%s_%d" % (model, i), output_root=output_root, subj=args.subj
             )
         )
@@ -64,8 +70,8 @@ def visualize_layerwise_max_corr_results(
                 % (output_root, subj, model, task, "negtail_fdr", 0.05)
             )
         elif args.sig_method == "pvalue":
-            pvalues = load_data(
-                model="%s_%d" % (model, layer_num-1),
+            pvalues = load_model_performance(
+                model="%s_%d" % (model, layer_num - 1),
                 output_root=output_root,
                 subj=args.subj,
                 measure="pvalue",
@@ -90,13 +96,22 @@ def visualize_layerwise_max_corr_results(
     return layerwise_volume
 
 
-def make_volume(subj, model, task=None, mask_with_significance=False, output_root=".", measure="corr"):
+def make_volume(
+    subj,
+    model,
+    task=None,
+    mask_with_significance=False,
+    output_root=".",
+    measure="corr",
+):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
     # load correlation scores of cortical voxels
-    vals = load_data(model, task, output_root=output_root, subj=subj, measure=measure)
+    vals = load_model_performance(
+        model, task, output_root=output_root, subj=subj, measure=measure
+    )
     try:
         cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
@@ -117,7 +132,7 @@ def make_volume(subj, model, task=None, mask_with_significance=False, output_roo
                 % (output_root, subj, model, task, "negtail_fdr", 0.05)
             )
         elif args.sig_method == "pvalue":
-            pvalues = load_data(
+            pvalues = load_model_performance(
                 model, task, output_root=output_root, subj=subj, measure="pvalue"
             )
             sig_mask = pvalues <= 0.05
@@ -522,7 +537,7 @@ if __name__ == "__main__":
         model="clip",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
-        measure="rsq"
+        measure="rsq",
     )
 
     for i in range(12):

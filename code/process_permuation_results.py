@@ -7,6 +7,8 @@ import argparse
 from glob import glob
 from statsmodels.stats.multitest import fdrcorrection
 
+# from util.data_util import load_model_performance
+
 from util.model_config import *
 from util.util import *
 
@@ -15,7 +17,7 @@ acc_dir = "outputs/encoding_results"
 nrep = 5000
 
 
-def load_data(dir, subj, model, feature, type="pvalue"):
+def load_permutation_model_performance(dir, subj, model, feature, type="pvalue"):
     fname = (
         "%s/subj%d/permutation_test_on_test_data_%s_%s_%s_whole_brain_whole_brain.p"
         % (dir, subj, type, model, feature)
@@ -27,7 +29,7 @@ def load_data(dir, subj, model, feature, type="pvalue"):
 
 def get_per_voxel_p(feature, subj):
     try:
-        p = load_data(
+        p = load_permutation_model_performance(
             perm_dir, subj=subj, model="taskrepr", feature=feature, type="pvalue"
         )
     except FileNotFoundError:

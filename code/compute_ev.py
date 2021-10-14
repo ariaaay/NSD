@@ -77,7 +77,9 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
     return np.array(ev_list)
 
 
-def compute_sample_wise_ev(subj, mask, biascorr=False, zscored_input=False, output_dir="output"):
+def compute_sample_wise_ev(
+    subj, mask, biascorr=False, zscored_input=False, output_dir="output"
+):
     l = np.load(
         "%s/trials_subj%02d.npy" % (output_dir, subj)
     )  # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
@@ -100,7 +102,7 @@ def compute_sample_wise_ev(subj, mask, biascorr=False, zscored_input=False, outp
             "%s/cortical_voxels/cortical_voxel_across_sessions_subj%02d.npy"
             % (output_dir, subj)
         )
-    
+
     # index by roi
     data = data[:, mask]
     print("Brain data shape is:")
@@ -124,7 +126,9 @@ if __name__ == "__main__":
     parser.add_argument("--compute_ev", action="store_true", default=False)
     parser.add_argument("--compute_sample_ev", action="store_true")
     parser.add_argument("--roi_for_sample_ev", type=str, default=None)
-    parser.add_argument("--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output")
+    parser.add_argument(
+        "--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output"
+    )
 
     args = parser.parse_args()
 
@@ -169,10 +173,33 @@ if __name__ == "__main__":
             for k, v in roi_dict.items():
                 if k > 0:
                     mask = roi_mask == k
-                    sample_ev = compute_sample_wise_ev(args.subj, mask, args.biascorr, args.zscored_input, output_dir=args.output_dir)
+                    sample_ev = compute_sample_wise_ev(
+                        args.subj,
+                        mask,
+                        args.biascorr,
+                        args.zscored_input,
+                        output_dir=args.output_dir,
+                    )
                     sample_ev_by_roi[v] = sample_ev
-            json.dump(sample_ev_by_roi, open("%s/sample_snr/sample_snr_subj%02d_%s.json" % (args.output_dir, args.subj, roi), "w"))
+            json.dump(
+                sample_ev_by_roi,
+                open(
+                    "%s/sample_snr/sample_snr_subj%02d_%s.json"
+                    % (args.output_dir, args.subj, roi),
+                    "w",
+                ),
+            )
 
         else:
-            sample_evs = compute_sample_wise_ev(args.subj, roi, args.biascorr, args.zscored_input, output_dir=args.output_dir)
-            np.save("%s/sample_snr/sample_snr_subj%02d_%s.npy" % (args.output_dir, args.subj, roi), sample_evs)
+            sample_evs = compute_sample_wise_ev(
+                args.subj,
+                roi,
+                args.biascorr,
+                args.zscored_input,
+                output_dir=args.output_dir,
+            )
+            np.save(
+                "%s/sample_snr/sample_snr_subj%02d_%s.npy"
+                % (args.output_dir, args.subj, roi),
+                sample_evs,
+            )

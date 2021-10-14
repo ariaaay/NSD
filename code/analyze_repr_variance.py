@@ -55,7 +55,7 @@ if __name__ == "__main__":
     if args.task is not None:
         fm = load_common_feature_matrix(args.task)
         print(measure_variance(fm))
-    
+
     else:
         tasks = ["taskrepr_" + t for t in args.task_list]
         var_dict = dict()
@@ -64,6 +64,3 @@ if __name__ == "__main__":
             fm = load_common_feature_matrix(t)
             var_dict[t] = measure_variance(fm)
         print(var_dict)
-        
-
-        

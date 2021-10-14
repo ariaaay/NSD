@@ -156,7 +156,7 @@ def load_roi_data(roi_names, subset_idx=None):
 
     br_data = np.load(brain_path)
     if subset_idx is not None:
-        br_data = br_data[subset_idx,: ]
+        br_data = br_data[subset_idx, :]
 
     for roi_name in roi_names:
         roi_label_dict = roi_name_dict[roi_name]
@@ -269,12 +269,7 @@ if __name__ == "__main__":
             brain_labels += labels
         print("Running CKA for task %s and the brain..." % task)
         run_cka_across_brain_and_networks(
-            task,
-            layers,
-            roi_data,
-            layer_labels,
-            brain_labels,
-            subset_idx=subset_idx,
+            task, layers, roi_data, layer_labels, brain_labels, subset_idx=subset_idx,
         )
 
     # cka between clip and other networks"
@@ -301,11 +296,11 @@ if __name__ == "__main__":
         # tasks = ["visual", "taskrepr_class_1000"]
         # layers1 = ["_layer_" + str(i) for i in range(12)]
         # layer_labels1 = layers1.copy()
-        
+
         # layers2 = task_layer_dict[tasks[1]]
         # layer_labels2 = layers2.copy()
         # layer_labels2[4] = "_bottle_neck"
-        
+
         # run_cka_across_networks(
         #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
         #     )
@@ -313,10 +308,10 @@ if __name__ == "__main__":
         # tasks = ["text", "bert"]
         # layers1 = ["_layer_" + str(i) for i in range(12)]
         # layer_labels1 = layers1.copy()
-        
+
         # layers2 = ["_layer_" + str(i+1) for i in range(13)]
         # layer_labels2 = layers2.copy()
-        
+
         # run_cka_across_networks(
         #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
         #     )
@@ -324,11 +319,11 @@ if __name__ == "__main__":
         tasks = ["visual_resnet", "taskrepr_class_1000"]
         layers1 = ["_layer_" + str(i) for i in range(12)]
         layer_labels1 = ["Clip_ResNet" + s for s in layers1]
-        
+
         layers2 = task_layer_dict[tasks[1]]
         layer_labels2 = layers2.copy()
         layer_labels2[4] = "_bottle_neck"
-        
+
         run_cka_across_networks(
-                tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-            )
+            tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )

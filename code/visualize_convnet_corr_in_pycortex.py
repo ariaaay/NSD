@@ -4,8 +4,10 @@ import pickle
 import numpy as np
 
 import argparse
+
+# from process_permuation_results import load_model_performance
 from util.model_config import model_features
-from util.data_util import load_data
+from util.data_util import load_model_performance
 
 
 def make_volume(subj, model, task, mask_with_significance=False):
@@ -14,7 +16,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
-    vals = load_data(model, task, subj=subj)
+    vals = load_model_performance(model, task, subj=subj)
 
     if mask_with_significance:
         correction = "emp_fdr"
@@ -56,7 +58,7 @@ def make_volume(subj, model, task, mask_with_significance=False):
 #     for m in model_dict.keys():
 #         if model_dict[m] is not None:
 #             for l in model_dict[m]:
-#                 data = load_data(m, model_subtype=l, subj=subj, measure="corr")
+#                 data = load_model_performance(m, model_subtype=l, subj=subj, measure="corr")
 #                 datamat.append(data)
 #     datamat = np.array(datamat)
 #     threshold_mask = np.max(datamat, axis=0) > 0.13

@@ -8,7 +8,9 @@ def centering(K):
     I = np.eye(n)
     H = I - unit / n
 
-    return np.dot(np.dot(H, K), H)  # HKH are the same with KH, KH is the first centering, H(KH) do the second time, results are the sme with one time centering
+    return np.dot(
+        np.dot(H, K), H
+    )  # HKH are the same with KH, KH is the first centering, H(KH) do the second time, results are the sme with one time centering
     # return np.dot(H, K)  # KH
 
 
@@ -18,7 +20,7 @@ def rbf(X, sigma=None):
     if sigma is None:
         mdist = np.median(KX[KX != 0])
         sigma = math.sqrt(mdist)
-    KX *= - 0.5 / (sigma * sigma)
+    KX *= -0.5 / (sigma * sigma)
     KX = np.exp(KX)
     return KX
 
@@ -49,12 +51,12 @@ def kernel_CKA(X, Y, sigma=None):
     return hsic / (var1 * var2)
 
 
-if __name__=='__main__':
+if __name__ == "__main__":
     X = np.random.randn(100, 64)
     Y = np.random.randn(100, 64)
 
-    print('Linear CKA, between X and Y: {}'.format(linear_CKA(X, Y)))
-    print('Linear CKA, between X and X: {}'.format(linear_CKA(X, X)))
+    print("Linear CKA, between X and Y: {}".format(linear_CKA(X, Y)))
+    print("Linear CKA, between X and X: {}".format(linear_CKA(X, X)))
 
-    print('RBF Kernel CKA, between X and Y: {}'.format(kernel_CKA(X, Y)))
-    print('RBF Kernel CKA, between X and X: {}'.format(kernel_CKA(X, X)))
+    print("RBF Kernel CKA, between X and Y: {}".format(kernel_CKA(X, Y)))
+    print("RBF Kernel CKA, between X and X: {}".format(kernel_CKA(X, X)))

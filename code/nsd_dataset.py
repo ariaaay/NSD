@@ -43,19 +43,17 @@ from util.model_config import roi_name_dict
 
 class NSDBrainOnlyDataset(Dataset):
     def __init__(
-        self,
-        output_dir,
-        subj,
-        idx,
-        roi,
-        roi_num,
-    ):   
+        self, output_dir, subj, idx, roi, roi_num,
+    ):
         self.subj = subj
         self.idx = idx
         self.roi = roi
         self.roi_num = roi_num
         self.output_dir = output_dir
-        self.fmri = np.load("%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"% (self.output_dir, self.subj))
+        self.fmri = np.load(
+            "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
+            % (self.output_dir, self.subj)
+        )
         if self.roi is not None:
             self.subset_brain_data()
 
@@ -73,4 +71,4 @@ class NSDBrainOnlyDataset(Dataset):
         roi_dict = roi_name_dict[self.roi]
         mask = roi_mask == self.roi_num
         self.fmri = self.fmri[:, mask]
-        #TODO: normalize data?
+        # TODO: normalize data?

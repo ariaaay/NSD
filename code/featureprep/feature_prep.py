@@ -124,27 +124,8 @@ def extract_feature_by_imgs(
             all_feat = np.load("%s/%s.npy" % (features_dir, model))
         except FileNotFoundError:
             all_feat = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/CLIP/%s.npy" % model)
-        stim = pd.read_pickle(
-            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-        )
-        featmat = []
-        for img_id in tqdm(stim_list):
-            try:
-                # extract the nsd ID corresponding to the coco ID in the stimulus list
-                stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
-                # extract the repective features for that nsd ID
-                featmat.append(all_feat[stim_ind, :])
-            except IndexError:
-                print("COCO Id Not Found: " + str(img_id))
-        featmat = np.array(featmat).squeeze()
-    
-    if "cat" in model:
-        try:
-            all_feat = np.load("%s/%s.npy" % (features_dir, model))
-        except FileNotFoundError:
-            all_feat = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/%s.npy" % model)
+                "/lab_data/tarrlab/common/datasets/features/NSD/CLIP/%s.npy" % model
+            )
         stim = pd.read_pickle(
             "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
         )
@@ -159,6 +140,26 @@ def extract_feature_by_imgs(
                 print("COCO Id Not Found: " + str(img_id))
         featmat = np.array(featmat).squeeze()
 
+    if "cat" in model:
+        try:
+            all_feat = np.load("%s/%s.npy" % (features_dir, model))
+        except FileNotFoundError:
+            all_feat = np.load(
+                "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/%s.npy" % model
+            )
+        stim = pd.read_pickle(
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
+        featmat = []
+        for img_id in tqdm(stim_list):
+            try:
+                # extract the nsd ID corresponding to the coco ID in the stimulus list
+                stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
+                # extract the repective features for that nsd ID
+                featmat.append(all_feat[stim_ind, :])
+            except IndexError:
+                print("COCO Id Not Found: " + str(img_id))
+        featmat = np.array(featmat).squeeze()
 
     else:
         print("ERROR: Feature spaces unknown...")

@@ -49,9 +49,10 @@ def load_objects_in_COCO(cid):
     assert len(catID_of_trial) == len(COCO_cat)
     assert len(supcatID_of_trial) == len(COCO_super_cat)
 
-    catnms += list(COCO_cat[catID_of_trial>0])
-    catnms += list(COCO_super_cat[supcatID_of_trial>0])
+    catnms += list(COCO_cat[catID_of_trial > 0])
+    catnms += list(COCO_super_cat[supcatID_of_trial > 0])
     return catnms
+
 
 def load_top1_objects_in_COCO(cid):
     # extract the nsd ID corresponding to the coco ID in the stimulus list
@@ -95,7 +96,7 @@ def extract_object_base_text_feature():
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_object.npy", all_features,
     )
-    
+
 
 def extract_top1_obejct_base_text_feature():
     model, _ = clip.load("ViT-B/32", device=device)
@@ -110,8 +111,10 @@ def extract_top1_obejct_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_top1_object.npy", all_features,
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_top1_object.npy",
+        all_features,
     )
+
 
 def extract_obj_cap_intersect_text_feature():
     model, _ = clip.load("ViT-B/32", device=device)
@@ -390,9 +393,7 @@ stim = pd.read_pickle(
 )
 from pycocotools.coco import COCO
 
-trainFile = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-)
+trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
 valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)

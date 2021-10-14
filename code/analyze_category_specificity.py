@@ -14,7 +14,6 @@ from util.util import zscore
 from util.model_config import *
 
 
-
 def make_text_sim_matrix(vocab):
     # text_embedding_of_labels
     import gensim.downloader as api
@@ -54,17 +53,17 @@ def make_scree_plot(A, figname):
     # center A
 
     A = A - np.mean(A, axis=0)
-    U, S, V = np.linalg.svd(A) 
-    eigvals = S**2 / np.sum(S**2)  
+    U, S, V = np.linalg.svd(A)
+    eigvals = S ** 2 / np.sum(S ** 2)
     num_vars = len(eigvals)
 
-    fig = plt.figure(figsize=(8,5))
+    fig = plt.figure(figsize=(8, 5))
     sing_vals = np.arange(num_vars) + 1
-    plt.plot(sing_vals, eigvals, 'ro-', linewidth=2)
-    plt.title('Scree Plot')
-    plt.xlabel('Principal Component')
-    plt.ylabel('Eigenvalue')
-    # leg = plt.legend(['Eigenvalues from SVD'], loc='best', borderpad=0.3, 
+    plt.plot(sing_vals, eigvals, "ro-", linewidth=2)
+    plt.title("Scree Plot")
+    plt.xlabel("Principal Component")
+    plt.ylabel("Eigenvalue")
+    # leg = plt.legend(['Eigenvalues from SVD'], loc='best', borderpad=0.3,
     #                 shadow=False, prop=matplotlib.font_manager.FontProperties(size='small'),
     #                 markerscale=0.4)
     # leg.get_frame().set_alpha(0.4)
@@ -188,7 +187,6 @@ if __name__ == "__main__":
     #     np.save("../Cats/outputs/rsm_%s_supercat.npy" % roi_name[i], b_supercat)
     # plt.savefig("../Cats/figures/rsm/rsm_individual_visual_ROIs_supercat.png")
 
-    
     ##### bert_caption #####
     # bert = np.load(
     #     "/lab_data/tarrlab/common/datasets/features/NSD/BERT/NSD_bert_all_layer_emb_subj%01d.npy"
@@ -313,7 +311,7 @@ if __name__ == "__main__":
     # linked = linkage(all_rois_supercat, 'single')
     # dendrogram(linked,
     #         orientation='top',
-    #         leaf_rotation=90, 
+    #         leaf_rotation=90,
     #         labels=COCO_super_cat,
     #         distance_sort='descending',
     #         show_leaf_counts=True)
@@ -372,7 +370,7 @@ if __name__ == "__main__":
     #     linked = linkage(supercat_sim, 'single')
     #     dendrogram(linked,
     #             orientation='top',
-    #             leaf_rotation=45, 
+    #             leaf_rotation=45,
     #             labels=COCO_super_cat,
     #             distance_sort='descending',
     #             show_leaf_counts=True)
@@ -397,7 +395,7 @@ if __name__ == "__main__":
 
     rsm_output_path = "%s/rdms/" % nsd_output_dir
     for f in os.listdir(rsm_output_path):
-        if ("avgpool" not in f):
+        if "avgpool" not in f:
             rsm = np.load(rsm_output_path + f)
             fname = f.split(".")[0].strip("subj01_")
             fname = "rsm_" + fname

@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 
 from scipy.stats import ranksums
+from util.data_util import load_model_performance
 
-from visualize_corr_in_pycortex import load_data
 from util.model_config import visual_roi_names, place_roi_names, ecc_roi_names
 
 sns.set(style="whitegrid", font_scale=1)
@@ -41,7 +41,7 @@ def load_prediction(model, task, subj=1):
 def get_voxels(model_list, subj):
     datamat = list()
     for l in model_list:
-        data = load_data("taskrepr", task=l, subj=subj, measure="corr")
+        data = load_model_performance("taskrepr", task=l, subj=subj, measure="corr")
         datamat.append(data)
     datamat = np.array(datamat)
     return datamat
@@ -63,9 +63,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="please specify subject to show")
 
     parser.add_argument(
-        "--use_voxel_prediction",
-        default=False,
-        action="store_true",
+        "--use_voxel_prediction", default=False, action="store_true",
     )
     parser.add_argument("--subj", default=1, type=int, help="define which subject")
 
