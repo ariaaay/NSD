@@ -18,7 +18,6 @@ import torchextractor as tx
 import clip
 from util.util import pytorch_pca
 from util.data_util import load_top1_objects_in_COCO, load_objects_in_COCO
-from util.model_config import COCO_cat, COCO_super_cat
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -360,18 +359,12 @@ all_coco_ids = np.load(
     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
 )
 
-cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
-supcat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy")
-
 from pycocotools.coco import COCO
 
 trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
 valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
-
-COCO_cat = np.array(COCO_cat)
-COCO_super_cat = np.array(COCO_super_cat)
 
 expand_dict = {}
 expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
