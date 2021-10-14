@@ -177,10 +177,13 @@ if __name__ == "__main__":
         feature_mat = feature_mat[subset_trial_id, :]
         model_name_to_save += "_" + args.subset_data + "_subset"
 
+    print("=======================")
     print("Running ridge encoding model on :")
     print(model_name_to_save)
 
     print("Feature size is: " + str(feature_mat.shape))
+    print("=======================")
+
 
     if not args.get_features_only:
         run(
