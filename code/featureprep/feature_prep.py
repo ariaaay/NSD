@@ -45,7 +45,7 @@ def get_preloaded_features(
             )
 
     print("feature shape is " + str(featmat.shape[0]))
-    return featmat
+    return featmat.squeeze()
 
 
 def extract_feature_by_imgs(
@@ -178,4 +178,4 @@ def extract_feature_with_image_order(stim_list, feature_matrix, image_order):
     idxes = [image_order.index(cid) for cid in stim_list]
     # extract the respective features for that coco ID
     featmat = feature_matrix[np.array(idxes), :]
-    return featmat
+    return featmat.squeeze()
