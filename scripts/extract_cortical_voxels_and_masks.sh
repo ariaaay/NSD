@@ -1,5 +1,7 @@
-SUBJS="5 \
-      7"
+SUBJS="1 \
+       2 \
+       5 \
+       7"
 
 for subj in $SUBJS; do
   python code/extract_cortical_voxel.py --subj $subj --mask_only
