@@ -67,7 +67,7 @@ def extract_object_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object.npy", all_features,
+        "%s/clip_object.npy" % feature_output_dir, all_features,
     )
 
 
@@ -84,7 +84,7 @@ def extract_top1_obejct_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_top1_object.npy",
+        "%s/clip_top1_object.npy" % feature_output_dir,
         all_features,
     )
 
@@ -102,7 +102,7 @@ def extract_obj_cap_intersect_text_feature():
     all_features = np.array(all_features)
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object_caption_overlap.npy",
+        "%s/clip_object_caption_overlap.npy" % feature_output_dir,
         all_features,
     )
     return
@@ -317,7 +317,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_features = np.array(all_features)
     # print(all_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_%s.npy"
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy"
         % model_name,
         all_features,
     )
@@ -335,8 +335,8 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_text_features = np.array(all_text_features)
     # print(all_text_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_text.npy",
-        all_text_features,
+        "%s/clip_text.npy",
+        (feature_output_dir, all_text_features),
     )
 
 
@@ -366,9 +366,11 @@ valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.j
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
 
-expand_dict = {}
-expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
+# expand_dict = {}
+# expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
 extract_object_base_text_feature()
 extract_top1_obejct_base_text_feature()
+extract_visual_resnet_feature()
+extract_visual_transformer_feature()
 # extract_obj_cap_intersect_text_feature()

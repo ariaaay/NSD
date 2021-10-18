@@ -65,7 +65,7 @@ if __name__ == "__main__":
         "--subj",
         type=int,
         default=1,
-        help="Specify which subject to build model on. Currently it supports subject 1, 2, 7",
+        help="Specify which subject to build model on. Currently it supports subject 1, 2, 5, 7",
     )
     parser.add_argument(
         "--fix_testing",
