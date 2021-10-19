@@ -65,7 +65,7 @@ if __name__ == "__main__":
         "--subj",
         type=int,
         default=1,
-        help="Specify which subject to build model on. Currently it supports subject 1, 2, 7",
+        help="Specify which subject to build model on. Currently it supports subject 1, 2, 5, 7",
     )
     parser.add_argument(
         "--fix_testing",
@@ -177,10 +177,13 @@ if __name__ == "__main__":
         feature_mat = feature_mat[subset_trial_id, :]
         model_name_to_save += "_" + args.subset_data + "_subset"
 
+    print("=======================")
     print("Running ridge encoding model on :")
     print(model_name_to_save)
 
     print("Feature size is: " + str(feature_mat.shape))
+    print("=======================")
+
 
     if not args.get_features_only:
         run(

@@ -316,8 +316,8 @@ if __name__ == "__main__":
         #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
         #     )
 
-        tasks = ["visual_resnet", "taskrepr_class_1000"]
-        layers1 = ["_layer_" + str(i) for i in range(12)]
+        tasks = ["visual", "taskrepr_class_1000"]
+        layers1 = ["_layer_resnet_" + str(i) for i in range(7)]
         layer_labels1 = ["Clip_ResNet" + s for s in layers1]
 
         layers2 = task_layer_dict[tasks[1]]

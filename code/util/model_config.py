@@ -1,3 +1,5 @@
+import numpy as np
+
 taskrepr_features = [
     "autoencoder",
     "denoise",
@@ -280,3 +282,6 @@ COCO_super_cat = [
     "appliance",
     "indoor",
 ]
+
+COCO_cat = np.array(COCO_cat)
+COCO_super_cat = np.array(COCO_super_cat)

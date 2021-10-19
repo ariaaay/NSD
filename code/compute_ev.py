@@ -22,7 +22,7 @@ def extract_subject_trials_index_shared1000(stim, subj):
 
 def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
     l = np.load(
-        "output/trials_subj%02d.npy" % subj
+        "%s/trials_subj%02d.npy" % (args.output_dir, subj)
     )  # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
 
     repeat_n = l.shape[0]
@@ -35,13 +35,13 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
 
     if zscored_input:
         data = np.load(
-            "output/cortical_voxels/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy"
-            % (subj, roi)
+            "%s/cortical_voxels/cortical_voxel_across_sessions_zscored_by_run_subj%02d%s.npy"
+            % (args.output_dir, subj, roi)
         )
     else:
         data = np.load(
-            "output/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
-            % (subj, roi)
+            "%s/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
+            % (args.output_dir, subj, roi)
         )
 
     ev_list = []
@@ -70,15 +70,15 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
 
         ev_list.append(ev(repeat, biascorr=biascorr))
     np.save(
-        "output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
-        % (subj, roi),
+        "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d%s.npy"
+        % (args.output_dir, subj, roi),
         avg_mat,
     )
     return np.array(ev_list)
 
 
 def compute_sample_wise_ev(
-    subj, mask, biascorr=False, zscored_input=False, output_dir="output"
+    subj, mask, biascorr=False, zscored_input=False, output_dir="/user_data/yuanw3/project_outputs/NSD/output"
 ):
     l = np.load(
         "%s/trials_subj%02d.npy" % (output_dir, subj)
@@ -150,11 +150,11 @@ if __name__ == "__main__":
 
     if args.compute_ev:
         try:
-            all_evs = np.load("output/evs_subj%02d%s.npy" % (args.subj, tag))
+            all_evs = np.load("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag))
         except FileNotFoundError:
             print("computing EVs")
             all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
-            np.save("output/evs_subj%02d%s.npy" % (args.subj, tag), all_evs)
+            np.save("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs)
 
         plt.figure()
         plt.hist(all_evs)

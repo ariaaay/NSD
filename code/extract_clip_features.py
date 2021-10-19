@@ -18,7 +18,6 @@ import torchextractor as tx
 import clip
 from util.util import pytorch_pca
 from util.data_util import load_top1_objects_in_COCO, load_objects_in_COCO
-from util.model_config import COCO_cat, COCO_super_cat
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -68,7 +67,7 @@ def extract_object_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object.npy", all_features,
+        "%s/clip_object.npy" % feature_output_dir, all_features,
     )
 
 
@@ -85,7 +84,7 @@ def extract_top1_obejct_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_top1_object.npy",
+        "%s/clip_top1_object.npy" % feature_output_dir,
         all_features,
     )
 
@@ -103,7 +102,7 @@ def extract_obj_cap_intersect_text_feature():
     all_features = np.array(all_features)
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_object_caption_overlap.npy",
+        "%s/clip_object_caption_overlap.npy" % feature_output_dir,
         all_features,
     )
     return
@@ -198,7 +197,7 @@ def extract_visual_resnet_feature():
     for l in range(7):
         try:
             f = np.load(
-                "%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l)
+                "%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l)
             )
         except FileNotFoundError:
             extract_visual_resnet_prePCA_feature()
@@ -318,14 +317,14 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_features = np.array(all_features)
     # print(all_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip_visual_%s.npy"
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy"
         % model_name,
         all_features,
     )
 
     # extract text feature of image titles
     all_text_features = []
-    for cid in tqdm(all_coco_ids):
+    for cid in tqdm(all_images_paths):
         with torch.no_grad():
             captions = load_captions(cid)
             # print(captions)
@@ -337,7 +336,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     # print(all_text_features.shape)
     np.save(
         "/lab_data/tarrlab/common/datasets/features/NSD/clip_text.npy",
-        all_text_features,
+        (feature_output_dir, all_text_features),
     )
 
 
@@ -360,9 +359,6 @@ all_coco_ids = np.load(
     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
 )
 
-cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
-supcat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy")
-
 from pycocotools.coco import COCO
 
 trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
@@ -370,12 +366,12 @@ valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.j
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
 
-COCO_cat = np.array(COCO_cat)
-COCO_super_cat = np.array(COCO_super_cat)
+# expand_dict = {}
+# expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
-expand_dict = {}
-expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
-
-extract_object_base_text_feature()
-extract_top1_obejct_base_text_feature()
+# extract_object_base_text_feature()
+# extract_top1_obejct_base_text_feature()
+extract_visual_resnet_feature()
+extract_visual_transformer_feature()
+extract_last_layer_feature()
 # extract_obj_cap_intersect_text_feature()

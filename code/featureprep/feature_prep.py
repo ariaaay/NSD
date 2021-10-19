@@ -45,7 +45,7 @@ def get_preloaded_features(
             )
 
     print("feature shape is " + str(featmat.shape[0]))
-    return featmat
+    return featmat.squeeze()
 
 
 def extract_feature_by_imgs(
@@ -91,35 +91,35 @@ def extract_feature_by_imgs(
             featmat = pca.fit_transform(featmat.astype(np.float16))
             print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
 
-    elif "convnet" in model:
-        # model should be named "convnet_vgg16" to load "feat_vgg16.npy"
-        model_id = model.split("_")[1:]
-        feat_name = "_".join(model_id)
-        print("Loading convnet model %s..." % feat_name)
-        # this extracted feature is order based on nsd ID (order in the stimulus info file)
-        try:
-            all_feat = np.load("%s/feat_%s.npy" % (features_dir, feat_name))
-        except FileNotFoundError:
-            all_feat = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy" % feat_name
-            )  # on clsuter
+    # elif "convnet" or "resnet" in model:
+    #     # model should be named "convnet_vgg16" to load "feat_vgg16.npy"
+    #     # model_id = model.split("_")[1:]
+    #     # feat_name = "_".join(model_id)
+    #     print("Loading convnet model %s..." % feat_name)
+    #     # this extracted feature is order based on nsd ID (order in the stimulus info file)
+    #     try:
+    #         all_feat = np.load("%s/feat_%s.npy" % (features_dir, feat_name))
+    #     except FileNotFoundError:
+    #         all_feat = np.load(
+    #             "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s.npy" % feat_name
+    #         )  # on clsuter
 
-        stim = pd.read_pickle(
-            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-        )
+    #     stim = pd.read_pickle(
+    #         "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+    #     )
 
-        featmat = []
-        for img_id in tqdm(stim_list):
-            try:
-                # extract the nsd ID corresponding to the coco ID in the stimulus list
-                stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
-                # extract the repective features for that nsd ID
-                featmat.append(all_feat[stim_ind, :])
-            except IndexError:
-                print("COCO Id Not Found: " + str(img_id))
-        featmat = np.array(featmat).squeeze()
+    #     featmat = []
+    #     for img_id in tqdm(stim_list):
+    #         try:
+    #             # extract the nsd ID corresponding to the coco ID in the stimulus list
+    #             stim_ind = stim["nsdId"][stim["cocoId"] == img_id]
+    #             # extract the repective features for that nsd ID
+    #             featmat.append(all_feat[stim_ind, :])
+    #         except IndexError:
+    #             print("COCO Id Not Found: " + str(img_id))
+    #     featmat = np.array(featmat).squeeze()
 
-    if "clip" in model:
+    elif "clip" in model:
         try:
             all_feat = np.load("%s/%s.npy" % (features_dir, model))
         except FileNotFoundError:
@@ -139,8 +139,9 @@ def extract_feature_by_imgs(
             except IndexError:
                 print("COCO Id Not Found: " + str(img_id))
         featmat = np.array(featmat).squeeze()
+        
 
-    if "cat" in model:
+    elif "cat" in model:
         try:
             all_feat = np.load("%s/%s.npy" % (features_dir, model))
         except FileNotFoundError:
@@ -178,4 +179,4 @@ def extract_feature_with_image_order(stim_list, feature_matrix, image_order):
     idxes = [image_order.index(cid) for cid in stim_list]
     # extract the respective features for that coco ID
     featmat = feature_matrix[np.array(idxes), :]
-    return featmat
+    return featmat.squeeze()

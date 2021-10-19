@@ -19,6 +19,8 @@ python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-places
 # computer explainable variance for the data and output data averaged by repeats
 python code/compute_ev.py --subj $subj --zscored_input
 
+
+#=====================lines below is not done on NSD==========================
 # run encoding models on taskonomy (on tayer)
 . scripts/run_encoding_models_on_taskonomy_tayer.sh $subj
 
