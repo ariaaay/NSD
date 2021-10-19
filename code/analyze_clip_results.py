@@ -24,35 +24,37 @@ if __name__ == "__main__":
     )
 args = parser.parse_args()
 
-corr_i = load_model_performance("clip", None, args.output_dir, subj=args.subj)
-corr_t = load_model_performance("clip_text", None, args.output_dir, subj=args.subj)
+corr_i = load_model_performance("convnet_res50_person_subset", None, args.output_dir, subj=args.subj)
+# corr_t = load_model_performance("clip_text", None, args.output_dir, subj=args.subj)
+corr_j = load_model_performance("clip_person_subset", None, args.output_dir, subj=args.subj)
+
 
 # Plotting text performance vs image performances
-# plt.scatter(corr_i, corr_t, alpha=0.05)
-# plt.plot([-0.1, 1], [-0.1, 1], "r")
-# plt.xlabel("image")
-# plt.ylabel("text")
-# plt.savefig("figures/CLIP/image_vs_text_acc.png")
+plt.scatter(corr_i, corr_j, alpha=0.05)
+plt.plot([-0.1, 1], [-0.1, 1], "r")
+plt.xlabel("resnet_person_subset")
+plt.ylabel("clip_person_subset")
+plt.savefig("figures/CLIP/resnet_person_vs_clip_person_acc.png")
 
-w_i = np.load(
-    "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
-    % (args.output_dir, args.subj)
-)
-w_t = np.load(
-    "%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy"
-    % (args.output_dir, args.subj)
-)
+# w_i = np.load(
+#     "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
+#     % (args.output_dir, args.subj)
+# )
+# w_t = np.load(
+#     "%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy"
+#     % (args.output_dir, args.subj)
+# )
 
-pca_i = PCA(n_components=5)
-pca_i.fit(w_i)
-np.save(
-    "%s/pca/subj%d/clip_pca_components.npy" % (args.output_dir, args.subj),
-    pca_i.components_,
-)
+# pca_i = PCA(n_components=5)
+# pca_i.fit(w_i)
+# np.save(
+#     "%s/pca/subj%d/clip_pca_components.npy" % (args.output_dir, args.subj),
+#     pca_i.components_,
+# )
 
-pca_t = PCA(n_components=5)
-pca_t.fit(w_t)
-np.save(
-    "%s/pca/subj%d/clip_text_pca_components.npy" % (args.output_dir, args.subj),
-    pca_t.components_,
-)
+# pca_t = PCA(n_components=5)
+# pca_t.fit(w_t)
+# np.save(
+#     "%s/pca/subj%d/clip_text_pca_components.npy" % (args.output_dir, args.subj),
+#     pca_t.components_,
+# )

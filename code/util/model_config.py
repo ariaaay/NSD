@@ -154,10 +154,31 @@ word_roi_names = {
     4: "mfs-words",
 }
 
+
+body_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "EBA",
+    2: "FBA-1",
+    3: "FBA-2",
+    4: "mTL-bodies",
+}
+
+word_roi_names = {
+    -1: "non_cortical",
+    0: "cortical",
+    1: "OWFA", 
+    2: "VWFA-1",
+    3: "VWFA-2",
+    4: "mfs-words",
+    5: "mTL-words",
+}
+
 roi_name_dict = {
     "floc-words": word_roi_names,
     "floc-faces": face_roi_names,
     "floc-places": place_roi_names,
+    "floc-bodies": body_roi_names,
     "prf-visualrois": visual_roi_names,
     "prf-eccrois": ecc_roi_names,
 }
