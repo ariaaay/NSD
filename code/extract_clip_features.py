@@ -197,7 +197,7 @@ def extract_visual_resnet_feature():
     for l in range(7):
         try:
             f = np.load(
-                "%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l)
+                "%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l)
             )
         except FileNotFoundError:
             extract_visual_resnet_prePCA_feature()
@@ -324,7 +324,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
 
     # extract text feature of image titles
     all_text_features = []
-    for cid in tqdm(all_coco_ids):
+    for cid in tqdm(all_images_paths):
         with torch.no_grad():
             captions = load_captions(cid)
             # print(captions)
@@ -335,7 +335,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_text_features = np.array(all_text_features)
     # print(all_text_features.shape)
     np.save(
-        "%s/clip_text.npy",
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip_text.npy",
         (feature_output_dir, all_text_features),
     )
 
@@ -369,8 +369,9 @@ val_caps = COCO(valFile)
 # expand_dict = {}
 # expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
-extract_object_base_text_feature()
-extract_top1_obejct_base_text_feature()
+# extract_object_base_text_feature()
+# extract_top1_obejct_base_text_feature()
 extract_visual_resnet_feature()
 extract_visual_transformer_feature()
+extract_last_layer_feature()
 # extract_obj_cap_intersect_text_feature()
