@@ -583,6 +583,48 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
+    volumes["CLIP+Cat"] = make_volume(
+        subj=args.subj,
+        model="clip_cat",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["CLIP+Resnt50"] = make_volume(
+        subj=args.subj,
+        model="clip_convnet_res50",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["clip-person-subset"] = make_volume(
+        subj=args.subj,
+        model="clip_person_subset",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["resnet-person-subset"] = make_volume(
+        subj=args.subj,
+        model="convnet_res50_person_subset",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["cat-person-subset"] = make_volume(
+        subj=args.subj,
+        model="cat_person_subset",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["resnet50"] = make_volume(
+        subj=args.subj,
+        model="convnet_res50",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
     for i in range(7):
         volumes["clip-RN-%s" % str(i + 1)] = make_volume(
             subj=args.subj,
@@ -596,14 +638,15 @@ if __name__ == "__main__":
         output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
+    
 
-    for i in range(13):
-        volumes["bert-%s" % str(i + 1)] = make_volume(
-            subj=args.subj,
-            model="bert_layer_%d" % (i + 1),
-            output_root=output_root,
-            mask_with_significance=args.mask_sig,
-        )
+    # for i in range(13):
+    #     volumes["bert-%s" % str(i + 1)] = make_volume(
+    #         subj=args.subj,
+    #         model="bert_layer_%d" % (i + 1),
+    #         output_root=output_root,
+    #         mask_with_significance=args.mask_sig,
+    #     )
 
     volumes["clip-ViT-layerwise"] = visualize_layerwise_max_corr_results(
         "visual_layer", 12, threshold=85, mask_with_significance=args.mask_sig
@@ -611,9 +654,9 @@ if __name__ == "__main__":
     volumes["clip-RN-layerwise"] = visualize_layerwise_max_corr_results(
         "visual_layer_resnet", 7, threshold=85, mask_with_significance=args.mask_sig
     )
-    volumes["clip-text-layerwise"] = visualize_layerwise_max_corr_results(
-        "text_layer", 12, threshold=85, mask_with_significance=args.mask_sig
-    )
+    # volumes["clip-text-layerwise"] = visualize_layerwise_max_corr_results(
+    #     "text_layer", 12, threshold=85, mask_with_significance=args.mask_sig
+    # )
     # volumes["bert-layerwise"] = visualize_layerwise_max_corr_results(
     #     "bert_layer", 13, threshold=85, mask_with_significance=args.mask_sig, start_with_zero=False
     # )
@@ -646,7 +689,7 @@ if __name__ == "__main__":
             output_root=output_root,
         )
 
-    cortex.webgl.show(data=volumes, autoclose=False, port=24124)
+    cortex.webgl.show(data=volumes, autoclose=False, port=24125)
 
     import pdb
 
