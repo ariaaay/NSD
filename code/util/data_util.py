@@ -12,28 +12,20 @@ def load_model_performance(model, task=None, output_root=".", subj=1, measure="c
         pvalue = False
 
     if task is None:
-        output = pickle.load(
-            open(
-                "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model),
-                "rb",
-            )
+        output = np.load("%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+                % (output_root, subj, measure, model)
         )
     else:
-        output = pickle.load(
-            open(
+        output = np.load(
                 "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model, task),
-                "rb",
-            )
+                % (output_root, subj, measure, model, task)
         )
     if measure == "corr":
-        out = np.array(output)[:, 0]
+        output = np.array(output)[:, 0]
         if pvalue:
-            out = np.array(output)[:, 1]
-    else:
-        out = np.array(output)
-    return out
+            output = np.array(output)[:, 1]
+
+    return np.array(output)
 
 
 def load_top1_objects_in_COCO(cid):
