@@ -157,7 +157,11 @@ def fit_encoding_model(
     )  # test that shape of features spaces and the brain are the same
 
     corrs_array, *cv_outputs = ridge_cv(
-        X, y, cv=False, fix_testing=fix_testing, permute_y=permute_y,
+        X,
+        y,
+        cv=False,
+        fix_testing=fix_testing,
+        permute_y=permute_y,
     )
 
     if permute_y:  # if running permutation just return subsets of the output
@@ -184,18 +188,22 @@ def fit_encoding_model(
         if len(cv_outputs) > 0:
             pickle.dump(cv_outputs[0], open(outpath + "rsq_%s.p" % model_name, "wb"))
             pickle.dump(
-                cv_outputs[1], open(outpath + "cv_score_%s.p" % model_name, "wb"),
+                cv_outputs[1],
+                open(outpath + "cv_score_%s.p" % model_name, "wb"),
             )
             pickle.dump(
-                cv_outputs[2], open(outpath + "l_score_%s.p" % model_name, "wb"),
+                cv_outputs[2],
+                open(outpath + "l_score_%s.p" % model_name, "wb"),
             )
             pickle.dump(
-                cv_outputs[3], open(outpath + "best_l_%s.p" % model_name, "wb"),
+                cv_outputs[3],
+                open(outpath + "best_l_%s.p" % model_name, "wb"),
             )
 
             if fix_testing:
                 pickle.dump(
-                    cv_outputs[4], open(outpath + "pred_%s.p" % model_name, "wb"),
+                    cv_outputs[4],
+                    open(outpath + "pred_%s.p" % model_name, "wb"),
                 )
 
             np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])

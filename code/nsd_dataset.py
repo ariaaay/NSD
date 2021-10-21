@@ -43,7 +43,12 @@ from util.model_config import roi_name_dict
 
 class NSDBrainOnlyDataset(Dataset):
     def __init__(
-        self, output_dir, subj, idx, roi, roi_num,
+        self,
+        output_dir,
+        subj,
+        idx,
+        roi,
+        roi_num,
     ):
         self.subj = subj
         self.idx = idx

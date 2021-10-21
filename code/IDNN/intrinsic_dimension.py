@@ -13,36 +13,36 @@ from scipy.spatial.distance import pdist, squareform
 
 def estimate(X, fraction=0.9, verbose=False):
     """
-        Estimates the intrinsic dimension of a system of points from
-        the matrix of their distances X
-        
-        Args:
-        X : 2-D Matrix X (n,n) where n is the number of points
-        fraction : fraction of the data considered for the dimensionality
-        estimation (default : fraction = 0.9)
+    Estimates the intrinsic dimension of a system of points from
+    the matrix of their distances X
 
-        Returns:            
-        x : log(mu)    (*)
-        y : -(1-F(mu)) (*)
-        reg : linear regression y ~ x structure obtained with scipy.stats.linregress
-        (reg.slope is the intrinsic dimension estimate)
-        r : determination coefficient of y ~ x
-        pval : p-value of y ~ x
-            
-        (*) See cited paper for description
-        
-        Usage:
-            
-        _,_,reg,r,pval = estimate(X,fraction=0.85)
-            
-        The technique is described in : 
-            
-        "Estimating the intrinsic dimension of datasets by a 
-        minimal neighborhood information"       
-        Authors : Elena Facco, Maria d’Errico, Alex Rodriguez & Alessandro Laio        
-        Scientific Reports 7, Article number: 12140 (2017)
-        doi:10.1038/s41598-017-11873-y
-    
+    Args:
+    X : 2-D Matrix X (n,n) where n is the number of points
+    fraction : fraction of the data considered for the dimensionality
+    estimation (default : fraction = 0.9)
+
+    Returns:
+    x : log(mu)    (*)
+    y : -(1-F(mu)) (*)
+    reg : linear regression y ~ x structure obtained with scipy.stats.linregress
+    (reg.slope is the intrinsic dimension estimate)
+    r : determination coefficient of y ~ x
+    pval : p-value of y ~ x
+
+    (*) See cited paper for description
+
+    Usage:
+
+    _,_,reg,r,pval = estimate(X,fraction=0.85)
+
+    The technique is described in :
+
+    "Estimating the intrinsic dimension of datasets by a
+    minimal neighborhood information"
+    Authors : Elena Facco, Maria d’Errico, Alex Rodriguez & Alessandro Laio
+    Scientific Reports 7, Article number: 12140 (2017)
+    doi:10.1038/s41598-017-11873-y
+
     """
 
     # sort distance matrix
@@ -93,15 +93,15 @@ def estimate(X, fraction=0.9, verbose=False):
 def block_analysis(X, blocks=list(range(1, 21)), fraction=0.9):
 
     """
-        Perform a block-analysis of a system of points from
-        the matrix of their distances X
-        
-        Args:
-        X : 2-D Matrix X (n,n) where n is the number of points
-        blocks : blocks specification, is a list of integers from
-        1 to N_blocks where N_blocks is the number of blocks (default : N_blocks = 20)
-        fraction : fraction of the data considered for the dimensionality
-        estimation (default : fraction = 0.9)
+    Perform a block-analysis of a system of points from
+    the matrix of their distances X
+
+    Args:
+    X : 2-D Matrix X (n,n) where n is the number of points
+    blocks : blocks specification, is a list of integers from
+    1 to N_blocks where N_blocks is the number of blocks (default : N_blocks = 20)
+    fraction : fraction of the data considered for the dimensionality
+    estimation (default : fraction = 0.9)
     """
 
     n = X.shape[0]

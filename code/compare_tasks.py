@@ -63,7 +63,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="please specify subject to show")
 
     parser.add_argument(
-        "--use_voxel_prediction", default=False, action="store_true",
+        "--use_voxel_prediction",
+        default=False,
+        action="store_true",
     )
     parser.add_argument("--subj", default=1, type=int, help="define which subject")
 

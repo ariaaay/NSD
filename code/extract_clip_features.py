@@ -67,7 +67,8 @@ def extract_object_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "%s/clip_object.npy" % feature_output_dir, all_features,
+        "%s/clip_object.npy" % feature_output_dir,
+        all_features,
     )
 
 
@@ -196,9 +197,7 @@ def extract_visual_resnet_prePCA_feature():
 def extract_visual_resnet_feature():
     for l in range(7):
         try:
-            f = np.load(
-                "%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l)
-            )
+            f = np.load("%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l))
         except FileNotFoundError:
             extract_visual_resnet_prePCA_feature()
             f = np.load(
@@ -317,8 +316,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
     all_features = np.array(all_features)
     # print(all_features.shape)
     np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy"
-        % model_name,
+        "/lab_data/tarrlab/common/datasets/features/NSD/clip.npy" % model_name,
         all_features,
     )
 
@@ -343,7 +341,9 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
 parser = argparse.ArgumentParser()
 parser.add_argument("--subj", default=1, type=int)
 parser.add_argument(
-    "--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features",
+    "--feature_dir",
+    type=str,
+    default="/user_data/yuanw3/project_outputs/NSD/features",
 )
 parser.add_argument(
     "--project_output_dir",

@@ -32,7 +32,9 @@ def zscore_by_run(mat, run_n=480):
     return zscored_mat
 
 
-def extract_cortical_mask(subj, roi="", output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+def extract_cortical_mask(
+    subj, roi="", output_dir="/user_data/yuanw3/project_outputs/NSD/output"
+):
     if roi != "":
         roi_tag = "_" + roi
     else:
@@ -82,7 +84,14 @@ def extract_cortical_mask(subj, roi="", output_dir="/user_data/yuanw3/project_ou
     return mask
 
 
-def extract_voxels(subj, roi, zscore, mask=None, mask_tag="", output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+def extract_voxels(
+    subj,
+    roi,
+    zscore,
+    mask=None,
+    mask_tag="",
+    output_dir="/user_data/yuanw3/project_outputs/NSD/output",
+):
     tag = roi
 
     if zscore:
@@ -128,7 +137,9 @@ def extract_voxels(subj, roi, zscore, mask=None, mask_tag="", output_dir="/user_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subj", type=int, default=1, help="Subject number (from 1 to 8)")
+    parser.add_argument(
+        "--subj", type=int, default=1, help="Subject number (from 1 to 8)"
+    )
     parser.add_argument(
         "--all_subj", type=bool, help="extract cortical voxel for all subjects"
     )

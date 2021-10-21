@@ -14,7 +14,13 @@ from util.data_util import load_subset_trials
 
 
 def run(
-    fm, br, model_name, test, fix_testing, cv, output_dir,
+    fm,
+    br,
+    model_name,
+    test,
+    fix_testing,
+    cv,
+    output_dir,
 ):
     if test:
         print("Running Permutation Test")
@@ -183,7 +189,6 @@ if __name__ == "__main__":
 
     print("Feature size is: " + str(feature_mat.shape))
     print("=======================")
-
 
     if not args.get_features_only:
         run(

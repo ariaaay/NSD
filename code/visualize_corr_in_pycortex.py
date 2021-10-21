@@ -638,7 +638,6 @@ if __name__ == "__main__":
         output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
-    
 
     # for i in range(13):
     #     volumes["bert-%s" % str(i + 1)] = make_volume(

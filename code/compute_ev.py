@@ -78,7 +78,11 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
 
 
 def compute_sample_wise_ev(
-    subj, mask, biascorr=False, zscored_input=False, output_dir="/user_data/yuanw3/project_outputs/NSD/output"
+    subj,
+    mask,
+    biascorr=False,
+    zscored_input=False,
+    output_dir="/user_data/yuanw3/project_outputs/NSD/output",
 ):
     l = np.load(
         "%s/trials_subj%02d.npy" % (output_dir, subj)
@@ -150,11 +154,15 @@ if __name__ == "__main__":
 
     if args.compute_ev:
         try:
-            all_evs = np.load("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag))
+            all_evs = np.load(
+                "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag)
+            )
         except FileNotFoundError:
             print("computing EVs")
             all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
-            np.save("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs)
+            np.save(
+                "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs
+            )
 
         plt.figure()
         plt.hist(all_evs)

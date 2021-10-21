@@ -169,7 +169,7 @@ body_roi_names = {
 word_roi_names = {
     -1: "non_cortical",
     0: "cortical",
-    1: "OWFA", 
+    1: "OWFA",
     2: "VWFA-1",
     3: "VWFA-2",
     4: "mfs-words",

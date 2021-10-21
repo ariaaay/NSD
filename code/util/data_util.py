@@ -12,13 +12,16 @@ def load_model_performance(model, task=None, output_root=".", subj=1, measure="c
         pvalue = False
 
     if task is None:
-        output = np.load("%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model)
+        output = np.load(
+            "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+            % (output_root, subj, measure, model),
+            allow_pickle=False,
         )
     else:
         output = np.load(
-                "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-                % (output_root, subj, measure, model, task)
+            "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
+            % (output_root, subj, measure, model, task),
+            allow_pickle=False,
         )
     if measure == "corr":
         output = np.array(output)[:, 0]
@@ -68,7 +71,7 @@ def load_objects_in_COCO(cid):
 
 def load_subset_trials(coco_id_by_trial, cat):
     """
-    Returns a list of idx to apply on the 10,000 trials for each subject. These are not trials ID themselves but 
+    Returns a list of idx to apply on the 10,000 trials for each subject. These are not trials ID themselves but
     indexs for trials IDS.
     """
     subset_idx = []

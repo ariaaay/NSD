@@ -100,7 +100,8 @@ def extract_feature_by_imgs(
             all_feat = np.load("%s/%s.npy" % (features_dir, model))
         except FileNotFoundError:
             all_feat = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/%s/%s_%s.npy" % (model_folder, model_folder, layer)
+                "/lab_data/tarrlab/common/datasets/features/NSD/%s/%s_%s.npy"
+                % (model_folder, model_folder, layer)
             )  # on clsuter
 
         stim = pd.read_pickle(
@@ -138,7 +139,6 @@ def extract_feature_by_imgs(
             except IndexError:
                 print("COCO Id Not Found: " + str(img_id))
         featmat = np.array(featmat).squeeze()
-        
 
     elif "cat" in model:
         try:
