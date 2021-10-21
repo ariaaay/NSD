@@ -590,7 +590,7 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
-    volumes["CLIP+Resnt50"] = make_volume(
+    volumes["CLIP+Resnet50"] = make_volume(
         subj=args.subj,
         model="clip_convnet_res50",
         output_root=output_root,
