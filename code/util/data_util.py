@@ -12,23 +12,24 @@ def load_model_performance(model, task=None, output_root=".", subj=1, measure="c
         pvalue = False
 
     if task is None:
-        output = np.load(
+        out = np.load(
             "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
             % (output_root, subj, measure, model),
-            allow_pickle=False,
+            allow_pickle=True,
         )
     else:
-        output = np.load(
+        out = np.load(
             "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
             % (output_root, subj, measure, model, task),
-            allow_pickle=False,
+            allow_pickle=True,
         )
     if measure == "corr":
-        output = np.array(output)[:, 0]
+        output = np.array(out)[:, 0]
         if pvalue:
-            output = np.array(output)[:, 1]
+            output = np.array(out)[:, 1]
+        return output
 
-    return np.array(output)
+    return np.array(out)
 
 
 def load_top1_objects_in_COCO(cid):
@@ -80,3 +81,16 @@ def load_subset_trials(coco_id_by_trial, cat):
         if cat in catnms:
             subset_idx.append(i)
     return subset_idx
+
+
+def find_trial_indexes(subj, cat="person", output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+    coco_id = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (output_dir, subj))
+
+    idx1, idx2 = [], []
+    for i, id in enumerate(coco_id):
+        catnms = load_objects_in_COCO(id)
+        if cat in catnms:
+            idx1.append(i)
+        else:
+            idx2.append(i)
+    return idx1, idx2
