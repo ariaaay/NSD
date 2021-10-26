@@ -33,9 +33,14 @@ def load_model_performance(model, task=None, output_root=".", subj=1, measure="c
 
 
 def load_top1_objects_in_COCO(cid):
-    stim = pd.read_pickle(
-        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-    )
+    try:
+        stim = pd.read_pickle(
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
+    except FileNotFoundError:
+        stim = pd.read_pickle(
+            "nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
     cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
 
     # extract the nsd ID corresponding to the coco ID in the stimulus list
@@ -47,9 +52,14 @@ def load_top1_objects_in_COCO(cid):
 
 
 def load_objects_in_COCO(cid):
-    stim = pd.read_pickle(
-        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-    )
+    try:
+        stim = pd.read_pickle(
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
+    except FileNotFoundError:
+        stim = pd.read_pickle(
+            "nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+        )
     cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
     supcat = np.load(
         "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy"
