@@ -44,7 +44,7 @@ def load_top1_objects_in_COCO(cid):
     try:
         cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
     except FileNotFoundError:
-        cat = np.load("features/COCO_Cat/cat.npy")
+        cat = np.load("features/cat.npy")
 
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
@@ -69,7 +69,7 @@ def load_objects_in_COCO(cid):
             "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy"
         )
     except:
-        cat = np.load("features/COCO_Cat/cat.npy")
+        cat = np.load("features/cat.npy")
         supcat = np.load(
             "features/supcat.npy"
         )
