@@ -39,7 +39,7 @@ def load_top1_objects_in_COCO(cid):
         )
     except FileNotFoundError:
         stim = pd.read_pickle(
-            "nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+            "nsddata/nsd_stim_info_merged.pkl"
         )
     cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
 
@@ -58,7 +58,7 @@ def load_objects_in_COCO(cid):
         )
     except FileNotFoundError:
         stim = pd.read_pickle(
-            "nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+            "nsddata/nsd_stim_info_merged.pkl"
         )
     cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
     supcat = np.load(
