@@ -41,7 +41,10 @@ def load_top1_objects_in_COCO(cid):
         stim = pd.read_pickle(
             "nsddata/nsd_stim_info_merged.pkl"
         )
-    cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
+    try:
+        cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
+    except FileNotFoundError:
+        cat = np.load("features/COCO_Cat/cat.npy")
 
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
@@ -60,10 +63,16 @@ def load_objects_in_COCO(cid):
         stim = pd.read_pickle(
             "nsddata/nsd_stim_info_merged.pkl"
         )
-    cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
-    supcat = np.load(
-        "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy"
-    )
+    try:
+        cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
+        supcat = np.load(
+            "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy"
+        )
+    except:
+        cat = np.load("features/COCO_Cat/cat.npy")
+        supcat = np.load(
+            "features/supcat.npy"
+        )
 
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
