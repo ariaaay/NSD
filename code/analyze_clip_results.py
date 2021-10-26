@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # scatter plot by images
         from scipy.stats import pearsonr
 
-        model1 = "clip"
-        model2 = "bert_13"
+        model1 = "bert_layer_13"
+        model2 = "clip"
 
         sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
         sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
