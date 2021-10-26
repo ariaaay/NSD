@@ -177,8 +177,9 @@ if __name__ == "__main__":
                 model_name_to_save += "_" + model
 
     if args.subset_data is not None:
-
-        subset_trial_id = load_subset_trials(stimulus_list, args.subset_data)
+        subset_cat = args.subset_data
+        print("Subsetting training data with: " + subset_cat)
+        subset_trial_id = load_subset_trials(stimulus_list, subset_cat)
         br_data = br_data[subset_trial_id, :]
         feature_mat = feature_mat[subset_trial_id, :]
         model_name_to_save += "_" + args.subset_data + "_subset"

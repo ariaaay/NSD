@@ -618,6 +618,13 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
+    volumes["clip-top1-person-subset"] = make_volume(
+        subj=args.subj,
+        model="clip_top1_object_person_subset",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
     volumes["resnet50"] = make_volume(
         subj=args.subj,
         model="convnet_res50",
@@ -625,16 +632,23 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
     )
 
-    for i in range(7):
-        volumes["clip-RN-%s" % str(i + 1)] = make_volume(
-            subj=args.subj,
-            model="visual_layer_resnet_%d" % i,
-            output_root=output_root,
-            mask_with_significance=args.mask_sig,
-        )
+    # for i in range(7):
+    #     volumes["clip-RN-%s" % str(i + 1)] = make_volume(
+    #         subj=args.subj,
+    #         model="visual_layer_resnet_%d" % i,
+    #         output_root=output_root,
+    #         mask_with_significance=args.mask_sig,
+    #     )
     volumes["clip-RN-last"] = make_volume(
         subj=args.subj,
         model="clip_visual_resnet",
+        output_root=output_root,
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["BERT-last"] = make_volume(
+        subj=args.subj,
+        model="bert_layer_13",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
