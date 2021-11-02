@@ -91,7 +91,7 @@ def extract_feature_by_imgs(
             featmat = pca.fit_transform(featmat.astype(np.float16))
             print("PCA explained variance" + str(np.sum(pca.explained_variance_ratio_)))
 
-    elif "convnet" or "resnet50" in model:
+    elif "convnet" in model or "resnet50" in model:
         # model should be named "convnet_vgg16" to load "feat_vgg16.npy"
         model_folder, layer = model.split("_")
         print("Loading convnet model %s..." % model)
