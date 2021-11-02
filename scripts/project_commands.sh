@@ -16,6 +16,7 @@ python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-faces
 python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-words
 python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-places
 python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-bodies
+python code/extract_cortical_voxel.py --subj $subj --mask_only --roi Kastner2015
 
 
 # computer explainable variance for the data and output data averaged by repeats
