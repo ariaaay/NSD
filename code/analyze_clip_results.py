@@ -42,17 +42,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # scatter plot per voxels
-    
+
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
         model2 = "clip_visual_resnet"
-        corr_i = load_model_performance(
-            model1, None, args.output_dir, subj=args.subj
-        )
+        corr_i = load_model_performance(model1, None, args.output_dir, subj=args.subj)
         # corr_t = load_model_performance("clip_text", None, args.output_dir, subj=args.subj)
-        corr_j = load_model_performance(
-            model2, None, args.output_dir, subj=args.subj
-        )
+        corr_j = load_model_performance(model2, None, args.output_dir, subj=args.subj)
 
         if args.roi is not None:
             colors = np.load(

@@ -67,8 +67,7 @@ def extract_object_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "%s/clip_object.npy" % feature_output_dir,
-        all_features,
+        "%s/clip_object.npy" % feature_output_dir, all_features,
     )
 
 
@@ -85,8 +84,7 @@ def extract_top1_obejct_base_text_feature():
     all_features = np.array(all_features).squeeze()
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "%s/clip_top1_object.npy" % feature_output_dir,
-        all_features,
+        "%s/clip_top1_object.npy" % feature_output_dir, all_features,
     )
 
 
@@ -103,8 +101,7 @@ def extract_obj_cap_intersect_text_feature():
     all_features = np.array(all_features)
     print("Feature shape is: " + str(all_features.shape))
     np.save(
-        "%s/clip_object_caption_overlap.npy" % feature_output_dir,
-        all_features,
+        "%s/clip_object_caption_overlap.npy" % feature_output_dir, all_features,
     )
     return
 
@@ -341,9 +338,7 @@ def extract_last_layer_feature(model_name="ViT-B/32"):
 parser = argparse.ArgumentParser()
 parser.add_argument("--subj", default=1, type=int)
 parser.add_argument(
-    "--feature_dir",
-    type=str,
-    default="/user_data/yuanw3/project_outputs/NSD/features",
+    "--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features",
 )
 parser.add_argument(
     "--project_output_dir",
@@ -366,12 +361,12 @@ valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.j
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
 
-# expand_dict = {}
-# expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
+expand_dict = {}
+expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
 # extract_object_base_text_feature()
 # extract_top1_obejct_base_text_feature()
-extract_visual_resnet_feature()
-extract_visual_transformer_feature()
+# extract_visual_resnet_feature()
+# extract_visual_transformer_feature()
 extract_last_layer_feature()
 # extract_obj_cap_intersect_text_feature()
