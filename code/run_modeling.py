@@ -14,13 +14,7 @@ from util.data_util import load_subset_trials
 
 
 def run(
-    fm,
-    br,
-    model_name,
-    test,
-    fix_testing,
-    cv,
-    output_dir,
+    fm, br, model_name, test, fix_testing, cv, output_dir,
 ):
     if test:
         print("Running Permutation Test")

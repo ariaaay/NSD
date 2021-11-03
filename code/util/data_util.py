@@ -38,9 +38,7 @@ def load_top1_objects_in_COCO(cid):
             "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
         )
     except FileNotFoundError:
-        stim = pd.read_pickle(
-            "nsddata/nsd_stim_info_merged.pkl"
-        )
+        stim = pd.read_pickle("nsddata/nsd_stim_info_merged.pkl")
     try:
         cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
     except FileNotFoundError:
@@ -60,9 +58,7 @@ def load_objects_in_COCO(cid):
             "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
         )
     except FileNotFoundError:
-        stim = pd.read_pickle(
-            "nsddata/nsd_stim_info_merged.pkl"
-        )
+        stim = pd.read_pickle("nsddata/nsd_stim_info_merged.pkl")
     try:
         cat = np.load("/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/cat.npy")
         supcat = np.load(
@@ -70,9 +66,7 @@ def load_objects_in_COCO(cid):
         )
     except:
         cat = np.load("features/cat.npy")
-        supcat = np.load(
-            "features/supcat.npy"
-        )
+        supcat = np.load("features/supcat.npy")
 
     # extract the nsd ID corresponding to the coco ID in the stimulus list
     stim_ind = stim["nsdId"][stim["cocoId"] == cid]
@@ -102,7 +96,9 @@ def load_subset_trials(coco_id_by_trial, cat):
     return subset_idx
 
 
-def find_trial_indexes(subj, cat="person", output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+def find_trial_indexes(
+    subj, cat="person", output_dir="/user_data/yuanw3/project_outputs/NSD/output"
+):
     coco_id = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (output_dir, subj))
 
     idx1, idx2 = [], []

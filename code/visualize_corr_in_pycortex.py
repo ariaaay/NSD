@@ -122,7 +122,9 @@ def make_volume(
 
     # load correlation scores of cortical voxels
     if vals is None:
-        if type(model) == list: # for different naming convention for variance partitioning (only 1 should exist)
+        if (
+            type(model) == list
+        ):  # for different naming convention for variance partitioning (only 1 should exist)
             model_list = model
             for model in model_list:
                 try:
@@ -134,18 +136,17 @@ def make_volume(
                     continue
         else:
             vals = load_model_performance(
-                    model, task, output_root=output_root, subj=subj, measure=measure
-                )
-                
-        if model2 is not None: #for variance paritioning
+                model, task, output_root=output_root, subj=subj, measure=measure
+            )
+
+        if model2 is not None:  # for variance paritioning
             vals2 = load_model_performance(
                 model2, task, output_root=output_root, subj=subj, measure=measure
             )
-            vals = vals-vals2
-    
+            vals = vals - vals2
+
         print("model:" + model)
         print("max:" + str(max(vals)))
-
 
     if mask_with_significance:
         if args.sig_method == "negtail_fdr":
@@ -313,7 +314,6 @@ if __name__ == "__main__":
     else:
         output_root = "."
 
-
     visual_roi_volume = make_roi_volume("prf-visualrois")
     ecc_roi_volume = make_roi_volume("prf-eccrois")
     place_roi_volume = make_roi_volume("floc-places")
@@ -324,9 +324,7 @@ if __name__ == "__main__":
     hcp_volume = make_roi_volume("HCP_MMP1")
     sulc_volume = make_roi_volume("corticalsulc")
 
-    ev_vals = np.load(
-        "%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj)
-    )
+    ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj))
     ev_volume = make_volume(subj=args.subj, vals=ev_vals, measure="rsq")
 
     volumes = {
@@ -480,7 +478,7 @@ if __name__ == "__main__":
         output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
-    
+
     volumes["clip-ViT-last R^2"] = make_volume(
         subj=args.subj,
         model="clip",
@@ -508,7 +506,7 @@ if __name__ == "__main__":
     volumes["clip&resnet50-clip R^2"] = make_volume(
         subj=args.subj,
         model=["resnet50_bottleneck_clip", "clip_resnet50_bottleneck"],
-        model2 = "clip",
+        model2="clip",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
@@ -517,7 +515,7 @@ if __name__ == "__main__":
     volumes["clip&resnet50-resnet50 R^2"] = make_volume(
         subj=args.subj,
         model=["resnet50_bottleneck_clip", "clip_resnet50_bottleneck"],
-        model2 = "resnet50_bottleneck",
+        model2="resnet50_bottleneck",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
@@ -534,7 +532,7 @@ if __name__ == "__main__":
 
     volumes["clip&bert13-clip R^2"] = make_volume(
         subj=args.subj,
-        model=["clip_bert_layer_13","bert_layer_13_clip"],
+        model=["clip_bert_layer_13", "bert_layer_13_clip"],
         model2="clip",
         output_root=output_root,
         mask_with_significance=args.mask_sig,

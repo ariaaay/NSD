@@ -43,9 +43,7 @@ def stack(err_list, yhat, y_test):
 
     for i in range(0, n_voxels):
         PP = matrix(P[i])
-        S[i, :] = np.array(solvers.qp(PP, q, G, h, A, b)["x"]).reshape(
-            n_features,
-        )
+        S[i, :] = np.array(solvers.qp(PP, q, G, h, A, b)["x"]).reshape(n_features,)
         # combine the predictions from the individual feature spaces for voxel i
         z = np.array([yhat[feature_j, :, i] for feature_j in range(n_features)])
         # if i == 0:

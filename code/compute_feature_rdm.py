@@ -45,8 +45,7 @@ if __name__ == "__main__":
         feature = np.load(feature_path).squeeze()
         rsm = np.corrcoef(feature)
         np.save(
-            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, args.subj, args.feature),
-            rsm,
+            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, args.subj, args.feature), rsm,
         )
 
     if args.ID:
