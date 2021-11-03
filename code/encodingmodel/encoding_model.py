@@ -81,7 +81,14 @@ def ridge_cv(
 
     print("Making predictions using ridge models...")
     yhat = clf.predict(X_test).cpu().numpy()
-    rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
+    try:
+        rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
+    except ValueError: # debugging for NaNs in subj 5
+        print(np.any(np.isnan(y_test)))
+        print(np.all(np.isfinite(y_test)))
+        print(np.any(np.isnan(yhat)))
+        print(np.all(np.isfinite(yhat)))
+
     corrs = [pearsonr(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
 
     if not permute_y:
