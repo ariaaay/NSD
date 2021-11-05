@@ -128,14 +128,14 @@ def extract_voxels(
         else:
             cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta / 300))
     
-    print("NaN Values:" + np.any(np.isnan(cortical_beta_mat)))
-    print("Is finite:" + np.all(np.isfinite(cortical_beta_mat)))
+    print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
+    print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
 
     if zscore_by_run:
         print("Zscoring...")
         cortical_beta_mat = zscore_by_run(cortical_beta_mat)
-    print("NaN Values:" + np.any(np.isnan(cortical_beta_mat)))
-    print("Is finite:" + np.all(np.isfinite(cortical_beta_mat)))
+        print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
+        print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
 
     np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat
