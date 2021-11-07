@@ -8,12 +8,9 @@ beta_path = "/lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/"
 
 
 def zscore_by_run(mat, run_n=480):
-    try:
-        assert mat.shape[0] / run_n == 62.5 # for subject with full datasaet
-    except AssertionError:
-        print("data has the wrong shape or run_number is wrong for zscoring by run.")
-
     from scipy.stats import zscore
+
+    run_n = np.ceil(mat.shape[0] / 62.5) # should be 480 for subject with full experiment\
 
     zscored_mat = np.zeros(mat.shape)
     index_so_far = 0
