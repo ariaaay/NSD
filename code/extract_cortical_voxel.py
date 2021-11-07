@@ -9,7 +9,7 @@ beta_path = "/lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/"
 
 def zscore_by_run(mat, run_n=480):
     try:
-        assert mat.shape[0] / run_n == 62.5
+        assert mat.shape[0] / run_n == 62.5 # for subject with full datasaet
     except AssertionError:
         print("data has the wrong shape or run_number is wrong for zscoring by run.")
 
@@ -131,12 +131,16 @@ def extract_voxels(
     print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
     print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
 
-    if zscore_by_run:
+    if zscore:
         print("Zscoring...")
         cortical_beta_mat = zscore_by_run(cortical_beta_mat)
-        print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
-        print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
+        finite_flag = np.all(np.isfinite(cortical_beta_mat))
+        print("Is finite:" + str(finite_flag))
 
+        if finite_flag == False:
+            nonzero_mask = np.sum(np.isfinite(cortical_beta_mat), axis=0) != cortical_beta_mat.shape[0]
+            np.save("%s/cortical_voxels/nonzero_mask_subj%02d.npy" % (output_dir, subj), nonzero_mask)
+        
     np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat
 
@@ -158,7 +162,7 @@ if __name__ == "__main__":
         "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj01/func1pt8mm/roi",
     )
     parser.add_argument(
-        "--zscore_by_run", action="store_true", help="zscore brain data by runs"
+        "--zscore_by_run", default=False, action="store_true", help="zscore brain data by runs"
     )
     parser.add_argument(
         "--mask_only",

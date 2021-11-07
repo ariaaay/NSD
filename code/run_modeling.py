@@ -135,6 +135,14 @@ if __name__ == "__main__":
     br_data = np.load(brain_path)
     print("Brain response size is: " + str(br_data.shape))
 
+    # deal with voxels that are zeros in runs and therefore cause nan values in zscoring
+    # only happens in some subjects (e.g. subj5)
+    try:
+        non_zero_mask = np.load("%s/cortical_voxels/nonzero_voxels_subj%02d.npy")
+        br_data = br_data[:, non_zero_mask]
+    except FileNotFoundError:
+        pass
+
     stimulus_list = np.load(
         "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj)
     )

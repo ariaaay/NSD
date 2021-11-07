@@ -33,23 +33,23 @@
 # python code/run_modeling.py --model "clip_text" --subj $subj --fix_testing
 
 
+# subj=5
+
+# python code/run_modeling.py --model "clip" --subj $subj --fix_testing
+# python code/run_modeling.py --model "bert_layer_13" "clip" --subj $subj --fix_testing
+# python code/run_modeling.py --model "bert_layer_13" --subj $subj --fix_testing
+# python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing
+# python code/run_modeling.py --model "resnet50_bottleneck" "clip" --subj $subj --fix_testing
+
 subj=5
 
 python code/run_modeling.py --model "clip" --subj $subj --fix_testing
 python code/run_modeling.py --model "bert_layer_13" "clip" --subj $subj --fix_testing
-python code/run_modeling.py --model "bert_layer_13" --subj $subj --fix_testing
-python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing
-python code/run_modeling.py --model "resnet50_bottleneck" "clip" --subj $subj --fix_testing
-
-subj=7
-
-python code/run_modeling.py --model "clip" --subj $subj --fix_testing
-python code/run_modeling.py --model "bert_layer_13" "clip" --subj $subj --fix_testing
-python code/run_modeling.py --model "bert_layer_13" --subj $subj --fix_testing
-python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing
+# python code/run_modeling.py --model "bert_layer_13" --subj $subj --fix_testing
+# python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing
 python code/run_modeling.py --model "resnet50_bottleneck" "clip" --subj $subj --fix_testing
 
 
-python code/run_modeling.py --model "clip_visual_resnet" --subj 2 --fix_testing
+# python code/run_modeling.py --model "clip_visual_resnet" --subj 2 --fix_testing
 
 
