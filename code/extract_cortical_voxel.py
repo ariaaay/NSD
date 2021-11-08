@@ -1,3 +1,4 @@
+import os
 import argparse
 import numpy as np
 import nibabel as nib
@@ -30,7 +31,7 @@ def zscore_by_run(mat, run_n=480):
 
 
 def extract_cortical_mask(
-    subj, roi="", output_dir="/user_data/yuanw3/project_outputs/NSD/output"
+    subj, roi=""
 ):
     if roi != "":
         roi_tag = "_" + roi
@@ -68,13 +69,13 @@ def extract_cortical_mask(
         )  # check the roi 1D length is same as cortical numbers in nsd general
         np.save(
             "%s/voxels_masks/subj%d/roi_1d_mask_subj%02d%s.npy"
-            % (output_dir, subj, subj, roi_tag),
+            % (args.output_dir, subj, subj, roi_tag),
             roi_1d_mask,
         )
 
     np.save(
         "%s/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
-        % (output_dir, subj, subj, roi_tag),
+        % (args.output_dir, subj, subj, roi_tag),
         mask,
     )
 
@@ -87,7 +88,6 @@ def extract_voxels(
     zscore,
     mask=None,
     mask_tag="",
-    output_dir="/user_data/yuanw3/project_outputs/NSD/output",
 ):
     tag = roi
 
@@ -98,7 +98,7 @@ def extract_voxels(
 
     output_path = (
         "%s/cortical_voxels/cortical_voxel_across_sessions_%ssubj%02d%s.npy"
-        % (output_dir, zscore_tag, subj, mask_tag)
+        % (args.output_dir, zscore_tag, subj, mask_tag)
     )
 
     beta_subj_dir = "%s/subj%02d/func1pt8mm/betas_fithrf_GLMdenoise_RR" % (
@@ -109,7 +109,7 @@ def extract_voxels(
         try:
             mask = np.load(
                 "%s/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
-                % (output_dir, subj, subj, tag)
+                % (args.output_dir, subj, subj, tag)
             )
         except FileNotFoundError:
             mask = extract_cortical_mask(subj, roi)
@@ -136,9 +136,9 @@ def extract_voxels(
 
         if finite_flag == False:
             nonzero_mask = np.sum(np.isfinite(cortical_beta_mat), axis=0) != cortical_beta_mat.shape[0]
-            np.save("%s/cortical_voxels/nonzero_mask_subj%02d.npy" % (output_dir, subj), nonzero_mask)
+            np.save("%s/cortical_voxels/nonzero_mask_subj%02d.npy" % (args.output_dir, subj), nonzero_mask)
         
-    np.save(output_path, cortical_beta_mat)
+    np.save(args.output_path, cortical_beta_mat)
     return cortical_beta_mat
 
 
@@ -166,6 +166,11 @@ if __name__ == "__main__":
         action="store_true",
         help="only extract roi mask but not voxel response",
     )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/output"
+    )
 
     args = parser.parse_args()
 
@@ -175,6 +180,8 @@ if __name__ == "__main__":
         subj = [args.subj]
 
     for s in subj:
+        if not os.path.isdir("%s/voxels_masks/subj%d" % (args.output_dir, subj)):
+            os.makedirs("%s/voxels_masks/subj%d" % (args.output_dir, subj))
         if args.mask_only:
             print("Extracting ROI %s for subj%d" % (args.roi, s))
             extract_cortical_mask(s, roi=args.roi)
