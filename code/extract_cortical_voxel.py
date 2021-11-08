@@ -180,8 +180,8 @@ if __name__ == "__main__":
         subj = [args.subj]
 
     for s in subj:
-        if not os.path.isdir("%s/voxels_masks/subj%d" % (args.output_dir, subj)):
-            os.makedirs("%s/voxels_masks/subj%d" % (args.output_dir, subj))
+        if not os.path.isdir("%s/voxels_masks/subj%d" % (args.output_dir, s)):
+            os.makedirs("%s/voxels_masks/subj%d" % (args.output_dir, s))
         if args.mask_only:
             print("Extracting ROI %s for subj%d" % (args.roi, s))
             extract_cortical_mask(s, roi=args.roi)
