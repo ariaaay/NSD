@@ -143,6 +143,10 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
+    print("NaNs? Finite?:")
+    print(np.any(np.isnan(br_data)))
+    print(np.all(np.isfinite(br_data)))
+
     stimulus_list = np.load(
         "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj)
     )

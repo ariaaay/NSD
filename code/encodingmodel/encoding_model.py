@@ -84,8 +84,10 @@ def ridge_cv(
     try:
         rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
     except ValueError:  # debugging for NaNs in subj 5
+        print("Ytest: NaNs? Finite?")
         print(np.any(np.isnan(y_test)))
         print(np.all(np.isfinite(y_test)))
+        print("Yhat: NaNs? Finite?")
         print(np.any(np.isnan(yhat)))
         print(np.all(np.isfinite(yhat)))
 
