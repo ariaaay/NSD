@@ -15,7 +15,7 @@ def zscore_by_run(mat, run_n=480):
 
     zscored_mat = np.zeros(mat.shape)
     index_so_far = 0
-    for i in tqdm(range(run_n)):
+    for i in tqdm(range(int(run_n))):
         if i % 2 == 0:
             zscored_mat[index_so_far : index_so_far + 62, :] = zscore(
                 mat[index_so_far : index_so_far + 62, :]
@@ -116,7 +116,10 @@ def extract_voxels(
 
     cortical_beta_mat = None
     for ses in tqdm(range(1, 41)):
-        beta_file = nib.load("%s/betas_session%02d.nii.gz" % (beta_subj_dir, ses))
+        try:
+            beta_file = nib.load("%s/betas_session%02d.nii.gz" % (beta_subj_dir, ses))
+        except FileNotFoundError:
+            break
         beta = beta_file.get_fdata()
         cortical_beta = (beta[mask]).T  # verify the mask with array
 
@@ -138,7 +141,7 @@ def extract_voxels(
             nonzero_mask = np.sum(np.isfinite(cortical_beta_mat), axis=0) != cortical_beta_mat.shape[0]
             np.save("%s/cortical_voxels/nonzero_mask_subj%02d.npy" % (args.output_dir, subj), nonzero_mask)
         
-    np.save(args.output_path, cortical_beta_mat)
+    np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat
 
 
