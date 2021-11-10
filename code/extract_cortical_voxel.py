@@ -139,7 +139,7 @@ def extract_voxels(
 
         if finite_flag == False:
             nonzero_mask = np.sum(np.isfinite(cortical_beta_mat), axis=0) != cortical_beta_mat.shape[0]
-            np.save("%s/cortical_voxels/nonzero_mask_subj%02d.npy" % (args.output_dir, subj), nonzero_mask)
+            np.save("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (args.output_dir, subj, subj), nonzero_mask)
         
     np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat

@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # deal with voxels that are zeros in runs and therefore cause nan values in zscoring
     # only happens in some subjects (e.g. subj5)
     try:
-        non_zero_mask = np.load("%s/cortical_voxels/nonzero_voxels_subj%02d.npy" % (args.output_dir, args.subj))
+        non_zero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (args.output_dir, args.subj, args.subj))
         print("Masking zero voxels...")
         br_data = br_data[:, non_zero_mask]
     except FileNotFoundError:

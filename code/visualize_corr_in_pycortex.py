@@ -5,18 +5,20 @@ from nibabel.volumeutils import working_type
 import numpy as np
 
 import argparse
+from numpy.core.fromnumeric import nonzero
 from tqdm import tqdm
 
 from util.model_config import model_features
 from util.data_util import load_model_performance
 
 
-def project_vals_to_3d(vals, mask):
-    # print(np.sum(mask))
-    # print(len(vals))
+def project_vals_to_3d(vals, mask, nonzero_mask=None):
     all_vals = np.zeros(mask.shape)
+    if nonzero_mask is not None:
+        mask = mask[nonzero_mask]
     all_vals[mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
+
     return all_vals
 
 
@@ -81,14 +83,18 @@ def visualize_layerwise_max_corr_results(
     layeridx[~sig_mask] = -1
 
     # projecting value back to 3D space
-    all_vals = project_vals_to_3d(layeridx, cortical_mask)
+    try: # some subject has zeros voxels masked out
+        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    except FileNotFoundError:
+        nonzero_mask = None
+    all_vals = project_vals_to_3d(layeridx, cortical_mask, nonzero_mask)
 
     layerwise_volume = cortex.Volume(
         all_vals,
-        "subj%02d" % args.subj,
+        "subj%02d" % subj,
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=cortex.utils.get_cortical_mask(
-            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+            "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
         ),
         vmin=1,
         vmax=layer_num,
@@ -162,7 +168,11 @@ def make_volume(
 
         vals[~sig_mask] = 0
     # projecting value back to 3D space
-    all_vals = project_vals_to_3d(vals, cortical_mask)
+    try: # some subject has zeros voxels masked out
+        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    except FileNotFoundError:
+        nonzero_mask = None
+    all_vals = project_vals_to_3d(vals, cortical_mask, nonzero_mask)
 
     vol_data = cortex.Volume(
         all_vals,
@@ -199,7 +209,11 @@ def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
         )
         vals[~sig_mask] = -999
     # projecting value back to 3D space
-    all_vals = project_vals_to_3d(vals, cortical_mask)
+    try: # some subject has zeros voxels masked out
+        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    except FileNotFoundError:
+        nonzero_mask = None
+    all_vals = project_vals_to_3d(vals, cortical_mask, nonzero_mask)
 
     vol_data = cortex.Volume(
         all_vals,
@@ -239,7 +253,11 @@ def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
             )
             tmp[~sig_mask] = 0
         # projecting value back to 3D space
-        pc_3d.append(project_vals_to_3d(tmp, cortical_mask))
+        try: # some subject has zeros voxels masked out
+            nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+        except FileNotFoundError:
+            nonzero_mask = None
+        pc_3d.append(project_vals_to_3d(tmp, cortical_mask, nonzero_mask))
 
     red = cortex.Volume(
         pc_3d[0].astype(np.uint8),
@@ -370,33 +388,33 @@ if __name__ == "__main__":
     #     mask_with_significance=args.mask_sig,
     # )
 
-    volumes["clip_top1_object"] = make_volume(
-        subj=args.subj,
-        model="clip_top1_object",
-        output_root=output_root,
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["clip_top1_object"] = make_volume(
+    #     subj=args.subj,
+    #     model="clip_top1_object",
+    #     output_root=output_root,
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["clip_all_objects"] = make_volume(
-        subj=args.subj,
-        model="clip_object",
-        output_root=output_root,
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["clip_all_objects"] = make_volume(
+    #     subj=args.subj,
+    #     model="clip_object",
+    #     output_root=output_root,
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["COCO categories"] = make_volume(
-        subj=args.subj,
-        model="cat",
-        output_root=output_root,
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["COCO categories"] = make_volume(
+    #     subj=args.subj,
+    #     model="cat",
+    #     output_root=output_root,
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["COCO super categories"] = make_volume(
-        subj=args.subj,
-        model="supcat",
-        output_root=output_root,
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["COCO super categories"] = make_volume(
+    #     subj=args.subj,
+    #     model="supcat",
+    #     output_root=output_root,
+    #     mask_with_significance=args.mask_sig,
+    # )
 
     # volumes["CLIP+Cat"] = make_volume(
     #     subj=args.subj,
