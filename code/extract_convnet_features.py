@@ -121,3 +121,5 @@ if __name__ == "__main__":
 
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
     feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
+
+    extract_resnet_last_layer_feature()
