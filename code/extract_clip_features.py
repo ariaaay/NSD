@@ -106,6 +106,49 @@ def extract_obj_cap_intersect_text_feature():
     return
 
 
+# def extract_visual_resnet_prePCA_feature():
+#     LOI_ResNet_vision = [
+#         "visual.bn1",
+#         "visual.avgpool",
+#         "visual.layer1.2.bn3",
+#         "visual.layer2.3.bn3",
+#         "visual.layer3.5.bn3",
+#         "visual.layer4.2.bn3",
+#         "visual.attnpool",
+#     ]
+#     model, preprocess = clip.load("RN50", device=device)
+#     model_visual = tx.Extractor(model, LOI_ResNet_vision)
+#     compressed_features = [copy.copy(e) for _ in range(8) for e in [[]]]
+#     subsampling_size = 5000
+
+#     print("Extracting ResNet features")
+#     for cid in tqdm(all_coco_ids):
+#         with torch.no_grad():
+#             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+#             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+#             captions = load_captions(cid)
+#             text = clip.tokenize(captions).to(device)
+
+#             _, features = model_visual(image, text)
+
+#             for i, f in enumerate(features.values()):
+#                 # print(f.size())
+#                 if len(f.size()) > 3:
+#                     c = f.data.shape[1]  # number of channels
+#                     k = int(np.floor(np.sqrt(subsampling_size / c)))
+#                     tmp = nn.functional.adaptive_avg_pool2d(f.data, (k, k))
+#                     # print(tmp.size())
+#                     compressed_features[i].append(tmp.squeeze().cpu().numpy().flatten())
+#                 else:
+#                     compressed_features[i].append(
+#                         f.squeeze().data.cpu().numpy().flatten()
+#                     )
+
+#     for l, f in enumerate(compressed_features):
+#         np.save("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l), f)
+#         # compressed_features_array.append(np.array(f))
+
+
 def extract_visual_resnet_prePCA_feature():
     LOI_ResNet_vision = [
         "visual.bn1",
@@ -146,55 +189,12 @@ def extract_visual_resnet_prePCA_feature():
 
     for l, f in enumerate(compressed_features):
         np.save("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l), f)
-        # compressed_features_array.append(np.array(f))
-
-
-def extract_visual_resnet_prePCA_feature():
-    LOI_ResNet_vision = [
-        "visual.bn1",
-        "visual.avgpool",
-        "visual.layer1.2.bn3",
-        "visual.layer2.3.bn3",
-        "visual.layer3.5.bn3",
-        "visual.layer4.2.bn3",
-        "visual.attnpool",
-    ]
-    model, preprocess = clip.load("RN50", device=device)
-    model_visual = tx.Extractor(model, LOI_ResNet_vision)
-    compressed_features = [copy.copy(e) for _ in range(8) for e in [[]]]
-    subsampling_size = 5000
-
-    print("Extracting ResNet features")
-    for cid in tqdm(all_coco_ids):
-        with torch.no_grad():
-            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
-            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
-            captions = load_captions(cid)
-            text = clip.tokenize(captions).to(device)
-
-            _, features = model_visual(image, text)
-
-            for i, f in enumerate(features.values()):
-                # print(f.size())
-                if len(f.size()) > 3:
-                    c = f.data.shape[1]  # number of channels
-                    k = int(np.floor(np.sqrt(subsampling_size / c)))
-                    tmp = nn.functional.adaptive_avg_pool2d(f.data, (k, k))
-                    # print(tmp.size())
-                    compressed_features[i].append(tmp.squeeze().cpu().numpy().flatten())
-                else:
-                    compressed_features[i].append(
-                        f.squeeze().data.cpu().numpy().flatten()
-                    )
-
-    for l, f in enumerate(compressed_features):
-        np.save("%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l), f)
 
 
 def extract_visual_resnet_feature():
     for l in range(7):
         try:
-            f = np.load("%s/visual_layer_prePCA_%01d.npy" % (feature_output_dir, l))
+            f = np.load("%s/visual_layer_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
         except FileNotFoundError:
             extract_visual_resnet_prePCA_feature()
             f = np.load(
