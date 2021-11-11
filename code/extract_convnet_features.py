@@ -86,7 +86,7 @@ def extract_resnet_last_layer_feature():
             _, features = model(image)
             output.append(features["avgpool"].squeeze().data.cpu().numpy().flatten())
 
-        np.save("%s/convnet_resnet_%01d.npy" % (feature_output_dir, "avgpool"), output)
+        np.save("%s/convnet_resnet_avgpool.npy" % feature_output_dir, output)
 
 
 if __name__ == "__main__":
