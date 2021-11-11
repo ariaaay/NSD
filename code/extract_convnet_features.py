@@ -1,141 +1,123 @@
 import argparse
+import copy
+
+import pandas as pd
+import numpy as np
+from torch._C import Value
 from tqdm import tqdm
 from PIL import Image
 
-import torch
-from torch.autograd import Variable
-from torchvision import transforms, utils, models
-
-import numpy as np
-import pandas as pd
 from sklearn.decomposition import PCA
 
-from util.util import pytorch_pca
+import torch
+import torch.nn as nn
+# import torchvision
+from torchvision import transforms, utils, models
+
+import torchextractor as tx
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+def extract_resnet_prePCA_feature():
+    layers = ["layer1", "layer2", "layer3", "layer4", "layer4.2.relu"]
+    # model, preprocess = clip.load("RN50", device=device)
+    model = models.resnet50(pretrained=True)
+    model = tx.Extractor(model, layers)
+    compressed_features = [copy.copy(e) for _ in range(len(layers)) for e in [[]]]
+    subsampling_size = 5000
+
+    print("Extracting ResNet features")
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+
+            _, features = model(image)
+
+            for i, f in enumerate(features.values()):
+                # print(f.size())
+                if len(f.size()) > 3:
+                    c = f.data.shape[1]  # number of channels
+                    k = int(np.floor(np.sqrt(subsampling_size / c)))
+                    tmp = nn.functional.adaptive_avg_pool2d(f.data, (k, k))
+                    # print(tmp.size())
+                    compressed_features[i].append(tmp.squeeze().cpu().numpy().flatten())
+                else:
+                    compressed_features[i].append(
+                        f.squeeze().data.cpu().numpy().flatten()
+                    )
+
+    for l, f in enumerate(compressed_features):
+        np.save("%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l), f)
 
 
-import warnings
+def extract_visual_resnet_feature():
+    for l in range(7):
+        try:
+            f = np.load("%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
+        except FileNotFoundError:
+            extract_resnet_prePCA_feature()
+            f = np.load(
+                "%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l)
+            )
 
-warnings.filterwarnings("ignore")
+        print("Running PCA")
+        print("feature shape: ")
+        print(f.shape)
+        pca = PCA(n_components=min(f.shape[0], 64), svd_solver="auto")
 
+        fp = pca.fit_transform(f)
+        print("Feature %01d has shape of:" % l)
+        print(fp.shape)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+        np.save("%s/resnet_%01d.npy" % (feature_output_dir, l), fp)
 
-preprocess = transforms.Compose(
-    [
-        # transforms.Resize(375),
-        transforms.ToTensor()
-    ]
-)
+def extract_resnet_last_layer_feature():
+    model = models.resnet50(pretrained=True)
+    model = tx.Extractor(model, "avgpool")
 
-# Load Images
-stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
+    print("Extracting ResNet features")
+    for cid in tqdm(all_coco_ids):
+        output = list()
+        with torch.no_grad():
+            image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
-stim = pd.read_pickle(
-    "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-)
-all_coco_ids = stim.cocoId
-all_images_paths = list()
-all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
-print("Number of Images: {}".format(len(all_images_paths)))
+            _, features = model(image)
+            output.append(features["avgpool"].squeeze().data.cpu().numpy().flatten())
+
+        np.save("%s/convnet_resnet_%01d.npy" % (feature_output_dir, "avgpool"), output)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="")
-    parser.add_argument("layer", type=str, help="input name of the convolutional layer")
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="vgg19",
-        help="input name of the model to extract layer from",
+    preprocess = transforms.Compose(
+        [
+            # transforms.Resize(375),
+            transforms.ToTensor()
+        ]
     )
-    parser.add_argument(
-        "--subsample",
-        type=str,
-        default="avgpool",
-        help="Please specify the method to subsample convolutional layers. Options are PCA and "
-        "avgpool.",
-    )
-    parser.add_argument(
-        "--subsampling_size",
-        type=int,
-        default=20000,
-        help="Specify the target size for subsampling",
-    )
-    parser.add_argument("--cpu", action="store_true", help="cpu only for subsmapling.")
 
+    # Load Images
+    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
+
+    stim = pd.read_pickle(
+        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+    )
+    all_coco_ids = stim.cocoId
+    all_images_paths = list()
+    all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
+    print("Number of Images: {}".format(len(all_images_paths)))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--subj", default=1, type=int)
+    parser.add_argument(
+        "--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features",
+    )
+    parser.add_argument(
+        "--project_output_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/output",
+    )
     args = parser.parse_args()
-    print("Feature are subsampling with " + args.subsample)
-    subsample_tag = "_" + args.subsample
 
-    if "conv" in args.layer:
-        extract_conv = True
-    else:
-        extract_conv = False
-
-    if args.model == "vgg19":
-        from featureprep.convnet_extractor import Vgg19
-
-        print("Extracting features from Vgg19_bn")
-
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print(device)
-
-        model = Vgg19(args.layer, extract_conv).eval()
-
-    elif args.model == "alexnet":
-        from featureprep.convnet_extractor import AlexNet
-
-        print("Extracting features from Alexnet...")
-
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print(device)
-        model = AlexNet(args.layer, extract_conv).eval()
-
-    # if there's only cpu, extracting feature is too slow so load pre-computed features
-    if args.cpu and args.subsample == "pca":
-        try:
-            all_features = np.load(
-                "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s_%s%s.npy"
-                % (args.model, args.layer, subsample_tag)
-            )
-        except FileNotFoundError:
-            pass
-    else:
-        all_features = []
-        for p in tqdm(all_images_paths):
-            img = Image.open(p)
-            input = Variable(preprocess(img).unsqueeze_(0)).to(device)
-            out = model.forward(input, args.subsample, args.subsampling_size)
-
-            all_features.append(out)
-        all_features = np.array(all_features)
-        # print(all_features.dtype)
-
-    # PCA
-    if args.subsample == "pca":
-        print("Running PCA...")
-        if args.cpu:
-            pca = PCA()
-            all_features = pca.fit_transform(all_features.astype(np.float16))
-        else:
-            all_features_full = torch.from_numpy(all_features).to(device)
-            all_features = pytorch_pca(all_features_full).cpu()
-
-    # Saving
-
-    print(all_features.shape)
-    np.save(
-        "/lab_data/tarrlab/common/datasets/features/NSD/feat_%s_%s%s.npy"
-        % (args.model, args.layer, subsample_tag),
-        all_features,
-    )
-    # pickle.dump(all_images_paths, open('../outputs/convnet_features/convnet_image_orders_{}.p'.format(args.layer), 'wb'))
-
-    # save the imtermediate product of PCAs for future use
-    if args.subsample == "pca":
-        # Save to file in the current working directory
-        from joblib import dump
-
-        joblib_filename = "pca_model_{}_{}.pkl".format(args.subsample, args.layer)
-        dump(pca, joblib_filename)
+    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
+    feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
