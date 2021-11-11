@@ -11,12 +11,14 @@ from sklearn.decomposition import PCA
 
 import torch
 import torch.nn as nn
+
 # import torchvision
 from torchvision import transforms, utils, models
 
 import torchextractor as tx
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 def extract_resnet_prePCA_feature():
     layers = ["layer1", "layer2", "layer3", "layer4", "layer4.2.relu"]
@@ -57,9 +59,7 @@ def extract_visual_resnet_feature():
             f = np.load("%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
         except FileNotFoundError:
             extract_resnet_prePCA_feature()
-            f = np.load(
-                "%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l)
-            )
+            f = np.load("%s/convnet_resnet_prePCA_%01d.npy" % (feature_output_dir, l))
 
         print("Running PCA")
         print("feature shape: ")
@@ -71,6 +71,7 @@ def extract_visual_resnet_feature():
         print(fp.shape)
 
         np.save("%s/resnet_%01d.npy" % (feature_output_dir, l), fp)
+
 
 def extract_resnet_last_layer_feature():
     model = models.resnet50(pretrained=True)
@@ -100,17 +101,19 @@ if __name__ == "__main__":
     # Load Images
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
 
-    stim = pd.read_pickle(
-        "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
-    )
-    all_coco_ids = stim.cocoId
-    all_images_paths = list()
-    all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
-    print("Number of Images: {}".format(len(all_images_paths)))
+    # stim = pd.read_pickle(
+    #     "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
+    # )
+    # all_coco_ids = stim.cocoId
+    # all_images_paths = list()
+    # all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
+    # print("Number of Images: {}".format(len(all_images_paths)))
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", default=1, type=int)
     parser.add_argument(
-        "--feature_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/features",
+        "--feature_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/features",
     )
     parser.add_argument(
         "--project_output_dir",
@@ -121,5 +124,9 @@ if __name__ == "__main__":
 
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
     feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
+    # feature_output_dir = "/lab_data/tarrlab/common/datasets/features/NSD/"
+    all_coco_ids = np.load(
+        "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
+    )
 
     extract_resnet_last_layer_feature()
