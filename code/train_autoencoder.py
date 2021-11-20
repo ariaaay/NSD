@@ -58,9 +58,10 @@ if __name__ == "__main__":
     n = 10000
     epochs = 200
     latent_dims = np.linspace(5, 100, 6)
-    (train_idx, test_idx,) = train_test_split(
-        np.arange(n), test_size=0.15, random_state=42
-    )
+    (
+        train_idx,
+        test_idx,
+    ) = train_test_split(np.arange(n), test_size=0.15, random_state=42)
 
     train_data = NSDBrainOnlyDataset(
         args.output_dir, args.subj, train_idx, args.roi, args.roi_num

@@ -11,7 +11,9 @@ beta_path = "/lab_data/tarrlab/common/datasets/NSD/nsddata_betas/ppdata/"
 def zscore_by_run(mat, run_n=480):
     from scipy.stats import zscore
 
-    run_n = np.ceil(mat.shape[0] / 62.5) # should be 480 for subject with full experiment\
+    run_n = np.ceil(
+        mat.shape[0] / 62.5
+    )  # should be 480 for subject with full experiment\
 
     zscored_mat = np.zeros(mat.shape)
     index_so_far = 0
@@ -30,9 +32,7 @@ def zscore_by_run(mat, run_n=480):
     return zscored_mat
 
 
-def extract_cortical_mask(
-    subj, roi=""
-):
+def extract_cortical_mask(subj, roi=""):
     if roi != "":
         roi_tag = "_" + roi
     else:
@@ -127,7 +127,7 @@ def extract_voxels(
             cortical_beta_mat = cortical_beta / 300
         else:
             cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta / 300))
-    
+
     print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
     print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
 
@@ -138,9 +138,16 @@ def extract_voxels(
         print("Is finite:" + str(finite_flag))
 
         if finite_flag == False:
-            nonzero_mask = np.sum(np.isfinite(cortical_beta_mat), axis=0) != cortical_beta_mat.shape[0]
-            np.save("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (args.output_dir, subj, subj), nonzero_mask)
-        
+            nonzero_mask = (
+                np.sum(np.isfinite(cortical_beta_mat), axis=0)
+                != cortical_beta_mat.shape[0]
+            )
+            np.save(
+                "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+                % (args.output_dir, subj, subj),
+                nonzero_mask,
+            )
+
     np.save(output_path, cortical_beta_mat)
     return cortical_beta_mat
 
@@ -162,7 +169,10 @@ if __name__ == "__main__":
         "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj01/func1pt8mm/roi",
     )
     parser.add_argument(
-        "--zscore_by_run", default=False, action="store_true", help="zscore brain data by runs"
+        "--zscore_by_run",
+        default=False,
+        action="store_true",
+        help="zscore brain data by runs",
     )
     parser.add_argument(
         "--mask_only",
@@ -170,9 +180,7 @@ if __name__ == "__main__":
         help="only extract roi mask but not voxel response",
     )
     parser.add_argument(
-        "--output_dir",
-        type=str,
-        default="/user_data/yuanw3/project_outputs/NSD/output"
+        "--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD/output"
     )
 
     args = parser.parse_args()

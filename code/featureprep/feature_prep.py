@@ -1,4 +1,4 @@
-"This scripts load feature spaces and prepares it for encoding model"
+"This script loads feature spaces and prepares it for encoding model"
 import numpy as np
 from tqdm import tqdm
 import pandas as pd

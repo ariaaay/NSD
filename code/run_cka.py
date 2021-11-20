@@ -269,7 +269,12 @@ if __name__ == "__main__":
             brain_labels += labels
         print("Running CKA for task %s and the brain..." % task)
         run_cka_across_brain_and_networks(
-            task, layers, roi_data, layer_labels, brain_labels, subset_idx=subset_idx,
+            task,
+            layers,
+            roi_data,
+            layer_labels,
+            brain_labels,
+            subset_idx=subset_idx,
         )
 
     # cka between clip and other networks"

@@ -16,7 +16,10 @@ from util.model_config import *
 
 
 def compute_adjust_p(
-    model, feature="", subj=None, correction="fdr",
+    model,
+    feature="",
+    subj=None,
+    correction="fdr",
 ):
     out = pickle.load(
         open(
@@ -53,13 +56,19 @@ if __name__ == "__main__":
             adj_p = pickle.load(
                 open(
                     "output/baseline/empirical_p_values_taskrepr_%s_subj%d_whole_brain_test_permute_fdr.p"
-                    % (f, args.subj,),
+                    % (
+                        f,
+                        args.subj,
+                    ),
                     "rb",
                 )
             )
         else:
             p, adj_p = compute_adjust_p(
-                args.model, f, subj=args.subj, correction=args.correction,
+                args.model,
+                f,
+                subj=args.subj,
+                correction=args.correction,
             )
         # print(len(adj_p))
         print(f + ": " + str(np.sum(np.array(adj_p) < args.alpha)))

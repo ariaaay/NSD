@@ -44,7 +44,9 @@ def quad_stack(PP, n_features):
     A = matrix(np.ones((1, n_features)))
     b = matrix(np.ones(1))
 
-    return np.array(solvers.qp(PP, q, G, h, A, b)["x"]).reshape(n_features,)
+    return np.array(solvers.qp(PP, q, G, h, A, b)["x"]).reshape(
+        n_features,
+    )
 
 
 def feat_ridge_CV(

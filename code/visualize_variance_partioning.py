@@ -94,16 +94,24 @@ if __name__ == "__main__":
 
     volumes = {
         "Unique Var - 2D Edges": make_volume(
-            var_unique1, subj=args.subj, mask_with_significance=args.mask_sig,
+            var_unique1,
+            subj=args.subj,
+            mask_with_significance=args.mask_sig,
         ),
         "Unique Var - 3D Edges": make_volume(
-            var_unique2, subj=args.subj, mask_with_significance=args.mask_sig,
+            var_unique2,
+            subj=args.subj,
+            mask_with_significance=args.mask_sig,
         ),
         "Unique Var - Semantic": make_volume(
-            var_unique3, subj=args.subj, mask_with_significance=args.mask_sig,
+            var_unique3,
+            subj=args.subj,
+            mask_with_significance=args.mask_sig,
         ),
         "Total Variance": make_volume(
-            t123, subj=args.subj, mask_with_significance=args.mask_sig,
+            t123,
+            subj=args.subj,
+            mask_with_significance=args.mask_sig,
         ),
     }
 

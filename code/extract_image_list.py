@@ -44,6 +44,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", type=int)
     parser.add_argument("--type", type=str)
+    parser.add_argument(
+        "--output_dir", type=str, default="/user_data/yuanw3/project_outputs/NSD"
+    )
     # parser.add_argument("--rep", type=int, default="0", help="Choose which repeats (0-2)")
 
     args = parser.parse_args()
@@ -54,11 +57,16 @@ if __name__ == "__main__":
 
     if args.type == "cocoId":
         image_list = extract_repeat_img_list(stim, args.subj)
-        np.save("output/coco_ID_of_repeats_subj%02d.npy" % args.subj, image_list)
+        np.save(
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, args.subj),
+            image_list,
+        )
 
     elif args.type == "trial":
         trial_list = extract_repeat_trials_list(stim, args.subj)
-        np.save("output/trials_subj%02d.npy" % args.subj, trial_list)
+        np.save(
+            "%s/output/trials_subj%02d.npy" % (args.output_dir, args.subj), trial_list
+        )
 
     else:
         raise TypeError("please correct return type to cocoId or trial")
