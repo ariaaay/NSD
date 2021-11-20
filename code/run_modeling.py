@@ -14,7 +14,13 @@ from util.data_util import load_subset_trials
 
 
 def run(
-    fm, br, model_name, test, fix_testing, cv, output_dir,
+    fm,
+    br,
+    model_name,
+    test,
+    fix_testing,
+    cv,
+    output_dir,
 ):
     if test:
         print("Running Permutation Test")
@@ -136,12 +142,15 @@ if __name__ == "__main__":
     # deal with voxels that are zeros in runs and therefore cause nan values in zscoring
     # only happens in some subjects (e.g. subj5)
     try:
-        non_zero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (args.output_dir, args.subj, args.subj))
+        non_zero_mask = np.load(
+            "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (args.output_dir, args.subj, args.subj)
+        )
         print("Masking zero voxels...")
         br_data = br_data[:, non_zero_mask]
     except FileNotFoundError:
         pass
-    
+
     print("NaNs? Finite?:")
     print(np.any(np.isnan(br_data)))
     print(np.all(np.isfinite(br_data)))

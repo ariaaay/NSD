@@ -83,8 +83,11 @@ def visualize_layerwise_max_corr_results(
     layeridx[~sig_mask] = -1
 
     # projecting value back to 3D space
-    try: # some subject has zeros voxels masked out
-        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    try:  # some subject has zeros voxels masked out
+        nonzero_mask = np.load(
+            "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (output_root, subj, subj)
+        )
     except FileNotFoundError:
         nonzero_mask = None
     all_vals = project_vals_to_3d(layeridx, cortical_mask, nonzero_mask)
@@ -168,8 +171,11 @@ def make_volume(
 
         vals[~sig_mask] = 0
     # projecting value back to 3D space
-    try: # some subject has zeros voxels masked out
-        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    try:  # some subject has zeros voxels masked out
+        nonzero_mask = np.load(
+            "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (output_root, subj, subj)
+        )
     except FileNotFoundError:
         nonzero_mask = None
     all_vals = project_vals_to_3d(vals, cortical_mask, nonzero_mask)
@@ -209,8 +215,11 @@ def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
         )
         vals[~sig_mask] = -999
     # projecting value back to 3D space
-    try: # some subject has zeros voxels masked out
-        nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+    try:  # some subject has zeros voxels masked out
+        nonzero_mask = np.load(
+            "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (output_root, subj, subj)
+        )
     except FileNotFoundError:
         nonzero_mask = None
     all_vals = project_vals_to_3d(vals, cortical_mask, nonzero_mask)
@@ -253,8 +262,11 @@ def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
             )
             tmp[~sig_mask] = 0
         # projecting value back to 3D space
-        try: # some subject has zeros voxels masked out
-            nonzero_mask = np.load("%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy" % (output_root, subj, subj))
+        try:  # some subject has zeros voxels masked out
+            nonzero_mask = np.load(
+                "%s/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+                % (output_root, subj, subj)
+            )
         except FileNotFoundError:
             nonzero_mask = None
         pc_3d.append(project_vals_to_3d(tmp, cortical_mask, nonzero_mask))

@@ -411,7 +411,9 @@ def GCV_ridge(
     # % of lambda. SVD uses X = UDV' form.
     # % First compute K0 = (X'X + lambda*I) where lambda = 0.
     # K0 = np.dot(train_features,train_features.T)
-    print("Running svd",)
+    print(
+        "Running svd",
+    )
     start_time = time.time()
     [U, D, Vt] = svd(train_features, full_matrices=False)
     V = Vt.T

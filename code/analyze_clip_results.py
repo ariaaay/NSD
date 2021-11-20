@@ -1,4 +1,5 @@
 import argparse
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,6 +19,90 @@ def compute_sample_corrs(model, output_dir):
         for i in range(ytest.shape[0])
     ]
     return sample_corrs
+
+
+def plot_image_wise_performance(model1, model2):
+    try:
+        sample_corr1 = np.load(
+            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1)
+        )
+    except FileNotFoundError:
+        sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
+        np.save(
+            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1),
+            sample_corr1,
+        )
+
+    try:
+        sample_corr2 = np.load(
+            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2)
+        )
+    except FileNotFoundError:
+        sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
+        np.save(
+            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2),
+            sample_corr2,
+        )
+
+    plt.figure()
+    plt.scatter(sample_corr1[:, 0], sample_corr2[:, 0], alpha=0.3)
+    plt.plot([-0.1, 1], [-0.1, 1], "r")
+    plt.xlabel(model1)
+    plt.ylabel(model2)
+    plt.savefig("figures/CLIP/%s_vs_%s_samplewise.png" % (model1, model2))
+
+
+def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
+    sc1 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1))[
+        :, 0
+    ]
+    sc2 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2))[
+        :, 0
+    ]
+    diff = sc1 - sc2
+    indexes = np.argsort(diff)
+    br = indexes[:20]
+    tl = indexes[::-1][:20]
+    tr = np.where(((sc1 > upper_thr) * 1 * ((sc2 > upper_thr) * 1).T))
+    bl = np.where(((sc1 > lower_thr) * 1 * ((sc2 > lower_thr) * 1).T))
+    corner_idxes = [br, tl, tr, bl]
+
+    from sklearn.model_selection import train_test_split
+
+    _, test_idx = train_test_split(range(10000), test_size=0.15, random_state=42)
+    coco_id = np.load("%s/output/coco_ID_of_repeats_subj01.npy" % (args.output_dir))
+    test_image_id = coco_id[test_idx]
+    image_ids = [test_image_id[idx] for idx in corner_idxes]
+    with open(
+        "%s/output/clip/%s_vs_%s_corner_image_ids.npy"
+        % (args.output_dir, model1, model2),
+        "wb",
+    ) as f:
+        pickle.dump(image_ids, f)
+
+    image_labels = ["%s Better" % model1, "%s Better" % model2, "Both Good", "Both Bad"]
+
+    for i, idx in enumerate(image_ids):
+        plt.figure()
+        for j, id in enumerate(idx[:16]):
+            print(id)
+            plt.subplot(4, 4, j + 1)
+            try:
+                imgIds = coco_train.getImgIds(imgIds=[id])
+                # img = coco.loadImgs(imgIds)[0]
+                # print(imgIds)
+                img = coco_train.loadImgs(imgIds)[0]
+            except KeyError:
+                imgIds = coco_val.getImgIds(imgIds=[id])
+                # img = coco.loadImgs(imgIds)[0]
+                # print(imgIds)
+                img = coco_val.loadImgs(imgIds)[0]
+            I = io.imread(img["coco_url"])
+            plt.axis("off")
+            plt.imshow(I)
+        plt.title(image_labels[i])
+        plt.tight_layout()
+        plt.savefig("figures/CLIP/sample_corr_images_%s.png" % image_labels[i])
 
 
 if __name__ == "__main__":
@@ -99,15 +184,23 @@ if __name__ == "__main__":
     if args.plot_image_wise_performance:
         # scatter plot by images
         from scipy.stats import pearsonr
+        from pycocotools.coco import COCO
+        import skimage.io as io
 
-        model1 = "bert_layer_13"
-        model2 = "clip"
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        annFile_val = (
+            "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        )
+        coco_train = COCO(annFile_train)
+        coco_val = COCO(annFile_val)
 
-        sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
-        sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
+        # plot_image_wise_performance("clip", "convnet_res50")
+        find_corner_images("clip", "convnet_res50")
+        # plot_image_wise_performance("clip", "bert_layer_13")
+        find_corner_images("clip", "bert_layer_13")
 
-        plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
-        plt.plot([-0.1, 1], [-0.1, 1], "r")
-        plt.xlabel(model1)
-        plt.ylabel(model2)
-        plt.savefig("figures/CLIP/%s_vs_%s_samplewise.png" % (model1, model2))
+    # trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+    # valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+
+    # train_caps = COCO(trainFile)
+    # val_caps = COCO(valFile)

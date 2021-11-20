@@ -31,6 +31,7 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
     try:
         assert l.shape == (repeat_n, 3)
     except AssertionError:
+        print("Irregular trial shape:")
         print(l.shape)
 
     if zscored_input:
@@ -51,6 +52,12 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
 
     print("Brain data shape is:")
     print(data.shape)
+    # fill in 0s for nonexisting trials
+    if data.shape[0] < 30000:
+        tmp = np.zeros((30000, data.shape[1]))
+        tmp[:data.shape[0],:] = data.copy()
+        data = tmp
+
 
     for v in tqdm(range(data.shape[1])):  # loop over voxels
         repeat = list()
