@@ -109,3 +109,11 @@ def find_trial_indexes(
         else:
             idx2.append(i)
     return idx1, idx2
+
+
+def extract_test_image_ids(subj=1, output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+    from sklearn.model_selection import train_test_split
+    _, test_idx = train_test_split(range(10000), test_size=0.15, random_state=42)
+    coco_id = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (output_dir, subj))
+    test_image_id = coco_id[test_idx]
+    return test_image_id, test_idx
