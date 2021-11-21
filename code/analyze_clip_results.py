@@ -3,10 +3,11 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.fromnumeric import clip
 
 from sklearn.decomposition import PCA
 
-from util.data_util import load_model_performance
+from util.data_util import load_model_performance, extract_test_image_ids
 
 
 def compute_sample_corrs(model, output_dir):
@@ -67,11 +68,7 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
     bl = np.where(((sc1 > lower_thr) * 1 * ((sc2 > lower_thr) * 1).T))
     corner_idxes = [br, tl, tr, bl]
 
-    from sklearn.model_selection import train_test_split
-
-    _, test_idx = train_test_split(range(10000), test_size=0.15, random_state=42)
-    coco_id = np.load("%s/output/coco_ID_of_repeats_subj01.npy" % (args.output_dir))
-    test_image_id = coco_id[test_idx]
+    test_image_id, _ = extract_test_image_ids(subj=1)
     image_ids = [test_image_id[idx] for idx in corner_idxes]
     with open(
         "%s/output/clip/%s_vs_%s_corner_image_ids.npy"
@@ -105,6 +102,26 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
         plt.savefig("figures/CLIP/sample_corr_images_%s.png" % image_labels[i])
 
 
+def compare_model_and_brain_performance_on_COCO(subj=1):
+    _, test_idx = extract_test_image_ids(subj)
+    clip_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
+    clip_text_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
+    scores = clip_feature @ clip_text_feature.T
+
+    sample_corr_clip = np.load(
+        "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, "clip")
+    )
+    sample_corr_clip_text = np.load(
+        "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, "clip_text")
+    )
+    plt.figure()
+    plt.plot(sample_corr_clip, "g")
+    plt.plot(sample_corr_clip_text, "b")
+    plt.plot(scores, "r")
+    return scores
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -121,6 +138,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--plot_voxel_wise_performance", action="store_true")
     parser.add_argument("--plot_image_wise_performance", action="store_true")
+    parser.add_argument("--compare_brain_and_clip_performance", action="store_true")
     parser.add_argument("--weight_analysis", action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi", type=str)
@@ -198,6 +216,9 @@ if __name__ == "__main__":
         find_corner_images("clip", "convnet_res50")
         # plot_image_wise_performance("clip", "bert_layer_13")
         find_corner_images("clip", "bert_layer_13")
+    
+    if args.compare_brain_and_clip_performance:
+        compare_model_and_brain_performance_on_COCO(subj=1)
 
     # trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
     # valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
