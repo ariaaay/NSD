@@ -11,6 +11,7 @@ from util.data_util import load_model_performance, extract_test_image_ids
 
 
 def compute_sample_corrs(model, output_dir):
+    from scipy.stats import pearsonr
     try:
         sample_corrs = np.load(
             "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
@@ -188,7 +189,6 @@ if __name__ == "__main__":
 
     if args.plot_image_wise_performance:
         # scatter plot by images
-        from scipy.stats import pearsonr
         from pycocotools.coco import COCO
         import skimage.io as io
 
