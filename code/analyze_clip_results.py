@@ -11,39 +11,29 @@ from util.data_util import load_model_performance, extract_test_image_ids
 
 
 def compute_sample_corrs(model, output_dir):
-    yhat, ytest = load_model_performance(model, output_root=output_dir, measure="pred")
-    pvalues = load_model_performance(model, output_root=output_dir, measure="pvalue")
-    sig_mask = pvalues <= 0.05
+    try:
+        sample_corrs = np.load(
+            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
+        )
+    except FileNotFoundError:
+        yhat, ytest = load_model_performance(model, output_root=output_dir, measure="pred")
+        pvalues = load_model_performance(model, output_root=output_dir, measure="pvalue")
+        sig_mask = pvalues <= 0.05
 
-    sample_corrs = [
-        pearsonr(ytest[:, sig_mask][i, :], yhat[:, sig_mask][i, :])
-        for i in range(ytest.shape[0])
-    ]
+        sample_corrs = [
+            pearsonr(ytest[:, sig_mask][i, :], yhat[:, sig_mask][i, :])
+            for i in range(ytest.shape[0])
+        ]
+        np.save(
+            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
+        )
+    
     return sample_corrs
 
 
 def plot_image_wise_performance(model1, model2):
-    try:
-        sample_corr1 = np.load(
-            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1)
-        )
-    except FileNotFoundError:
-        sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
-        np.save(
-            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1),
-            sample_corr1,
-        )
-
-    try:
-        sample_corr2 = np.load(
-            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2)
-        )
-    except FileNotFoundError:
-        sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
-        np.save(
-            "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2),
-            sample_corr2,
-        )
+    sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
+    sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
 
     plt.figure()
     plt.scatter(sample_corr1[:, 0], sample_corr2[:, 0], alpha=0.3)
@@ -108,12 +98,9 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     clip_text_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
     scores = clip_feature @ clip_text_feature.T
 
-    sample_corr_clip = np.load(
-        "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, "clip")
-    )
-    sample_corr_clip_text = np.load(
-        "%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, "clip_text")
-    )
+    sample_corr_clip = compute_sample_corrs("clip", args.output_dir)
+    sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_dir)
+    
     plt.figure()
     plt.plot(sample_corr_clip, "g")
     plt.plot(sample_corr_clip_text, "b")
