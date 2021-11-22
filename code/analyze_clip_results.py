@@ -7,9 +7,15 @@ from numpy.core.fromnumeric import clip
 
 from sklearn.decomposition import PCA
 
+import torch
+from PIL import Image
+
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import COCO_cat
 
+from extract_clip_features import load_captions
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def compute_sample_corrs(model, output_dir):
     from scipy.stats import pearsonr
@@ -95,24 +101,38 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
 
 
 def compare_model_and_brain_performance_on_COCO(subj=1):
-    _, test_idx = extract_test_image_ids(subj)
-    # clip_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
-    # clip_text_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
-    # scores = clip_feature @ clip_text_feature.T
-    model, preprocess = clip.load("ViT-B/32", device=device)
+    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
+    test_image_id, _ = extract_test_image_ids(subj)
+    all_images_paths = list()
+    all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in test_image_id]
+
+    print("Number of Images: {}".format(len(all_images_paths)))
+
+    captions = [load_captions(cid)[0] for cid in test_image_id] #pick the first caption
+    model, preprocess = clip.load("ViT-B/32", device=device)
+    
+    preds = list()
+    for i, p in enumerate(all_images_paths):
+        image = preprocess(Image.open(p)).unsqueeze(0).to(device) 
+        text = clip.tokenize([captions]).to(device)
+        with torch.no_grad():
+            logits_per_image, logits_per_text = model(image, text)
+            probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+            preds.append(probs[i])
+        
     sample_corr_clip = compute_sample_corrs("clip", args.output_root)
     sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_root)
     
     plt.figure()
     plt.plot(sample_corr_clip, "g", r=0.3)
     plt.plot(sample_corr_clip_text, "b", r=0.3)
-    plt.plot(scores, "r")
+    plt.plot(preds, "r", r=0.3)
     plt.savefig("figures/CLIP/model_brain_comparison.png")
-    return scores
 
 def coarse_level_semantic_analysis(subj=1):
     from sklearn.metrics.pairwise import cosine_similarity
+    
     image_supercat = np.load("data/NSD_supcat_feat.npy")
     # image_cat = np.load("data/NSD_cat_feat.npy")
     cocoId_subj = np.load("%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj))
