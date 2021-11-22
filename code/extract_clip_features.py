@@ -23,6 +23,12 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_captions(cid):
+    from pycocotools.coco import COCO
+
+    trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+    valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+    train_caps = COCO(trainFile)
+    val_caps = COCO(valFile)
     annIds = train_caps.getAnnIds(imgIds=[cid])
     anns = train_caps.loadAnns(annIds)
     if anns == []:
@@ -362,12 +368,7 @@ if __name__ == "__main__":
     #     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
     # )
 
-    from pycocotools.coco import COCO
-
-    trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-    valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-    train_caps = COCO(trainFile)
-    val_caps = COCO(valFile)
+    
 
     expand_dict = {}
     expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
