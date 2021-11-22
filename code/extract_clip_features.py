@@ -341,56 +341,56 @@ def extract_last_layer_feature(model_name="ViT-B/32", modality="vision"):
         print(all_text_features.shape)
         return all_text_features
 
-
-parser = argparse.ArgumentParser()
-# parser.add_argument("--subj", default=1, type=int)
-parser.add_argument(
-    "--feature_dir",
-    type=str,
-    default="/user_data/yuanw3/project_outputs/NSD/features",
-)
-parser.add_argument(
-    "--project_output_dir",
-    type=str,
-    default="/user_data/yuanw3/project_outputs/NSD/output",
-)
-args = parser.parse_args()
-stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
-# feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
-
-# all_coco_ids = np.load(
-#     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
-# )
-
-from pycocotools.coco import COCO
-
-trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-train_caps = COCO(trainFile)
-val_caps = COCO(valFile)
-
-expand_dict = {}
-expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
-
-# extract_object_base_text_feature()
-# extract_top1_obejct_base_text_feature()
-# extract_visual_resnet_feature()
-# extract_visual_transformer_feature()
-
-for s in range(7):
-    print("Extracting subj%01d" % (s+2))
-    feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s+2))
-    all_coco_ids = np.load(
-        "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, (s+2))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    # parser.add_argument("--subj", default=1, type=int)
+    parser.add_argument(
+        "--feature_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/features",
     )
-    try:
-        np.load("%s/clip_text.npy" % feature_output_dir)
-    except FileNotFoundError:
-        text_feat = extract_last_layer_feature(modality="text")
-        np.save("%s/clip_text.npy" % feature_output_dir, text_feat)
-    
-    try:
-        np.load("%s/clip_visual_resnet.npy" % feature_output_dir)
-    except FileNotFoundError:
-        visual_res_feat = extract_last_layer_feature(model_name="RN50", modality="vision")
-        np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)
+    parser.add_argument(
+        "--project_output_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/output",
+    )
+    args = parser.parse_args()
+    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
+    # feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
+
+    # all_coco_ids = np.load(
+    #     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
+    # )
+
+    from pycocotools.coco import COCO
+
+    trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+    valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+    train_caps = COCO(trainFile)
+    val_caps = COCO(valFile)
+
+    expand_dict = {}
+    expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
+
+    # extract_object_base_text_feature()
+    # extract_top1_obejct_base_text_feature()
+    # extract_visual_resnet_feature()
+    # extract_visual_transformer_feature()
+
+    for s in range(7):
+        print("Extracting subj%01d" % (s+2))
+        feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s+2))
+        all_coco_ids = np.load(
+            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, (s+2))
+        )
+        try:
+            np.load("%s/clip_text.npy" % feature_output_dir)
+        except FileNotFoundError:
+            text_feat = extract_last_layer_feature(modality="text")
+            np.save("%s/clip_text.npy" % feature_output_dir, text_feat)
+        
+        try:
+            np.load("%s/clip_visual_resnet.npy" % feature_output_dir)
+        except FileNotFoundError:
+            visual_res_feat = extract_last_layer_feature(model_name="RN50", modality="vision")
+            np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)

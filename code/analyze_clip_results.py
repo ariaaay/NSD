@@ -17,15 +17,21 @@ from extract_clip_features import load_captions
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 def compute_sample_corrs(model, output_dir):
     from scipy.stats import pearsonr
+
     try:
         sample_corrs = np.load(
             "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
         )
     except FileNotFoundError:
-        yhat, ytest = load_model_performance(model, output_root=output_dir, measure="pred")
-        pvalues = load_model_performance(model, output_root=output_dir, measure="pvalue")
+        yhat, ytest = load_model_performance(
+            model, output_root=output_dir, measure="pred"
+        )
+        pvalues = load_model_performance(
+            model, output_root=output_dir, measure="pvalue"
+        )
         sig_mask = pvalues <= 0.05
 
         sample_corrs = [
@@ -35,7 +41,7 @@ def compute_sample_corrs(model, output_dir):
         np.save(
             "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model), sample_corrs
         )
-    
+
     return sample_corrs
 
 
@@ -109,52 +115,62 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
 
     print("Number of Images: {}".format(len(all_images_paths)))
 
-    captions = [load_captions(cid)[0] for cid in test_image_id] #pick the first caption
+    captions = [
+        load_captions(cid)[0] for cid in test_image_id
+    ]  # pick the first caption
     model, preprocess = clip.load("ViT-B/32", device=device)
-    
+
     preds = list()
     for i, p in enumerate(all_images_paths):
-        image = preprocess(Image.open(p)).unsqueeze(0).to(device) 
+        image = preprocess(Image.open(p)).unsqueeze(0).to(device)
         text = clip.tokenize([captions]).to(device)
         with torch.no_grad():
             logits_per_image, logits_per_text = model(image, text)
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()
             preds.append(probs[i])
-        
+
     sample_corr_clip = compute_sample_corrs("clip", args.output_root)
     sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_root)
-    
+
     plt.figure()
     plt.plot(sample_corr_clip, "g", r=0.3)
     plt.plot(sample_corr_clip_text, "b", r=0.3)
     plt.plot(preds, "r", r=0.3)
     plt.savefig("figures/CLIP/model_brain_comparison.png")
 
+
 def coarse_level_semantic_analysis(subj=1):
     from sklearn.metrics.pairwise import cosine_similarity
-    
+
     image_supercat = np.load("data/NSD_supcat_feat.npy")
     # image_cat = np.load("data/NSD_cat_feat.npy")
-    cocoId_subj = np.load("%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj))
+    cocoId_subj = np.load(
+        "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
+    )
     nsd2coco = np.load("%s/output/NSD2cocoId.npy" % args.output_root)
     img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
-    image_supercat_subsample = image_supercat[img_ind,:]
+    image_supercat_subsample = image_supercat[img_ind, :]
     max_cat = np.argmax(image_supercat_subsample, axis=1)
-    max_cat_order = np.argsort(max_cat) 
-    sorted_image_supercat = image_supercat_subsample[max_cat_order,:]
+    max_cat_order = np.argsort(max_cat)
+    sorted_image_supercat = image_supercat_subsample[max_cat_order, :]
     sorted_image_supercat_sim_by_image = cosine_similarity(sorted_image_supercat)
     # image_cat_subsample = image_cat[img_ind,:]
     # sorted_image_cat = image_cat_subsample[np.argsort(max_cat),:]
-    models = ["clip", "clip_text", "convnet_res50", "bert_layer_13", "clip_visual_resnet"]
+    models = [
+        "clip",
+        "clip_text",
+        "convnet_res50",
+        "bert_layer_13",
+        "clip_visual_resnet",
+    ]
     plt.figure()
     plt.subplot(2, 3, 1)
     plt.imshow(sorted_image_supercat_sim_by_image)
     for i, m in enumerate(models):
-        plt.subplot(2, 3, i+2)
+        plt.subplot(2, 3, i + 2)
         rdm = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, m))
         plt.imshow(rdm)
     plt.savefig("figures/CLIP/coarse_category_RDM_comparison.png")
-
 
 
 if __name__ == "__main__":
@@ -171,13 +187,17 @@ if __name__ == "__main__":
         default="/user_data/yuanw3/project_outputs/NSD",
         help="Specify the path to the output directory",
     )
-    parser.add_argument("--plot_voxel_wise_performance", type=bool, action="store_true")
-    parser.add_argument("--plot_image_wise_performance", type=bool, action="store_true")
-    parser.add_argument("--coarse_level_semantic_analysis", type=bool, action="store_true")
-    parser.add_argument("--compare_brain_and_clip_performance", type=bool, action="store_true")
-    parser.add_argument("--weight_analysis", action="store_true")
-    parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi", type=str)
+    parser.add_argument("--plot_voxel_wise_performance", default=False, action="store_true")
+    parser.add_argument("--plot_image_wise_performance", default=False, action="store_true")
+    parser.add_argument(
+        "--coarse_level_semantic_analysis", default=False, action="store_true"
+    )
+    parser.add_argument(
+        "--compare_brain_and_clip_performance", default=False, action="store_true"
+    )
+    parser.add_argument("--weight_analysis", default=False, action="store_true")
+    parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
     # scatter plot per voxels
@@ -223,14 +243,16 @@ if __name__ == "__main__":
         pca_i = PCA(n_components=5)
         pca_i.fit(w_i)
         np.save(
-            "%s/output/pca/subj%d/clip_pca_components.npy" % (args.output_root, args.subj),
+            "%s/output/pca/subj%d/clip_pca_components.npy"
+            % (args.output_root, args.subj),
             pca_i.components_,
         )
 
         pca_t = PCA(n_components=5)
         pca_t.fit(w_t)
         np.save(
-            "%s/output/pca/subj%d/clip_text_pca_components.npy" % (args.output_root, args.subj),
+            "%s/output/pca/subj%d/clip_text_pca_components.npy"
+            % (args.output_root, args.subj),
             pca_t.components_,
         )
 
@@ -250,10 +272,10 @@ if __name__ == "__main__":
         find_corner_images("clip", "convnet_res50")
         # plot_image_wise_performance("clip", "bert_layer_13")
         find_corner_images("clip", "bert_layer_13")
-    
+
     if args.compare_brain_and_clip_performance:
         compare_model_and_brain_performance_on_COCO(subj=1)
-    
+
     if args.coarse_level_semantic_analysis:
         coarse_level_semantic_analysis(subj=1)
 
