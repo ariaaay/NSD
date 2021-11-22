@@ -34,8 +34,8 @@ def compute_sample_corrs(model, output_dir):
 
 
 def plot_image_wise_performance(model1, model2):
-    sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_dir)
-    sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_dir)
+    sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_root)
+    sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_root)
 
     plt.figure()
     plt.scatter(sample_corr1[:, 0], sample_corr2[:, 0], alpha=0.3)
@@ -46,10 +46,10 @@ def plot_image_wise_performance(model1, model2):
 
 
 def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
-    sc1 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model1))[
+    sc1 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_root, model1))[
         :, 0
     ]
-    sc2 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_dir, model2))[
+    sc2 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_root, model2))[
         :, 0
     ]
     diff = sc1 - sc2
@@ -64,7 +64,7 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
     image_ids = [test_image_id[idx] for idx in corner_idxes]
     with open(
         "%s/output/clip/%s_vs_%s_corner_image_ids.npy"
-        % (args.output_dir, model1, model2),
+        % (args.output_root, model1, model2),
         "wb",
     ) as f:
         pickle.dump(image_ids, f)
@@ -96,16 +96,17 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
 
 def compare_model_and_brain_performance_on_COCO(subj=1):
     _, test_idx = extract_test_image_ids(subj)
-    clip_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
-    clip_text_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
-    scores = clip_feature @ clip_text_feature.T
+    # clip_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
+    # clip_text_feature = np.load("%s/features/subj%01d/clip.npy" % (args.output_dir, subj))[test_idx, :]
+    # scores = clip_feature @ clip_text_feature.T
+    model, preprocess = clip.load("ViT-B/32", device=device)
 
-    sample_corr_clip = compute_sample_corrs("clip", args.output_dir)
-    sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_dir)
+    sample_corr_clip = compute_sample_corrs("clip", args.output_root)
+    sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_root)
     
     plt.figure()
-    plt.plot(sample_corr_clip, "g")
-    plt.plot(sample_corr_clip_text, "b")
+    plt.plot(sample_corr_clip, "g", r=0.3)
+    plt.plot(sample_corr_clip_text, "b", r=0.3)
     plt.plot(scores, "r")
     plt.savefig("figures/CLIP/model_brain_comparison.png")
     return scores
@@ -114,8 +115,8 @@ def coarse_level_semantic_analysis(subj=1):
     from sklearn.metrics.pairwise import cosine_similarity
     image_supercat = np.load("data/NSD_supcat_feat.npy")
     # image_cat = np.load("data/NSD_cat_feat.npy")
-    cocoId_subj = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, subj))
-    nsd2coco = np.load("%s/NSD2cocoId.npy" % args.output_dir)
+    cocoId_subj = np.load("%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj))
+    nsd2coco = np.load("%s/output/NSD2cocoId.npy" % args.output_root)
     img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
     image_supercat_subsample = image_supercat[img_ind,:]
     max_cat = np.argmax(image_supercat_subsample, axis=1)
@@ -130,7 +131,7 @@ def coarse_level_semantic_analysis(subj=1):
     plt.imshow(sorted_image_supercat_sim_by_image)
     for i, m in enumerate(models):
         plt.subplot(2, 3, i+2)
-        rdm = np.load("%s/rdms/subj%02d_%s.npy" % (args.output_dir, subj, m))
+        rdm = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, m))
         plt.imshow(rdm)
     plt.savefig("figures/CLIP/coarse_category_RDM_comparison.png")
 
@@ -145,7 +146,7 @@ if __name__ == "__main__":
         help="Specify which subject to build model on. Currently it supports subject 1, 2, 7",
     )
     parser.add_argument(
-        "--output_dir",
+        "--output_root",
         type=str,
         default="/user_data/yuanw3/project_outputs/NSD",
         help="Specify the path to the output directory",
@@ -164,14 +165,13 @@ if __name__ == "__main__":
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
         model2 = "clip_visual_resnet"
-        corr_i = load_model_performance(model1, None, args.output_dir, subj=args.subj)
-        # corr_t = load_model_performance("clip_text", None, args.output_dir, subj=args.subj)
-        corr_j = load_model_performance(model2, None, args.output_dir, subj=args.subj)
+        corr_i = load_model_performance(model1, None, args.output_root, subj=args.subj)
+        corr_j = load_model_performance(model2, None, args.output_root, subj=args.subj)
 
         if args.roi is not None:
             colors = np.load(
                 "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-                % (args.output_dir, args.subj, args.subj, args.roi)
+                % (args.output_root, args.subj, args.subj, args.roi)
             )
             if args.mask:
                 mask = colors > 0
@@ -193,24 +193,24 @@ if __name__ == "__main__":
     if args.weight_analysis:
         w_i = np.load(
             "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
-            % (args.output_dir, args.subj)
+            % (args.output_root, args.subj)
         )
         w_t = np.load(
             "%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy"
-            % (args.output_dir, args.subj)
+            % (args.output_root, args.subj)
         )
 
         pca_i = PCA(n_components=5)
         pca_i.fit(w_i)
         np.save(
-            "%s/pca/subj%d/clip_pca_components.npy" % (args.output_dir, args.subj),
+            "%s/output/pca/subj%d/clip_pca_components.npy" % (args.output_root, args.subj),
             pca_i.components_,
         )
 
         pca_t = PCA(n_components=5)
         pca_t.fit(w_t)
         np.save(
-            "%s/pca/subj%d/clip_text_pca_components.npy" % (args.output_dir, args.subj),
+            "%s/output/pca/subj%d/clip_text_pca_components.npy" % (args.output_root, args.subj),
             pca_t.components_,
         )
 
