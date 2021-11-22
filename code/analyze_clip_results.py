@@ -8,6 +8,7 @@ from numpy.core.fromnumeric import clip
 from sklearn.decomposition import PCA
 
 from util.data_util import load_model_performance, extract_test_image_ids
+from util.model_config import COCO_cat
 
 
 def compute_sample_corrs(model, output_dir):
@@ -26,7 +27,7 @@ def compute_sample_corrs(model, output_dir):
             for i in range(ytest.shape[0])
         ]
         np.save(
-            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
+            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model), sample_corrs
         )
     
     return sample_corrs
@@ -106,7 +107,13 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     plt.plot(sample_corr_clip, "g")
     plt.plot(sample_corr_clip_text, "b")
     plt.plot(scores, "r")
+    plt.savefig("figures/CLIP/model_brain_comparison.png")
     return scores
+
+def coarse_level_semantic_analysis(subj):
+    COCO_supcat = np.load("data/NSD_supcat_feat.npy")
+    COCO_cat = np.load("data/NSD_cat_feat.npy")
+    # RDMs: clip, clip_text, resnet, Bert, clip visual resnet
 
 
 
