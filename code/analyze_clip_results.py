@@ -3,12 +3,12 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.core.fromnumeric import clip
 
+from PIL import Image
 from sklearn.decomposition import PCA
 
 import torch
-from PIL import Image
+import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import COCO_cat
@@ -171,10 +171,10 @@ if __name__ == "__main__":
         default="/user_data/yuanw3/project_outputs/NSD",
         help="Specify the path to the output directory",
     )
-    parser.add_argument("--plot_voxel_wise_performance", action="store_true")
-    parser.add_argument("--plot_image_wise_performance", action="store_true")
-    parser.add_argument("--coarse_level_semantic_analysis", action="store_true")
-    parser.add_argument("--compare_brain_and_clip_performance", action="store_true")
+    parser.add_argument("--plot_voxel_wise_performance", type=bool, action="store_true")
+    parser.add_argument("--plot_image_wise_performance", type=bool, action="store_true")
+    parser.add_argument("--coarse_level_semantic_analysis", type=bool, action="store_true")
+    parser.add_argument("--compare_brain_and_clip_performance", type=bool, action="store_true")
     parser.add_argument("--weight_analysis", action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi", type=str)
