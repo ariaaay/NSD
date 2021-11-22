@@ -132,7 +132,7 @@ def coarse_level_semantic_analysis(subj=1):
         plt.subplot(2, 3, i+2)
         rdm = np.load("%s/rdms/subj%02d_%s.npy" % (args.output_dir, subj, m))
         plt.imshow(rdm)
-    plt.savefig("Coarse Category RDM comparison")
+    plt.savefig("figures/CLIP/coarse_category_RDM_comparison.png")
 
 
 
