@@ -110,10 +110,29 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     plt.savefig("figures/CLIP/model_brain_comparison.png")
     return scores
 
-def coarse_level_semantic_analysis(subj):
-    COCO_supcat = np.load("data/NSD_supcat_feat.npy")
-    COCO_cat = np.load("data/NSD_cat_feat.npy")
-    # RDMs: clip, clip_text, resnet, Bert, clip visual resnet
+def coarse_level_semantic_analysis(subj=1):
+    from sklearn.metrics.pairwise import cosine_similarity
+    image_supercat = np.load("data/NSD_supcat_feat.npy")
+    # image_cat = np.load("data/NSD_cat_feat.npy")
+    cocoId_subj = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, subj))
+    nsd2coco = np.load("%s/NSD2cocoId.npy" % args.output_dir)
+    img_ind = [list(nsd2coco).index(i) for i in cocoId_subj]
+    image_supercat_subsample = image_supercat[img_ind,:]
+    max_cat = np.argmax(image_supercat_subsample, axis=1)
+    max_cat_order = np.argsort(max_cat) 
+    sorted_image_supercat = image_supercat_subsample[max_cat_order,:]
+    sorted_image_supercat_sim_by_image = cosine_similarity(sorted_image_supercat)
+    # image_cat_subsample = image_cat[img_ind,:]
+    # sorted_image_cat = image_cat_subsample[np.argsort(max_cat),:]
+    models = ["clip", "clip_text", "convnet_res50", "bert_layer_13", "clip_visual_resnet"]
+    plt.figure()
+    plt.subplot(2, 3, 1)
+    plt.imshow(sorted_image_supercat_sim_by_image)
+    for i, m in enumerate(models):
+        plt.subplot(2, 3, i+2)
+        rdm = np.load("%s/rdms/subj%02d_%s.npy" % (args.output_dir, subj, m))
+        plt.imshow(rdm)
+    plt.savefig("Coarse Category RDM comparison")
 
 
 
@@ -133,6 +152,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--plot_voxel_wise_performance", action="store_true")
     parser.add_argument("--plot_image_wise_performance", action="store_true")
+    parser.add_argument("--coarse_level_semantic_analysis", action="store_true")
     parser.add_argument("--compare_brain_and_clip_performance", action="store_true")
     parser.add_argument("--weight_analysis", action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
@@ -213,6 +233,9 @@ if __name__ == "__main__":
     
     if args.compare_brain_and_clip_performance:
         compare_model_and_brain_performance_on_COCO(subj=1)
+    
+    if args.coarse_level_semantic_analysis:
+        coarse_level_semantic_analysis(subj=1)
 
     # trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
     # valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
