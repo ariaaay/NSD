@@ -45,6 +45,21 @@ def compute_sample_corrs(model, output_dir):
     return sample_corrs
 
 
+def extract_text_scores(word_lists, weight):
+    phrase_lists = ["photo of " + w[:-1] for w in word_lists]
+    model, _ = clip.load("ViT-B/32", device=device)
+    activations = []
+    for phrase in phrase_lists:
+        text = clip.tokenize([phrase]).to(device)
+        with torch.no_grad():
+            activations.append(model.encode_text(text).data.numpy())
+        
+    scores = np.mean(activations.squeeze() @ weight, axis=1)
+    print(np.array(word_lists)[np.argsort(scores)[:30]])
+    print(np.array(word_lists)[np.argsort(scores)[::-1][:30]])
+    return np.array(scores)
+
+
 def plot_image_wise_performance(model1, model2):
     sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_root)
     sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_root)
@@ -123,19 +138,19 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     preds = list()
     for i, p in enumerate(all_images_paths):
         image = preprocess(Image.open(p)).unsqueeze(0).to(device)
-        text = clip.tokenize([captions]).to(device)
+        text = clip.tokenize(captions).to(device)
         with torch.no_grad():
             logits_per_image, logits_per_text = model(image, text)
             probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-            preds.append(probs[i])
+            preds.append(probs[0][i])
 
     sample_corr_clip = compute_sample_corrs("clip", args.output_root)
     sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_root)
 
     plt.figure()
-    plt.plot(sample_corr_clip, "g", r=0.3)
-    plt.plot(sample_corr_clip_text, "b", r=0.3)
-    plt.plot(preds, "r", r=0.3)
+    plt.plot(sample_corr_clip, "g", alpha=0.3)
+    plt.plot(sample_corr_clip_text, "b", alpha=0.3)
+    plt.plot(preds, "r", alpha=0.3)
     plt.savefig("figures/CLIP/model_brain_comparison.png")
 
 
@@ -231,31 +246,26 @@ if __name__ == "__main__":
         plt.savefig("figures/CLIP/%s_vs_%s_acc_%s.png" % (model1, model2, args.roi))
 
     if args.weight_analysis:
-        w_i = np.load(
-            "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
-            % (args.output_root, args.subj)
-        )
-        w_t = np.load(
-            "%s/output/encoding_results/subj%d/weights_clip_text_whole_brain.npy"
-            % (args.output_root, args.subj)
-        )
+        models = ["clip_text", "clip", "convnet_res50", "clip_visual_resnet", "bert_layer_13"]
+        for m in models:
+            print(m)
+            w = np.load(
+                "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+                % (args.output_root, args.subj, m)
+            )
+            print(w.shape)
+            print("NaNs? Finite?:")
+            print(np.any(np.isnan(w)))
+            print(np.all(np.isfinite(w)))
+            pca = PCA(n_components=5)
+            pca.fit(w)
+            np.save(
+                "%s/output/pca/subj%d/clip_pca_components.npy"
+                % (args.output_root, args.subj),
+                pca.components_,
+            )
 
-        pca_i = PCA(n_components=5)
-        pca_i.fit(w_i)
-        np.save(
-            "%s/output/pca/subj%d/clip_pca_components.npy"
-            % (args.output_root, args.subj),
-            pca_i.components_,
-        )
-
-        pca_t = PCA(n_components=5)
-        pca_t.fit(w_t)
-        np.save(
-            "%s/output/pca/subj%d/clip_text_pca_components.npy"
-            % (args.output_root, args.subj),
-            pca_t.components_,
-        )
-
+        
     if args.plot_image_wise_performance:
         # scatter plot by images
         from pycocotools.coco import COCO
