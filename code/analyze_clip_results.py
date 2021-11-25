@@ -11,36 +11,49 @@ import torch
 import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
-from util.model_config import COCO_cat
+from util.model_config import COCO_cat, roi_name_dict
 
 from extract_clip_features import load_captions
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def compute_sample_corrs(model, output_dir):
+def compute_sample_corrs(model, output_dir, masking="sig", subj=1):
     from scipy.stats import pearsonr
 
     try:
         sample_corrs = np.load(
-            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model)
+            "%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking)
         )
+        if len(sample_corrs.shape) == 2:
+            sample_corrs = np.array(sample_corrs)[:,0]
+            np.save("%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking), sample_corrs)
     except FileNotFoundError:
         yhat, ytest = load_model_performance(
             model, output_root=output_dir, measure="pred"
         )
-        pvalues = load_model_performance(
-            model, output_root=output_dir, measure="pvalue"
-        )
-        sig_mask = pvalues <= 0.05
+        if masking == "sig":
+            pvalues = load_model_performance(
+                model, output_root=output_dir, measure="pvalue"
+            )
+            sig_mask = pvalues <= 0.05
 
-        sample_corrs = [
-            pearsonr(ytest[:, sig_mask][i, :], yhat[:, sig_mask][i, :])
-            for i in range(ytest.shape[0])
-        ]
+            sample_corrs = [
+                pearsonr(ytest[:, sig_mask][i, :], yhat[:, sig_mask][i, :])[0]
+                for i in range(ytest.shape[0])
+            ]
+        else:
+            roi = np.load("%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy" % (output_dir, subj, subj, masking))
+            roi_mask = roi > 0
+            sample_corrs = [
+                pearsonr(ytest[:, roi_mask][i, :], yhat[:, roi_mask][i, :])[0]
+                for i in range(ytest.shape[0])
+            ]
+        
         np.save(
-            "%s/output/clip/%s_sample_corrs.npy" % (output_dir, model), sample_corrs
+            "%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking), sample_corrs
         )
+        
 
     return sample_corrs
 
@@ -60,25 +73,22 @@ def extract_text_scores(word_lists, weight):
     return np.array(scores)
 
 
-def plot_image_wise_performance(model1, model2):
-    sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_root)
-    sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_root)
-
+def plot_image_wise_performance(model1, model2, masking="sig"):
+    sample_corr1 = compute_sample_corrs(model=model1, output_dir=args.output_root, masking=masking)
+    sample_corr2 = compute_sample_corrs(model=model2, output_dir=args.output_root, masking=masking)
+    print(sample_corr1.shape)
+    print(sample_corr2.shape)
     plt.figure()
-    plt.scatter(sample_corr1[:, 0], sample_corr2[:, 0], alpha=0.3)
+    plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
     plt.plot([-0.1, 1], [-0.1, 1], "r")
     plt.xlabel(model1)
     plt.ylabel(model2)
-    plt.savefig("figures/CLIP/%s_vs_%s_samplewise.png" % (model1, model2))
+    plt.savefig("figures/CLIP/%s_vs_%s_samplewise_%s.png" % (model1, model2, masking))
 
 
-def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
-    sc1 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_root, model1))[
-        :, 0
-    ]
-    sc2 = np.load("%s/output/clip/%s_sample_corrs.npy" % (args.output_root, model2))[
-        :, 0
-    ]
+def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig"):
+    sc1 = np.load("%s/output/clip/%s_sample_corrs_%s.npy" % (args.output_root, model1, masking))
+    sc2 = np.load("%s/output/clip/%s_sample_corrs_%s.npy" % (args.output_root, model2, masking))
     diff = sc1 - sc2
     indexes = np.argsort(diff)
     br = indexes[:20]
@@ -90,18 +100,18 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
     test_image_id, _ = extract_test_image_ids(subj=1)
     image_ids = [test_image_id[idx] for idx in corner_idxes]
     with open(
-        "%s/output/clip/%s_vs_%s_corner_image_ids.npy"
-        % (args.output_root, model1, model2),
+        "%s/output/clip/%s_vs_%s_corner_image_ids_%s.npy"
+        % (args.output_root, model1, model2, masking),
         "wb",
     ) as f:
         pickle.dump(image_ids, f)
 
-    image_labels = ["%s Better" % model1, "%s Better" % model2, "Both Good", "Both Bad"]
+    image_labels = ["%s +" % model1, "%s +" % model2, "%s+ %s+" % (model1, model2), "%s- %s-" % (model1, model2)]
 
     for i, idx in enumerate(image_ids):
         plt.figure()
         for j, id in enumerate(idx[:16]):
-            print(id)
+            # print(id)
             plt.subplot(4, 4, j + 1)
             try:
                 imgIds = coco_train.getImgIds(imgIds=[id])
@@ -116,12 +126,13 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03):
             I = io.imread(img["coco_url"])
             plt.axis("off")
             plt.imshow(I)
-        plt.title(image_labels[i])
+        # plt.title(image_labels[i])
         plt.tight_layout()
-        plt.savefig("figures/CLIP/sample_corr_images_%s.png" % image_labels[i])
+        plt.savefig("figures/CLIP/corner_images/sample_corr_images_%s_%s.png" % (image_labels[i], masking))
 
 
 def compare_model_and_brain_performance_on_COCO(subj=1):
+    from scipy.stats import pearsonr
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
     test_image_id, _ = extract_test_image_ids(subj)
@@ -141,16 +152,22 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
         text = clip.tokenize(captions).to(device)
         with torch.no_grad():
             logits_per_image, logits_per_text = model(image, text)
-            probs = logits_per_image.softmax(dim=-1).cpu().numpy()
-            preds.append(probs[0][i])
+            # print(logits_per_image.shape)
+            probs = logits_per_image.squeeze().softmax(dim=-1).cpu().numpy()
+            # print(probs.shape)
+            preds.append(probs[i])
 
     sample_corr_clip = compute_sample_corrs("clip", args.output_root)
     sample_corr_clip_text = compute_sample_corrs("clip_text", args.output_root)
 
-    plt.figure()
+    plt.figure(figsize=(10, 30))
     plt.plot(sample_corr_clip, "g", alpha=0.3)
     plt.plot(sample_corr_clip_text, "b", alpha=0.3)
     plt.plot(preds, "r", alpha=0.3)
+    print(pearsonr(sample_corr_clip, preds)[0])
+    print(pearsonr(sample_corr_clip_text, preds)[0])
+
+
     plt.savefig("figures/CLIP/model_brain_comparison.png")
 
 
@@ -277,11 +294,17 @@ if __name__ == "__main__":
         )
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
-
-        # plot_image_wise_performance("clip", "convnet_res50")
+        plot_image_wise_performance("clip", "convnet_res50")
         find_corner_images("clip", "convnet_res50")
-        # plot_image_wise_performance("clip", "bert_layer_13")
-        find_corner_images("clip", "bert_layer_13")
+
+        roi_list = list(roi_name_dict.keys())
+        roi_list = ["floc-faces", "floc-bodies", "prf-visualrois", "floc-places"]
+        for roi in roi_list:
+            plot_image_wise_performance("clip", "convnet_res50",masking=roi)
+            find_corner_images("clip", "convnet_res50", masking=roi)
+
+            plot_image_wise_performance("clip", "bert_layer_13", masking=roi)
+            find_corner_images("clip", "bert_layer_13", masking=roi)
 
     if args.compare_brain_and_clip_performance:
         compare_model_and_brain_performance_on_COCO(subj=1)
