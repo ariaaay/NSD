@@ -18,7 +18,13 @@ from torchvision import transforms, utils, models
 import torchextractor as tx
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
+stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
+preprocess = transforms.Compose(
+        [
+            # transforms.Resize(375),
+            transforms.ToTensor()
+        ]
+    )
 
 def extract_resnet_prePCA_feature():
     layers = ["layer1", "layer2", "layer3", "layer4", "layer4.2.relu"]
@@ -73,34 +79,34 @@ def extract_visual_resnet_feature():
         np.save("%s/resnet_%01d.npy" % (feature_output_dir, l), fp)
 
 
-def extract_resnet_last_layer_feature():
-    model = models.resnet50(pretrained=True)
+def extract_resnet_last_layer_feature(cid=None, saving=True):
+    model = models.resnet50(pretrained=True).to(device)
     model = tx.Extractor(model, "avgpool")
 
-    print("Extracting ResNet features")
-    for cid in tqdm(all_coco_ids):
-        output = list()
+    # print("Extracting ResNet features")
+    if cid is None:
+        for cid in tqdm(all_coco_ids):
+            output = list()
+            with torch.no_grad():
+                image_path = "%s/%s.jpg" % (stimuli_dir, cid)
+                image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+
+                _, features = model(image)
+                output.append(features["avgpool"].squeeze().data.cpu().numpy().flatten())
+    else:
         with torch.no_grad():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
-
             _, features = model(image)
-            output.append(features["avgpool"].squeeze().data.cpu().numpy().flatten())
-
+            output = features["avgpool"].data.squeeze().cpu()
+    if saving:
         np.save("%s/convnet_resnet_avgpool.npy" % feature_output_dir, output)
 
+    return output
+
+    
 
 if __name__ == "__main__":
-    preprocess = transforms.Compose(
-        [
-            # transforms.Resize(375),
-            transforms.ToTensor()
-        ]
-    )
-
-    # Load Images
-    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images"
-
     # stim = pd.read_pickle(
     #     "/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl"
     # )
@@ -121,8 +127,6 @@ if __name__ == "__main__":
         default="/user_data/yuanw3/project_outputs/NSD/output",
     )
     args = parser.parse_args()
-
-    stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
     feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
     # feature_output_dir = "/lab_data/tarrlab/common/datasets/features/NSD/"
     all_coco_ids = np.load(

@@ -346,9 +346,50 @@ def extract_last_layer_feature(model_name="ViT-B/32", modality="vision"):
         print(all_text_features.shape)
         return all_text_features
 
+    
+def extract_vibert_feature():
+    from transformers import BertTokenizer, VisualBertModel
+    from extract_convnet_features import extract_resnet_last_layer_feature
+
+    all_images_paths = list()
+    print("Number of Images: {}".format(len(all_images_paths)))
+    # model, preprocess = clip.load(model_name, device=device)
+    model = VisualBertModel.from_pretrained("uclanlp/visualbert-vqa-coco-pre")
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    # this is a custom function that returns the visual embeddings given the image path
+
+    all_features = []
+    for cid in tqdm(all_coco_ids):
+        with torch.no_grad():
+            captions = load_captions(cid)
+            inputs = tokenizer(captions[0], return_tensors="pt") # take in the first caption in COCO
+            visual_embeds = extract_resnet_last_layer_feature(cid=cid, saving=False).unsqueeze(0)
+            # print("shape -1")
+            # print(visual_embeds.shape)
+
+            visual_token_type_ids = torch.ones(visual_embeds.shape, dtype=torch.long)
+            visual_attention_mask = torch.ones(visual_embeds.shape, dtype=torch.float)
+            # print(visual_attention_mask.shape)
+
+            inputs.update({
+                "visual_embeds": visual_embeds,
+                "visual_token_type_ids": visual_token_type_ids,
+                "visual_attention_mask": visual_attention_mask
+            })
+            outputs = model(**inputs)
+            last_hidden_state = outputs.last_hidden_state
+            # print(last_hidden_state.shape)
+
+            all_features.append(last_hidden_state.squeeze().data.cpu().numpy())
+
+        np.save("%s/vibert.npy" % feature_output_dir, all_features)
+
+    all_features = np.array(all_features)
+    return all_features
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--subj", default=1, type=int)
+    parser.add_argument("--subj", default=1, type=int)
     parser.add_argument(
         "--feature_dir",
         type=str,
@@ -359,38 +400,40 @@ if __name__ == "__main__":
         type=str,
         default="/user_data/yuanw3/project_outputs/NSD/output",
     )
+
     args = parser.parse_args()
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
-    # feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
-
-    # all_coco_ids = np.load(
-    #     "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
-    # )
-
-    
 
     expand_dict = {}
     expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
-    # extract_object_base_text_feature()
-    # extract_top1_obejct_base_text_feature()
-    # extract_visual_resnet_feature()
-    # extract_visual_transformer_feature()
 
-    for s in range(7):
-        print("Extracting subj%01d" % (s+2))
-        feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s+2))
+    if args.subj == 0:
+        for s in range(7):
+            print("Extracting subj%01d" % (s+2))
+            feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s+2))
+            all_coco_ids = np.load(
+                "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, (s+2))
+            )
+            try:
+                np.load("%s/clip_text.npy" % feature_output_dir)
+            except FileNotFoundError:
+                text_feat = extract_last_layer_feature(modality="text")
+                np.save("%s/clip_text.npy" % feature_output_dir, text_feat)
+            
+            try:
+                np.load("%s/clip_visual_resnet.npy" % feature_output_dir)
+            except FileNotFoundError:
+                visual_res_feat = extract_last_layer_feature(model_name="RN50", modality="vision")
+                np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)
+    else:
         all_coco_ids = np.load(
-            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, (s+2))
+            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.project_output_dir, args.subj)
         )
-        try:
-            np.load("%s/clip_text.npy" % feature_output_dir)
-        except FileNotFoundError:
-            text_feat = extract_last_layer_feature(modality="text")
-            np.save("%s/clip_text.npy" % feature_output_dir, text_feat)
-        
-        try:
-            np.load("%s/clip_visual_resnet.npy" % feature_output_dir)
-        except FileNotFoundError:
-            visual_res_feat = extract_last_layer_feature(model_name="RN50", modality="vision")
-            np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)
+        feature_output_dir = "%s/subj%01d" % (args.feature_dir, args.subj)
+
+        # extract_object_base_text_feature()
+        # extract_top1_obejct_base_text_feature()
+        # extract_visual_resnet_feature()
+        # extract_visual_transformer_feature()
+        extract_vibert_feature()
