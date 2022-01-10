@@ -58,63 +58,86 @@ def imshow_cka_results(out, figname, labels, labels2=None):
                 j, i, round(out[i, j], 2), ha="center", va="center", color="w"
             )
     plt.savefig(figname)
+    plt.close()
 
 
-def run_cka_for_layers(task, layers, layer_labels, subset_idx=None):
-    reps = list()
-    for layer in layers:
-        print("Running CKA for Layers %s..." % layer)
-        feature = np.load("%s/%s%s.npy" % (args.feature_dir, task, layer)).squeeze()
-        if subset_idx is not None:
-            feature = feature[subset_idx, :]
-        reps.append(feature)
-        lcka, kcka = pairwise_cka(reps)
-        np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
-        np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
+def run_cka_for_layers(task, layers, layer_labels, subset_idx=None, plot=imshow_cka_results):
+    try:
+        lcka = np.load("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task))
+        kcka = np.load("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task))
+    except FileNotFoundError:
+        reps = list()
+        for layer in layers:
+            print("Running CKA for Layers %s..." % layer)
+            feature = np.load("%s/%s%s.npy" % (args.feature_dir, task, layer)).squeeze()
+            if subset_idx is not None:
+                feature = feature[subset_idx, :]
+            reps.append(feature)
+            lcka, kcka = pairwise_cka(reps)
+            np.save("%s/%s_all_layers_linear_cka.npy" % (args.output_dir, task), lcka)
+            np.save("%s/%s_all_layers_kernel_cka.npy" % (args.output_dir, task), kcka)
 
     figname = "%s/%s_linear_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(lcka, figname, layer_labels)
+    plot(lcka, figname, layer_labels)
 
     figname = "%s/%s_kernal_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(kcka, figname, layer_labels)
+    plot(kcka, figname, layer_labels)
+
+    return lcka, kcka
 
 
 def run_cka_across_networks(
-    tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=None
+    task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=None, plot=imshow_cka_results
 ):
-    reps1, reps2 = list(), list()
-    for layer1 in layers1:
-        feature = np.load(
-            "%s/%s%s.npy" % (args.feature_dir, tasks[0], layer1)
-        ).squeeze()
-        if subset_idx is not None:
-            feature = feature[subset_idx, :]
-        reps1.append(feature)
-    for layer2 in layers2:
-        feature = np.load(
-            "%s/%s%s.npy" % (args.feature_dir, tasks[1], layer2)
-        ).squeeze()
-        if subset_idx is not None:
-            feature = feature[subset_idx, :]
-        reps2.append(feature)
+    try:
+        lcka = np.load(
+            "%s/%s_vs_%s_linear_cka.npy" % (args.output_dir, task1, task2))
+        kcka = np.load(
+            "%s/%s_vs_%s_kernel_cka.npy" % (args.output_dir, task1, task2))
+    except FileNotFoundError:
+        reps1, reps2 = list(), list()
+        for layer1 in layers1:
+            if "_" in task1:
+                task_name = task1.split("_")[0]
+            else:
+                task_name = task1
+            feature = np.load(
+                "%s/%s%s.npy" % (args.feature_dir, task_name, layer1)
+            ).squeeze()
+            if subset_idx is not None:
+                feature = feature[subset_idx, :]
+            reps1.append(feature)
+        for layer2 in layers2:
+            if "_" in task1:
+                task_name = task2.split("_")[0]
+            else:
+                task_name = task2
+            feature = np.load(
+                "%s/%s%s.npy" % (args.feature_dir, task_name, layer2)
+            ).squeeze()
+            if subset_idx is not None:
+                feature = feature[subset_idx, :]
+            reps2.append(feature)
 
-        lcka, kcka = cross_cka(reps1, reps2)
-        np.save(
-            "%s/%s_vs_%s_linear_cka.npy" % (args.output_dir, tasks[0], tasks[1]), lcka
-        )
-        np.save(
-            "%s/%s_vs_%s_kernel_cka.npy" % (args.output_dir, tasks[0], tasks[1]), kcka
-        )
+            lcka, kcka = cross_cka(reps1, reps2)
+            np.save(
+                "%s/%s_vs_%s_linear_cka.npy" % (args.output_dir, task1, task2), lcka
+            )
+            np.save(
+                "%s/%s_vs_%s_kernel_cka.npy" % (args.output_dir, task1, task2), kcka
+            )
+    print("%s vs %s" % (task1, task2))
+    figname = "%s/%s_vs_%s_linear_cka.png" % (args.figure_dir, task1, task2)
+    plot(lcka, figname, layer_labels1, layer_labels2)
 
-    figname = "%s/%s_vs_%s_linear_cka.png" % (args.figure_dir, tasks[0], tasks[1])
-    imshow_cka_results(lcka, figname, layer_labels1, layer_labels2)
+    figname = "%s/%s_vs_%s_kernal_cka.png" % (args.figure_dir, task1, task2)
+    plot(kcka, figname, layer_labels1, layer_labels2)
 
-    figname = "%s/%s_vs_%s_kernal_cka.png" % (args.figure_dir, tasks[0], tasks[1])
-    imshow_cka_results(kcka, figname, layer_labels1, layer_labels2)
+    return lcka, kcka
 
 
 def run_cka_across_brain_and_networks(
-    task, layers, brain_data, layer_labels, brain_labels, subset_idx
+    task, layers, brain_data, layer_labels, brain_labels, subset_idx, plot=imshow_cka_results
 ):
     reps = list()
     for layer in layers:
@@ -127,11 +150,12 @@ def run_cka_across_brain_and_networks(
         np.save("%s/%s_vs_brain_linear_cka.npy" % (args.output_dir, task), lcka)
         np.save("%s/%s_vs_brain_kernel_cka.npy" % (args.output_dir, task), kcka)
     figname = "%s/%s_vs_brain_linear_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(lcka, figname, layer_labels, brain_labels)
+    plot(lcka, figname, layer_labels, brain_labels)
 
     figname = "%s/%s_vs_brain_kernel_cka.png" % (args.figure_dir, task)
-    imshow_cka_results(kcka, figname, layer_labels, brain_labels)
-
+    plot(kcka, figname, layer_labels, brain_labels)
+    
+    return lcka, kcka
 
 def load_roi_mask(roi_name, roi_dict):
     roi_mask = np.load(
@@ -204,7 +228,7 @@ if __name__ == "__main__":
 
     # construct task to layer dictionary
     task_layer_dict = dict()
-    tasks = ["taskrepr_class_1000", "taskrepr_class_places"]
+    task1, task2 = "taskrepr_class_1000", "taskrepr_class_places"
     basic_layers = [
         "_input_layer1",
         "_input_layer2",
@@ -212,15 +236,15 @@ if __name__ == "__main__":
         "_input_layer5",
         "",
     ]
-    for task in tasks:
+    for task in [task1, task2]:
         task_layer_dict[task] = basic_layers
 
-    tasks = ["taskrepr_edge2d", "taskrepr_edge3d"]
+    task1, task2 = "taskrepr_edge2d", "taskrepr_edge3d"
     layers = basic_layers + ["_output_layer1"]
-    for task in tasks:
+    for task in [task1, task2]:
         task_layer_dict[task] = layers
 
-    tasks = ["convnet_alexnet", "place_alexnet"]
+    task1, task2 = ["convnet_alexnet", "place_alexnet"]
     layers = [
         "_conv1_avgpool",
         "_conv2_avgpool",
@@ -230,7 +254,7 @@ if __name__ == "__main__":
         "_fc6_avgpool",
         "_fc7_avgpool",
     ]
-    for task in tasks:
+    for task in [task1, task2]:
         task_layer_dict[task] = layers
 
     # experiment 1 - across all layers for a network
@@ -244,16 +268,16 @@ if __name__ == "__main__":
 
     # experiment 2 - across networks
     if args.cka_across_networks is not None:
-        tasks = args.cka_across_networks
-        print("Running CKA for task %s and %s..." % (tasks[0], tasks[1]))
-        layers1 = task_layer_dict[tasks[0]]
-        layers2 = task_layer_dict[tasks[1]]
+        task1, task2 = args.cka_across_networks
+        print("Running CKA for task %s and %s..." % (task1, task2))
+        layers1 = task_layer_dict[task1]
+        layers2 = task_layer_dict[task2]
         layer_labels1 = layers1.copy()
         layer_labels1[4] = "_bottle_neck"
         layer_labels2 = layers2.copy()
         layer_labels2[4] = "_bottle_neck"
         run_cka_across_networks(
-            tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+            task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
         )
 
     if args.cka_across_networks_and_brain:
@@ -279,56 +303,62 @@ if __name__ == "__main__":
 
     # cka between clip and other networks"
     if args.comparison_with_clip:
-        # tasks = ["visual", "convnet_alexnet"]
-        # layers1 = ["_layer_" + str(i) for i in range(12)]
-        # layer_labels1 = layers1
+        ## CLIP ResNet vs ImageNet ResNet
+        task1, task2 = "visual_resnet", "resnet50"
 
-        # layers2 = [
-        #     "_conv1_avgpool",
-        #     "_conv2_avgpool",
-        #     "_conv3_avgpool",
-        #     "_conv4_avgpool",
-        #     "_conv5_avgpool",
-        #     "_fc6_avgpool",
-        #     "_fc7_avgpool",
-        # ]
-        # layer_labels2 = layers2
-
-        # run_cka_across_networks(
-        #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-        #     )
-
-        # tasks = ["visual", "taskrepr_class_1000"]
-        # layers1 = ["_layer_" + str(i) for i in range(12)]
-        # layer_labels1 = layers1.copy()
-
-        # layers2 = task_layer_dict[tasks[1]]
-        # layer_labels2 = layers2.copy()
-        # layer_labels2[4] = "_bottle_neck"
-
-        # run_cka_across_networks(
-        #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-        #     )
-
-        # tasks = ["text", "bert"]
-        # layers1 = ["_layer_" + str(i) for i in range(12)]
-        # layer_labels1 = layers1.copy()
-
-        # layers2 = ["_layer_" + str(i+1) for i in range(13)]
-        # layer_labels2 = layers2.copy()
-
-        # run_cka_across_networks(
-        #         tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
-        #     )
-
-        tasks = ["visual", "taskrepr_class_1000"]
         layers1 = ["_layer_resnet_" + str(i) for i in range(7)]
-        layer_labels1 = ["Clip_ResNet" + s for s in layers1]
+        layer_labels1 = ["Clip_ResNet_layer_" + str(s+1) for s in range(7)]
 
-        layers2 = task_layer_dict[tasks[1]]
-        layer_labels2 = layers2.copy()
-        layer_labels2[4] = "_bottle_neck"
+        layers2 = ["_layer" + str(i+1) for i in range(5)] + ["_bottleneck"]
+        layer_labels2 = ["ImageNet_ResNet_layer_" + str(s+1) for s in range(6)]
 
         run_cka_across_networks(
-            tasks, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+            task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
         )
+
+        ## CLIP Resnet vs last layer of BERT
+        task1, task2 = "visual_resnet", "bert"
+
+        layers1 = ["_layer_resnet_" + str(i) for i in range(7)]
+        layer_labels1 = ["Clip_ResNet_layer_" + str(s+1) for s in range(7)]
+
+        layers2 = ["_layer_13"]
+        layer_labels2 = ["BERT"]
+
+        clip_rn_lcka, _ = run_cka_across_networks(
+            task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )
+
+        ## CLIP-transformer vs last layer of BERT
+        task1, task2 = "visual_transformer", "bert"
+
+        layers1 = ["_layer_" + str(i) for i in range(12)]
+        layer_labels1 = ["Clip_layer_" + str(s+1) for s in range(12)]
+
+        layers2 = ["_layer_13"]
+        layer_labels2 = ["BERT"]
+
+        clip_tf_lcka, _ = run_cka_across_networks(
+            task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )
+
+        ## resnet vs last layer of BERT
+        task1, task2 = "resnet50", "bert"
+
+        layers1 = ["_layer" + str(i+1) for i in range(5)] + ["_bottleneck"]
+        layer_labels1 = ["ImageNet_ResNet_layer_" + str(s+1) for s in range(6)]
+
+        layers2 = ["_layer_13"]
+        layer_labels2 = ["BERT"]
+
+        rn_lcka, rn_kcka = run_cka_across_networks(
+            task1, task2, layers1, layers2, layer_labels1, layer_labels2, subset_idx=subset_idx
+        )
+
+        plt.figure()
+        plt.plot(clip_tf_lcka, "r", label="CLIP Transformer")
+        plt.plot(clip_rn_lcka, "b", label="CLIP ResNet")
+        plt.plot(rn_lcka, "g", label="ImageNet ResNet")
+        plt.legend()
+        plt.savefig("%s/clip_vs_bert_lineplot_linear_cka.png" % args.figure_dir)
+

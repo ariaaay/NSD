@@ -117,3 +117,7 @@ def extract_test_image_ids(subj=1, output_dir="/user_data/yuanw3/project_outputs
     coco_id = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (output_dir, subj))
     test_image_id = coco_id[test_idx]
     return test_image_id, test_idx
+
+
+# def sample_by_category(n, subj=1):
+
