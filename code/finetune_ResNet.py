@@ -8,6 +8,9 @@ import torch.optim as optim
 import numpy as np
 from torchvision import datasets, models, transforms
 from torch.utils.tensorboard import SummaryWriter
+# from skorch.callbacks import TensorBoard
+# from sklearn.model_selection import GridSearchCV
+# from skorch.helper import SliceDataset
 
 from transformers import AutoTokenizer, BertModel, BertConfig
 import matplotlib.pyplot as plt
@@ -84,7 +87,7 @@ def prepare_dataloader(num_workers=4, train_batch_size=200, val_batch_size=256):
     )
 
     dataloaders_dict = {"train": train_loader, "val": val_loader}
-    return dataloaders_dict
+    return dataloaders_dict, train_set, val_set
 
 
 def calculate_corrects(similarity):
@@ -93,10 +96,8 @@ def calculate_corrects(similarity):
     return torch.sum(preds == target)
 
 
-def train_model(model, lmodel, clip_model, tokenizer, dataloaders, criterion, optimizer, num_epochs=25, t=1):
+def train_model(model, lmodel, clip_model, t, tokenizer, dataloaders, criterion, optimizer, num_epochs=25):
     since = time.time()
-
-    # val_acc_history = []
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
@@ -131,6 +132,7 @@ def train_model(model, lmodel, clip_model, tokenizer, dataloaders, criterion, op
                     I_e = nn.functional.normalize(outputs, dim=-1)
                     T_e = nn.functional.normalize(language_emb, dim=-1)
                     similarity = I_e @ T_e.T
+                    torch.clamp(t, min=1/100)
                     logits = similarity * torch.exp(t)
                     target = torch.arange(I_e.shape[0]).to(device)
                     loss = criterion(logits, target)
@@ -185,46 +187,33 @@ def train_model(model, lmodel, clip_model, tokenizer, dataloaders, criterion, op
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batchsize", type=int, default=256)
+    parser.add_argument("--batchsize", type=int, default=200)
     parser.add_argument("--lr", default=0.001)
-    parser.add_argument("--temp", default=1)
+    # parser.add_argument("--temp", default=1)
 
     args = parser.parse_args()
 
-    writer = SummaryWriter(log_dir="runs/batchsize_%d_LR_%d_Temp_%d" % (args.batchsize, args.lr, args.temp))
-
+    writer = SummaryWriter(log_dir="runs/batchsize_%d_LR_%d_learned_temp" % (args.batchsize, args.lr))
 
     model = models.resnet50(pretrained=True)
 
     set_parameter_requires_grad(model, feature_extract=False)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, num_classes) 
-    input_size = 224 
+    input_size = 224
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = model.to(device)
+    t = torch.tensor(1/0.07)
 
-    params_to_update = model.parameters()
-    # print("Params to learn:")
-    # if feature_extract:
-    #     params_to_update = []
-    #     for name,param in model.named_parameters():
-    #         if param.requires_grad == True:
-    #             params_to_update.append(param)
-    #             print("\t",name)
-    # else:
-    #     for name,param in model.named_parameters():
-    #         if param.requires_grad == True:
-    #             print("\t",name)
+    params_to_update = list(model.parameters()) + [t]
 
     # optimizer_ft = optim.SGD(params_to_update, lr=LR, momentum=0.9)
     optimizer_ft = optim.Adam(params_to_update, lr=args.lr)
-
     criterion = nn.CrossEntropyLoss()
 
-
-    dataloaders_dict = prepare_dataloader(train_batch_size=args.batchsize)
+    dataloaders_dict, train_set, val_set = prepare_dataloader(train_batch_size=args.batchsize)
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     # tokenizer = torch.hub.load('huggingface/pytorch-transformers', 'tokenizer', 'bert-base-cased')    # Download vocabulary from S3 and cache.
     # text_pineline = lambda x: tokenizer.encode(x, add_special_tokens=True)
@@ -233,4 +222,21 @@ if __name__ == "__main__":
     clip_model, clip_preprocess = clip.load("ViT-B/32")
     clip_model = clip_model.to(device)
 
-    model, hist = train_model(model, bert, clip_model, tokenizer, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs, t=torch.tensor(args.temp))
+    # #grid search
+    # model.set_params(train_split=False, verbose=0, callbacks=[])
+    # params = {
+    #     'lr': np.logspace(-5, -3, 3),
+    #     # 'batch_size': [10, 20],
+    #     'temperature': np.logspace(-3, 0, 4),
+    # }
+    # gs = GridSearchCV(model, param_grid=params, refit=False, cv=3, scoring='accuracy', verbose=2)
+    # train_sliceable = SliceDataset(train_set)
+    # y_train = np.array([y for _, y in iter(train_set)])
+
+    # gs.fit(train_sliceable, y_train)
+    # print("best score: {:.3f}, best params: {}".format(gs.best_score_, gs.best_params_))
+
+    # best_temp = gs.best_params_["temperature"]
+    # best_lr = gs.best_params_["lr"]
+
+    model, hist = train_model(model, bert, clip_model, t, tokenizer, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs)
