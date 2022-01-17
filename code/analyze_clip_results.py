@@ -11,7 +11,7 @@ import torch
 import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
-from util.model_config import COCO_cat, roi_name_dict
+from util.model_config import COCO_cat, COCO_super_cat, roi_name_dict
 
 from extract_clip_features import load_captions
 
@@ -469,6 +469,99 @@ if __name__ == "__main__":
         sample_level_semantic_analysis(subj=args.subj, model1="visual_layer_11", model2="resnet50_bottleneck")
         sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="visual_layer_1")
         sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="clip_text")
+    
+    if args.compare_to_human_judgement:
+        human_emb_path = "data/human_similarity_judgement/spose_embedding_49d_sorted.txt"
+        word_path = "data/human_similarity_judgement/unique_id.txt"
+
+        human_emb = np.loadtxt(human_emb_path)
+        emb_label = np.loadtxt(word_path, dtype="S")
+        emb_label = [w.decode("utf-8") for w in emb_label]
+        print(emb_label[:10])
+
+        #checked that the label and emb matches
+        from util.model_config import COCO_cat, COCO_super_cat
+        print(len(COCO_cat))
+        count = 0
+        COCO_HJ_overlap = []
+        # all_coco = COCO_cat + COCO_super_cat
+        for w in COCO_cat:
+            if "_" in w:
+                word = "_".join(w.split(" "))
+            else:
+                word = w
+        
+            if word in emb_label:
+                count += 1
+                COCO_HJ_overlap.append(w)
+
+        print(count)
+        print(COCO_HJ_overlap)
+        # ['car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 
+        # 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 
+        # 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'tie', 'suitcase', 
+        # 'frisbee', 'snowboard', 'kite', 'skateboard', 'surfboard', 'bottle', 
+        # 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 
+        # 'orange', 'broccoli', 'carrot', 'pizza', 'donut', 'cake', 'chair', 
+        # 'couch', 'bed', 'toilet', 'laptop', 'keyboard', 'microwave', 'oven', 
+        # 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'toothbrush']
+        
+        #compare clip, bert, and human judgement
+        # clip
+        clip_model, _ = clip.load("ViT-B/32", device=device)
+        clip_features = []
+        for word in COCO_HJ_overlap:
+            with torch.no_grad():
+                expression = "a photo of " + word
+                text = clip.tokenize(expression).to(device)
+                emb = clip_model.encode_text(text).cpu().data.numpy()
+                clip_features.append(emb)
+        rsm_clip = np.corrcoef(clip_features)
+        
+        #bert
+        bert_features = []
+        from transformers import BertTokenizer, BertModel
+
+        bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        bert_model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
+
+        bert_model.eval()
+        for word in COCO_HJ_overlap:
+            text = "[CLS] a photo of " + word + " [SEP]"
+            tokenized_text = bert_tokenizer.tokenize(text)
+            indexed_tokens = bert_tokenizer.convert_tokens_to_ids(tokenized_text)
+            segments_ids = [1] * len(tokenized_text)
+            tokens_tensor = torch.tensor([indexed_tokens])
+            segments_tensors = torch.tensor([segments_ids])
+            with torch.no_grad():
+                outputs = bert_model(tokens_tensor, segments_tensors)
+                hidden_states = outputs[2]
+                print(hidden_states.shape)
+                bert_features.append(hidden_states[-1, 0, 3, :]) # embedding of the word, from last layer of bert
+        rsm_bert = np.corrcoef(bert_features)
+
+        #human judgement model
+        hj_features = []
+        for word in COCO_HJ_overlap:
+            ind = list(emb_label).index(w)
+            hj_features.append(human_emb[ind])
+            
+        rsm_hj = np.corrcoef(hj_features)
+        print(np.corrcoef(rsm_hj.flatten(), rsm_clip.flatten()))
+        print(np.corrcoef(rsm_hj.flatten(), rsm_bert.flatten()))
+        print(np.corrcoef(rsm_bert.flatten(), rsm_clip.flatten()))
+            
+        plt.figure()
+        plt.subplot(1,3,1)
+        plt.imshow(rsm_clip)
+        plt.colorbar()
+        plt.subplot(1,3,2)
+        plt.imshow(rsm_bert)
+        plt.colorbar()
+        plt.savefig("figures/CLIP/human_judgement_rsm_comparison.png")
+
+
+
 
 
 
