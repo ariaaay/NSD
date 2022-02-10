@@ -8,7 +8,7 @@ import numpy as np
 # import pandas as pd
 from tqdm import tqdm
 
-from tsv_file import TSVFile
+from util.tsv_file import TSVFile
 
 data_path = "/user_data/yuanw3/project_outputs/NSD/features/general/model_0060000/"
 id2ind = json.load(open("%s/imageid2idx.json" % data_path))
