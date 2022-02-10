@@ -20,11 +20,12 @@ import torchextractor as tx
 device = "cuda" if torch.cuda.is_available() else "cpu"
 stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 preprocess = transforms.Compose(
-        [
-            # transforms.Resize(375),
-            transforms.ToTensor()
-        ]
-    )
+    [
+        # transforms.Resize(375),
+        transforms.ToTensor()
+    ]
+)
+
 
 def extract_resnet_prePCA_feature():
     layers = ["layer1", "layer2", "layer3", "layer4", "layer4.2.relu"]
@@ -92,7 +93,9 @@ def extract_resnet_last_layer_feature(cid=None, saving=True):
                 image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
 
                 _, features = model(image)
-                output.append(features["avgpool"].squeeze().data.cpu().numpy().flatten())
+                output.append(
+                    features["avgpool"].squeeze().data.cpu().numpy().flatten()
+                )
     else:
         with torch.no_grad():
             image_path = "%s/%s.jpg" % (stimuli_dir, cid)
@@ -104,7 +107,6 @@ def extract_resnet_last_layer_feature(cid=None, saving=True):
 
     return output
 
-    
 
 if __name__ == "__main__":
     # stim = pd.read_pickle(

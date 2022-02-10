@@ -18,21 +18,28 @@ from extract_clip_features import load_captions
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def compute_sample_performance(model, output_dir, masking="sig", subj=1, measure="corrs"):
+def compute_sample_performance(
+    model, output_dir, masking="sig", subj=1, measure="corrs"
+):
     if measure == "corrs":
         from scipy.stats import pearsonr
+
         metric = pearsonr
     elif measure == "rsq":
         from sklearn.metrics import r2_score
+
         metric = r2_score
-    
+
     try:
         sample_corrs = np.load(
             "%s/output/clip/%s_sample_%s_%s.npy" % (output_dir, model, measure, masking)
         )
         if len(sample_corrs.shape) == 2:
-            sample_corrs = np.array(sample_corrs)[:,0]
-            np.save("%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking), sample_corrs)
+            sample_corrs = np.array(sample_corrs)[:, 0]
+            np.save(
+                "%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking),
+                sample_corrs,
+            )
     except FileNotFoundError:
         yhat, ytest = load_model_performance(
             model, output_root=output_dir, measure="pred"
@@ -49,19 +56,24 @@ def compute_sample_performance(model, output_dir, masking="sig", subj=1, measure
             ]
 
         else:
-            roi = np.load("%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy" % (output_dir, subj, subj, masking))
+            roi = np.load(
+                "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                % (output_dir, subj, subj, masking)
+            )
             roi_mask = roi > 0
             sample_corrs = [
                 metric(ytest[:, roi_mask][i, :], yhat[:, roi_mask][i, :])
                 for i in range(ytest.shape[0])
             ]
-        
+
         if measure == "corr":
-            sample_corrs = np.array(sample_corrs)[:,0]
+            sample_corrs = np.array(sample_corrs)[:, 0]
         np.save(
-            "%s/output/clip/%s_sample_%s_%s.npy" % (output_dir, model, measure, masking), sample_corrs
+            "%s/output/clip/%s_sample_%s_%s.npy"
+            % (output_dir, model, measure, masking),
+            sample_corrs,
         )
-        
+
     return sample_corrs
 
 
@@ -73,7 +85,7 @@ def extract_text_scores(word_lists, weight):
         text = clip.tokenize([phrase]).to(device)
         with torch.no_grad():
             activations.append(model.encode_text(text).data.numpy())
-        
+
     scores = np.mean(activations.squeeze() @ weight, axis=1)
     print(np.array(word_lists)[np.argsort(scores)[:30]])
     print(np.array(word_lists)[np.argsort(scores)[::-1][:30]])
@@ -88,8 +100,12 @@ def extract_text_activations(model, word_lists):
             activations.append(model.encode_text(text).data.numpy())
     return np.array(activations)
 
+
 def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
-    roi_mask = np.load("%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, args.subj, args.subj, roi_name))
+    roi_mask = np.load(
+        "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.output_root, args.subj, args.subj, roi_name)
+    )
     roi_selected_vox = np.zeros((roi_mask.shape))
     for v in roi_vals:
         roi_selected_vox += roi_mask == v
@@ -97,7 +113,7 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
 
     roi_w = w[:, roi_selected_vox]
 
-    roi_pca = PCA(n_components=5, svd_solver='full')
+    roi_pca = PCA(n_components=5, svd_solver="full")
     roi_pca.fit(roi_w)
 
     scores = np.mean(activations.squeeze() @ roi_w, axis=1)
@@ -106,19 +122,40 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
     worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
     print(best_list)
     print(worst_list)
-    pickle.dump(best_list, open("%s/output/clip/word_interpretation/best_in_%s.json" %(args.output_root, roi_name), "wb"))
-    pickle.dump(worst_list, open("%s/output/clip/word_interpretation/worst_in_%s.json" %(args.output_root, roi_name), "wb"))
+    pickle.dump(
+        best_list,
+        open(
+            "%s/output/clip/word_interpretation/best_in_%s.json"
+            % (args.output_root, roi_name),
+            "wb",
+        ),
+    )
+    pickle.dump(
+        worst_list,
+        open(
+            "%s/output/clip/word_interpretation/worst_in_%s.json"
+            % (args.output_root, roi_name),
+            "wb",
+        ),
+    )
 
 
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
-    sample_corr1 = compute_sample_performance(model=model1, output_dir=args.output_root, masking=masking, measure=measure)
-    sample_corr2 = compute_sample_performance(model=model2, output_dir=args.output_root, masking=masking, measure=measure)
+    sample_corr1 = compute_sample_performance(
+        model=model1, output_dir=args.output_root, masking=masking, measure=measure
+    )
+    sample_corr2 = compute_sample_performance(
+        model=model2, output_dir=args.output_root, masking=masking, measure=measure
+    )
     plt.figure()
     plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
     plt.plot([-0.1, 1], [-0.1, 1], "r")
     plt.xlabel(model1)
     plt.ylabel(model2)
-    plt.savefig("figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s.png" % (model1, model2, measure, masking))
+    plt.savefig(
+        "figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s.png"
+        % (model1, model2, measure, masking)
+    )
 
 
 def get_coco_image(id):
@@ -136,13 +173,21 @@ def get_coco_image(id):
     return I
 
 
-def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"):
-    sp1 = compute_sample_performance(model=model1, output_dir=args.output_root, masking=masking, measure=measure)
-    sp2 = compute_sample_performance(model=model2, output_dir=args.output_root, masking=masking, measure=measure)
+def find_corner_images(
+    model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
+):
+    sp1 = compute_sample_performance(
+        model=model1, output_dir=args.output_root, masking=masking, measure=measure
+    )
+    sp2 = compute_sample_performance(
+        model=model2, output_dir=args.output_root, masking=masking, measure=measure
+    )
     diff = sp1 - sp2
-    indexes = np.argsort(diff) # from where model 2 does the best to where model 1 does the best
-    br = indexes[:20] # model2 > 1
-    tl = indexes[::-1][:20] # model1 > 2
+    indexes = np.argsort(
+        diff
+    )  # from where model 2 does the best to where model 1 does the best
+    br = indexes[:20]  # model2 > 1
+    tl = indexes[::-1][:20]  # model1 > 2
 
     best1 = np.argsort(sp1)[::-1][:20]
     best2 = np.argsort(sp2)[::-1][:20]
@@ -162,7 +207,12 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03, masking="s
     ) as f:
         pickle.dump(corner_image_ids, f)
 
-    image_labels = ["%s+%s-" % (model1, model2), "%s+%s-" % (model2, model1), "%s+%s+" % (model1, model2), "%s-%s-" % (model1, model2)]
+    image_labels = [
+        "%s+%s-" % (model1, model2),
+        "%s+%s-" % (model2, model1),
+        "%s+%s+" % (model1, model2),
+        "%s-%s-" % (model1, model2),
+    ]
 
     for i, idx in enumerate(corner_image_ids):
         plt.figure()
@@ -174,12 +224,16 @@ def find_corner_images(model1, model2, upper_thr=0.5, lower_thr=0.03, masking="s
             plt.imshow(I)
         # plt.title(image_labels[i])
         plt.tight_layout()
-        plt.savefig("figures/CLIP/corner_images/sample_%s_images_%s_%s.png" % (measure, image_labels[i], masking))
+        plt.savefig(
+            "figures/CLIP/corner_images/sample_%s_images_%s_%s.png"
+            % (measure, image_labels[i], masking)
+        )
         plt.close()
 
 
 def compare_model_and_brain_performance_on_COCO(subj=1):
     from scipy.stats import pearsonr
+
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
     test_image_id, _ = extract_test_image_ids(subj)
@@ -249,7 +303,9 @@ def coarse_level_semantic_analysis(subj=1):
         plt.subplot(2, 3, i + 2)
         rdm = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, m))
         plt.imshow(rdm[max_cat_order, :][:, max_cat_order])
-        r = np.corrcoef(rdm.flatten(), sorted_image_supercat_sim_by_image.flatten())[1,1]
+        r = np.corrcoef(rdm.flatten(), sorted_image_supercat_sim_by_image.flatten())[
+            1, 1
+        ]
         plt.title("%s (r=%.2g)" % (m, r))
         plt.colorbar()
     plt.tight_layout()
@@ -269,47 +325,52 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
     # ]
     rdm1 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1))
     rdm2 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2))
-    
-    diff1 = rdm1 - rdm2 #close in 1, far in 2
+
+    diff1 = rdm1 - rdm2  # close in 1, far in 2
     diff2 = rdm2 - rdm1
     ind_1 = np.unravel_index(np.argsort(diff1, axis=None), diff1.shape)
     ind_2 = np.unravel_index(np.argsort(diff2, axis=None), diff2.shape)
 
-    #b/c symmetry of RDM, every two pairs are the same
-    trial_id_pair_1 = [(ind_1[0][::-1][i], ind_1[1][::-1][i]) for i in range(0,20,2)] 
-    trial_id_pair_2 = [(ind_2[0][::-1][i], ind_2[1][::-1][i]) for i in range(0,20,2)]
+    # b/c symmetry of RDM, every two pairs are the same
+    trial_id_pair_1 = [(ind_1[0][::-1][i], ind_1[1][::-1][i]) for i in range(0, 20, 2)]
+    trial_id_pair_2 = [(ind_2[0][::-1][i], ind_2[1][::-1][i]) for i in range(0, 20, 2)]
 
-    
     plt.figure(figsize=(10, 30))
     for i in range(10):
-        plt.subplot(10, 2, i*2+1)
+        plt.subplot(10, 2, i * 2 + 1)
         id = cocoId_subj[trial_id_pair_1[i][0]]
         I = get_coco_image(id)
         plt.imshow(I)
-        plt.axis('off')
+        plt.axis("off")
 
-        plt.subplot(10, 2, i*2+2)
+        plt.subplot(10, 2, i * 2 + 2)
         id = cocoId_subj[trial_id_pair_1[i][1]]
         I = get_coco_image(id)
         plt.imshow(I)
-        plt.axis('off')
-        
+        plt.axis("off")
+
     plt.tight_layout()
-    plt.savefig("figures/CLIP/RDM_max/RDM_max_images_close_in_%s_far_in_%s.png" % (model1, model2))
-    
+    plt.savefig(
+        "figures/CLIP/RDM_max/RDM_max_images_close_in_%s_far_in_%s.png"
+        % (model1, model2)
+    )
+
     for i in range(10):
-        plt.subplot(10, 2, i*2+1)
+        plt.subplot(10, 2, i * 2 + 1)
         id = cocoId_subj[trial_id_pair_2[i][0]]
         I = get_coco_image(id)
         plt.imshow(I)
 
-        plt.subplot(10, 2, i*2+2)
+        plt.subplot(10, 2, i * 2 + 2)
         id = cocoId_subj[trial_id_pair_2[i][1]]
         I = get_coco_image(id)
         plt.imshow(I)
-        
+
     plt.tight_layout()
-    plt.savefig("figures/CLIP/RDM_max/RDM_max_images_close_in_%s_far_in_%s.png" % (model2, model1))
+    plt.savefig(
+        "figures/CLIP/RDM_max/RDM_max_images_close_in_%s_far_in_%s.png"
+        % (model2, model1)
+    )
 
 
 if __name__ == "__main__":
@@ -327,8 +388,12 @@ if __name__ == "__main__":
         help="Specify the path to the output directory",
     )
     parser.add_argument("--roi", type=str)
-    parser.add_argument("--plot_voxel_wise_performance", default=False, action="store_true")
-    parser.add_argument("--plot_image_wise_performance", default=False, action="store_true")
+    parser.add_argument(
+        "--plot_voxel_wise_performance", default=False, action="store_true"
+    )
+    parser.add_argument(
+        "--plot_image_wise_performance", default=False, action="store_true"
+    )
     parser.add_argument(
         "--coarse_level_semantic_analysis", default=False, action="store_true"
     )
@@ -341,8 +406,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--compare_to_human_judgement", default=False, action="store_true"
     )
+    parser.add_argument(
+        "--performance_analysis_by_roi", default=False, action="store_true"
+    )
     parser.add_argument("--weight_analysis", default=False, action="store_true")
-    parser.add_argument("--extract_keywords_for_roi", default=False, action="store_true")
+    parser.add_argument(
+        "--extract_keywords_for_roi", default=False, action="store_true"
+    )
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -374,7 +444,10 @@ if __name__ == "__main__":
         plt.plot([-0.1, 1], [-0.1, 1], "r")
         plt.xlabel(model1)
         plt.ylabel(model2)
-        plt.savefig("figures/CLIP/voxel_wise_performance/%s_vs_%s_acc_%s.png" % (model1, model2, args.roi))
+        plt.savefig(
+            "figures/CLIP/voxel_wise_performance/%s_vs_%s_acc_%s.png"
+            % (model1, model2, args.roi)
+        )
 
     if args.weight_analysis:
         models = ["clip", "resnet50_bottleneck", "bert_layer_13"]
@@ -389,16 +462,14 @@ if __name__ == "__main__":
             print("NaNs? Finite?:")
             print(np.any(np.isnan(w)))
             print(np.all(np.isfinite(w)))
-            pca = PCA(n_components=5, svd_solver='full')
+            pca = PCA(n_components=5, svd_solver="full")
             pca.fit(w)
             np.save(
                 "%s/output/pca/subj%d/clip_pca_components.npy"
                 % (args.output_root, args.subj),
                 pca.components_,
             )
-        
 
-        
     if args.plot_image_wise_performance:
         # scatter plot by images
         from pycocotools.coco import COCO
@@ -421,9 +492,13 @@ if __name__ == "__main__":
             plot_image_wise_performance("bert_layer_13", "clip", masking=roi)
             find_corner_images("clip", "bert_layer_13", masking=roi)
 
-            plot_image_wise_performance("convnet_res50", "clip", masking=roi, measure="rsq")
+            plot_image_wise_performance(
+                "convnet_res50", "clip", masking=roi, measure="rsq"
+            )
             find_corner_images("clip", "convnet_res50", masking=roi, measure="rsq")
-            plot_image_wise_performance("bert_layer_13", "clip", masking=roi, measure="rsq")
+            plot_image_wise_performance(
+                "bert_layer_13", "clip", masking=roi, measure="rsq"
+            )
             find_corner_images("clip", "bert_layer_13", masking=roi, measure="rsq")
 
     if args.compare_brain_and_clip_performance:
@@ -437,22 +512,35 @@ if __name__ == "__main__":
             out = f.readlines()
         common_words = ["photo of " + w[:-1] for w in out]
         try:
-            activations = np.load("%s/output/clip/word_interpretation/1000eng_activation.npy" % args.output_root)
+            activations = np.load(
+                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                % args.output_root
+            )
         except FileNotFoundError:
             from nltk.corpus import wordnet
             import clip
             import torch
+
             device = "cuda" if torch.cuda.is_available() else "cpu"
             model, _ = clip.load("ViT-B/32", device=device)
             activations = extract_text_activations(model, common_words)
-            np.save("%s/output/clip/word_interpretation/1000eng_activation.npy" % args.output_root, activations)
-            
-        w = np.load("%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy" % (args.output_root, args.subj))
+            np.save(
+                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                % args.output_root,
+                activations,
+            )
 
-        extract_keywords_for_roi(w, "floc-faces", [2,3], activations, common_words)
-        extract_keywords_for_roi(w, "floc-bodies", [1,2,3], activations, common_words)
-        extract_keywords_for_roi(w, "floc-places", [1,2,3,4], activations, common_words)
-        
+        w = np.load(
+            "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
+            % (args.output_root, args.subj)
+        )
+
+        extract_keywords_for_roi(w, "floc-faces", [2, 3], activations, common_words)
+        extract_keywords_for_roi(w, "floc-bodies", [1, 2, 3], activations, common_words)
+        extract_keywords_for_roi(
+            w, "floc-places", [1, 2, 3, 4], activations, common_words
+        )
+
     if args.sample_level_semantic_analysis:
         from pycocotools.coco import COCO
         import skimage.io as io
@@ -464,23 +552,35 @@ if __name__ == "__main__":
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
 
-        sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="resnet50_bottleneck")
-        sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="bert_layer_13")
-        sample_level_semantic_analysis(subj=args.subj, model1="visual_layer_11", model2="resnet50_bottleneck")
-        sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="visual_layer_1")
-        sample_level_semantic_analysis(subj=args.subj, model1="clip", model2="clip_text")
-    
+        sample_level_semantic_analysis(
+            subj=args.subj, model1="clip", model2="resnet50_bottleneck"
+        )
+        sample_level_semantic_analysis(
+            subj=args.subj, model1="clip", model2="bert_layer_13"
+        )
+        sample_level_semantic_analysis(
+            subj=args.subj, model1="visual_layer_11", model2="resnet50_bottleneck"
+        )
+        sample_level_semantic_analysis(
+            subj=args.subj, model1="clip", model2="visual_layer_1"
+        )
+        sample_level_semantic_analysis(
+            subj=args.subj, model1="clip", model2="clip_text"
+        )
+
     if args.compare_to_human_judgement:
-        human_emb_path = "data/human_similarity_judgement/spose_embedding_49d_sorted.txt"
+        human_emb_path = (
+            "data/human_similarity_judgement/spose_embedding_49d_sorted.txt"
+        )
         word_path = "data/human_similarity_judgement/unique_id.txt"
 
         human_emb = np.loadtxt(human_emb_path)
         emb_label = np.loadtxt(word_path, dtype="S")
         emb_label = [w.decode("utf-8") for w in emb_label]
-        print(emb_label[:10])
 
-        #checked that the label and emb matches
+        # checked that the label and emb matches
         from util.model_config import COCO_cat, COCO_super_cat
+
         print(len(COCO_cat))
         count = 0
         COCO_HJ_overlap = []
@@ -490,23 +590,23 @@ if __name__ == "__main__":
                 word = "_".join(w.split(" "))
             else:
                 word = w
-        
+
             if word in emb_label:
                 count += 1
                 COCO_HJ_overlap.append(w)
 
         print(count)
-        print(COCO_HJ_overlap)
-        # ['car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 
-        # 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 
-        # 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'tie', 'suitcase', 
-        # 'frisbee', 'snowboard', 'kite', 'skateboard', 'surfboard', 'bottle', 
-        # 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 
-        # 'orange', 'broccoli', 'carrot', 'pizza', 'donut', 'cake', 'chair', 
-        # 'couch', 'bed', 'toilet', 'laptop', 'keyboard', 'microwave', 'oven', 
+        # print(COCO_HJ_overlap)
+        # ['car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat',
+        # 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant',
+        # 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'tie', 'suitcase',
+        # 'frisbee', 'snowboard', 'kite', 'skateboard', 'surfboard', 'bottle',
+        # 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich',
+        # 'orange', 'broccoli', 'carrot', 'pizza', 'donut', 'cake', 'chair',
+        # 'couch', 'bed', 'toilet', 'laptop', 'keyboard', 'microwave', 'oven',
         # 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'toothbrush']
-        
-        #compare clip, bert, and human judgement
+
+        # compare clip, bert, and human judgement
         # clip
         clip_model, _ = clip.load("ViT-B/32", device=device)
         clip_features = []
@@ -516,14 +616,17 @@ if __name__ == "__main__":
                 text = clip.tokenize(expression).to(device)
                 emb = clip_model.encode_text(text).cpu().data.numpy()
                 clip_features.append(emb)
+        clip_features = np.array(clip_features).squeeze()
         rsm_clip = np.corrcoef(clip_features)
-        
-        #bert
+
+        # bert
         bert_features = []
         from transformers import BertTokenizer, BertModel
 
-        bert_tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-        bert_model = BertModel.from_pretrained('bert-base-uncased', output_hidden_states = True)
+        bert_tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        bert_model = BertModel.from_pretrained(
+            "bert-base-uncased", output_hidden_states=True
+        )
 
         bert_model.eval()
         for word in COCO_HJ_overlap:
@@ -536,34 +639,59 @@ if __name__ == "__main__":
             with torch.no_grad():
                 outputs = bert_model(tokens_tensor, segments_tensors)
                 hidden_states = outputs[2]
-                print(hidden_states.shape)
-                bert_features.append(hidden_states[-1, 0, 3, :]) # embedding of the word, from last layer of bert
+                # print(len(hidden_states[-1][0][4]))
+                # print(hidden_states[-1][0][4])
+                # print(hidden_states)
+                # print(hidden_states.shape)
+                bert_features.append(
+                    hidden_states[-1][0][4].numpy()
+                )  # embedding of the word, from first layer of bert
         rsm_bert = np.corrcoef(bert_features)
 
-        #human judgement model
+        # human judgement model
         hj_features = []
         for word in COCO_HJ_overlap:
-            ind = list(emb_label).index(w)
+            ind = list(emb_label).index(word)
             hj_features.append(human_emb[ind])
-            
+        hj_features = np.array(hj_features)
         rsm_hj = np.corrcoef(hj_features)
+
         print(np.corrcoef(rsm_hj.flatten(), rsm_clip.flatten()))
         print(np.corrcoef(rsm_hj.flatten(), rsm_bert.flatten()))
         print(np.corrcoef(rsm_bert.flatten(), rsm_clip.flatten()))
-            
+
         plt.figure()
-        plt.subplot(1,3,1)
+
+        plt.subplot(1, 3, 1)
         plt.imshow(rsm_clip)
         plt.colorbar()
-        plt.subplot(1,3,2)
+        plt.title("CLIP")
+
+        plt.subplot(1, 3, 2)
         plt.imshow(rsm_bert)
         plt.colorbar()
-        plt.savefig("figures/CLIP/human_judgement_rsm_comparison.png")
+        plt.title("BERT")
 
+        plt.subplot(1, 3, 3)
+        plt.imshow(rsm_hj)
+        plt.colorbar()
+        plt.title("Human Behavior")
 
+        plt.tight_layout()
 
+        plt.savefig("figures/CLIP/human_judgement_rsm_comparison_bert13.png")
 
+    if args.performance_analysis_by_roi:
+        import nibabel as nib
 
+        roi_names = list(roi_name_dict.keys())
+        for roi_name in roi_names:
+            roi = nib.load(
+                "%s/output/voxels_masks/subj%d/%s.nii.gz"
+                % (args.output_root, args.subj, roi_name)
+            )
+            roi_data = roi.get_fdata()
+            roi_data = np.swapaxes(roi_data, 0, 2)
 
     # trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
     # valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"

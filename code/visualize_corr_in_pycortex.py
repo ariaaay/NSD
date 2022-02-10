@@ -359,7 +359,9 @@ if __name__ == "__main__":
     ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj))
     ev_volume = make_volume(subj=args.subj, vals=ev_vals, measure="rsq")
 
-    old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (output_root, args.subj))
+    old_ev_vals = np.load(
+        "%s/output/evs_old_subj%02d_zscored.npy" % (output_root, args.subj)
+    )
     old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
 
     volumes = {
@@ -602,7 +604,6 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
-
 
     volumes["clip&resnet50-resnet50 R^2 - old"] = make_volume(
         subj=args.subj,
