@@ -355,6 +355,10 @@ if __name__ == "__main__":
     kastner_volume = make_roi_volume("Kastner2015")
     hcp_volume = make_roi_volume("HCP_MMP1")
     sulc_volume = make_roi_volume("corticalsulc")
+    
+    lang_ROI = np.load("output/voxels_masks/language_ROIs.npy", allow_pickle=True).item()
+    language_volume = lang_ROI['subj%02d' % args.subj]
+
 
     # ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj))
     # ev_volume = make_volume(subj=args.subj, vals=ev_vals, measure="rsq")
@@ -372,6 +376,7 @@ if __name__ == "__main__":
         "Kastner2015": kastner_volume,
         "HCP": hcp_volume,
         "sulcus": sulc_volume,
+        "Language ROIs": language_volume,
         # "EV": ev_volume,
         # "EV - old": old_ev_volume,
     }

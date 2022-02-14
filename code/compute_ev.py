@@ -55,9 +55,8 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
     # fill in 0s for nonexisting trials
     if data.shape[0] < 30000:
         tmp = np.zeros((30000, data.shape[1]))
-        tmp[:data.shape[0],:] = data.copy()
+        tmp[: data.shape[0], :] = data.copy()
         data = tmp
-
 
     for v in tqdm(range(data.shape[1])):  # loop over voxels
         repeat = list()

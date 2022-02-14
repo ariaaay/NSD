@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import pandas as pd
+from torch import neg
 from util.model_config import COCO_cat, COCO_super_cat
 
 
@@ -83,17 +84,22 @@ def load_objects_in_COCO(cid):
     return catnms
 
 
-def load_subset_trials(coco_id_by_trial, cat):
+def load_subset_trials(coco_id_by_trial, cat, negcat=False):
     """
     Returns a list of idx to apply on the 10,000 trials for each subject. These are not trials ID themselves but
     indexs for trials IDS.
     """
-    subset_idx = []
+    subset_idx, negsubset_idx = [], []
     for i, id in enumerate(coco_id_by_trial):
         catnms = load_objects_in_COCO(id)
         if cat in catnms:
             subset_idx.append(i)
-    return subset_idx
+        else:
+            negsubset_idx.append(i)
+    if negcat:
+        return negsubset_idx
+    else:
+        return subset_idx
 
 
 def find_trial_indexes(
@@ -111,8 +117,11 @@ def find_trial_indexes(
     return idx1, idx2
 
 
-def extract_test_image_ids(subj=1, output_dir="/user_data/yuanw3/project_outputs/NSD/output"):
+def extract_test_image_ids(
+    subj=1, output_dir="/user_data/yuanw3/project_outputs/NSD/output"
+):
     from sklearn.model_selection import train_test_split
+
     _, test_idx = train_test_split(range(10000), test_size=0.15, random_state=42)
     coco_id = np.load("%s/coco_ID_of_repeats_subj%02d.npy" % (output_dir, subj))
     test_image_id = coco_id[test_idx]
@@ -120,4 +129,3 @@ def extract_test_image_ids(subj=1, output_dir="/user_data/yuanw3/project_outputs
 
 
 # def sample_by_category(n, subj=1):
-

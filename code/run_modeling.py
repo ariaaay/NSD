@@ -193,8 +193,14 @@ if __name__ == "__main__":
 
     if args.subset_data is not None:
         subset_cat = args.subset_data
-        print("Subsetting training data with: " + subset_cat)
-        subset_trial_id = load_subset_trials(stimulus_list, subset_cat)
+        print("Subsetting training data with criteria: " + subset_cat)
+        if (
+            "no" in subset_cat
+        ):  # selecting the trials that didnt contain certain categories
+            subset_cat = subset_cat.split("_")[-1]
+            subset_trial_id = load_subset_trials(stimulus_list, subset_cat, negcat=True)
+        else:
+            subset_trial_id = load_subset_trials(stimulus_list, subset_cat)
         br_data = br_data[subset_trial_id, :]
         feature_mat = feature_mat[subset_trial_id, :]
         model_name_to_save += "_" + args.subset_data + "_subset"
