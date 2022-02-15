@@ -176,6 +176,16 @@ word_roi_names = {
     5: "mTL-words",
 }
 
+language_roi_names = {
+    0:"Unknown",
+    1: "PTL",
+    2: "ATL",
+    3: "AG",
+    4: "IFG",
+    5: "MFG",
+    6: "IFGorb",
+}
+
 kastner_roi_names = {
     0: "Unknown",
     1: "V1v",
@@ -397,7 +407,8 @@ roi_name_dict = {
     "prf-visualrois": visual_roi_names,
     "prf-eccrois": ecc_roi_names,
     "Kastner2015": kastner_roi_names,
-    "HCP": hcp_roi_names,
+    "HCP_MMP1": hcp_roi_names,
+    "language": language_roi_names,
 }
 
 COCO_cat = [

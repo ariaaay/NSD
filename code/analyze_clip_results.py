@@ -13,8 +13,6 @@ import clip
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import COCO_cat, COCO_super_cat, roi_name_dict
 
-from extract_clip_features import load_captions
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -233,6 +231,8 @@ def find_corner_images(
 
 def compare_model_and_brain_performance_on_COCO(subj=1):
     from scipy.stats import pearsonr
+    from extract_clip_features import load_captions
+
 
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
@@ -372,6 +372,65 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
         % (model2, model1)
     )
 
+def make_roi_df(roi_names):
+    try:
+        df = pd.read_csv("%s/output/clip/performance_by_roi_df_tmp.csv" % args.output_root)
+    except FileNotFoundError:
+        joint_var = load_model_performance(model="clip_convnet_res50", output_root=args.output_root, subj=args.subj, measure="rsq")
+        clip_var = load_model_performance(model="clip", output_root=args.output_root, subj=args.subj, measure="rsq")
+        resnet_var = load_model_performance(model="convnet_res50", output_root=args.output_root, subj=args.subj, measure="rsq")
+        
+        u_clip = joint_var - resnet_var
+        u_resnet = joint_var - clip_var
+
+        df = pd.DataFrame(
+            columns = [
+                "voxel_idx",
+                "uv_clip",
+                "uv_resnet",
+                "joint"
+            ]
+        )
+        for i in tqdm(range(len(joint_var))):
+            vd = dict()
+            vd["voxel_idx"] = i
+            vd["uv_clip"] = u_clip[i]
+            vd["uv_resnet"] = u_resnet[i]
+            vd["joint"] = joint_var[i]
+            vd["uv_diff"] = u_clip[i] - u_resnet[i]
+            df = df.append(vd, ignore_index=True)
+        df.to_csv("%s/output/clip/performance_by_roi_df_tmp.csv" % args.output_root)
+
+    cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (args.output_root, args.subj, args.subj)
+    )
+
+    for roi_name in roi_names:
+        if roi_name == "language":
+            lang_ROI = np.load("%s/output/voxels_masks/language_ROIs.npy" % args.output_root, allow_pickle=True).item()
+            roi_volume = lang_ROI['subj%02d' % args.subj]
+            roi_volume = np.swapaxes(roi_volume, 0, 2)
+
+        else:            
+            roi = nib.load(
+                "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj%02d/func1pt8mm/roi/%s.nii.gz" % (args.subj, roi_name)
+            )
+            roi_volume = roi.get_fdata()
+        roi_vals = roi_volume[cortical_mask]
+        roi_label_dict = roi_name_dict[roi_name]
+        roi_label_dict[-1] = "non-cortical"
+        roi_label_dict["-1"] = "non-cortical"
+        try:
+            roi_labels = [roi_label_dict[int(i)] for i in roi_vals]
+        except KeyError:
+            roi_labels = [roi_label_dict[str(int(i))] for i in roi_vals]
+        # print(np.array(list(df["voxel_idx"])).astype(int))
+        df[roi_name] = np.array(roi_labels)[np.array(list(df["voxel_idx"])).astype(int)]
+
+    df.to_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
+    return df
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -409,6 +468,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--performance_analysis_by_roi", default=False, action="store_true"
     )
+    parser.add_argument("--rerun_df", default=False, action="store_true")
     parser.add_argument("--weight_analysis", default=False, action="store_true")
     parser.add_argument(
         "--extract_keywords_for_roi", default=False, action="store_true"
@@ -682,19 +742,22 @@ if __name__ == "__main__":
         plt.savefig("figures/CLIP/human_judgement_rsm_comparison_bert13.png")
 
     if args.performance_analysis_by_roi:
+        import pandas as pd
+        import seaborn as sns
+        from util.model_config import *
+        from tqdm import tqdm
         import nibabel as nib
 
+        sns.set(style="whitegrid", font_scale=1.5)
+
         roi_names = list(roi_name_dict.keys())
-        for roi_name in roi_names:
-            roi = nib.load(
-                "%s/output/voxels_masks/subj%d/%s.nii.gz"
-                % (args.output_root, args.subj, roi_name)
-            )
-            roi_data = roi.get_fdata()
-            roi_data = np.swapaxes(roi_data, 0, 2)
+        if not args.rerun_df:
+            df = pd.read_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
+        else:
+            df = make_roi_df(roi_names)
 
-    # trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-    # valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-
-    # train_caps = COCO(trainFile)
-    # val_caps = COCO(valFile)
+        for roi_name in roi_names:  
+            plt.figure(figsize=(50, 20))
+            ax = sns.barplot(x=roi_name, y="uv_diff", data=df, dodge=True)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            plt.savefig("figures/CLIP/performances_by_roi/%s.png" % roi_name)
