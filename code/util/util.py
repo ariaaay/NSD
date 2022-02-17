@@ -24,6 +24,10 @@ def zscore(mat, axis=None):
             mat, axis=axis, keepdims=True
         )
 
+def ztransform(val):
+    val = np.clip(val, a_min=1e-4, a_max=0.999)
+    val = np.log((1 + val) / (1 - val)) / 2.0
+    return val
 
 def pearson_corr(X, Y, rowvar=True):
     if rowvar:
