@@ -4,6 +4,19 @@ import pandas as pd
 from torch import neg
 from util.model_config import COCO_cat, COCO_super_cat
 
+def fill_in_nan_voxels(vals, subj, output_root):
+    try:  # some subject has zeros voxels masked out
+        nonzero_mask = np.load(
+            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (output_root, subj, subj)
+        )
+        tmp = np.zeros(nonzero_mask.shape)
+        tmp[nonzero_mask] = vals
+        vals = tmp
+    except FileNotFoundError:
+        pass
+
+    return vals
 
 def load_model_performance(model, task=None, output_root=".", subj=1, measure="corr"):
     if measure == "pvalue":
@@ -29,6 +42,8 @@ def load_model_performance(model, task=None, output_root=".", subj=1, measure="c
         if pvalue:
             output = np.array(out)[:, 1]
         return output
+    
+    out = fill_in_nan_voxels(out, subj, output_root)
 
     return np.array(out)
 
@@ -128,4 +143,3 @@ def extract_test_image_ids(
     return test_image_id, test_idx
 
 
-# def sample_by_category(n, subj=1):

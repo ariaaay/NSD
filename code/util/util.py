@@ -81,7 +81,6 @@ def check_nans(data, clean=False):
     else:
         return data
 
-
 def pytorch_pca(x, n_components):
     x_mu = x.mean(dim=0, keepdim=True)
     x = x - x_mu

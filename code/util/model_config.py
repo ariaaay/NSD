@@ -143,7 +143,7 @@ face_roi_names = {
     1: "OFA",
     2: "FFA-1",
     3: "FFA-2",
-    # 4: "mTL-faces",
+    4: "mTL-faces",
     5: "aTL-faces",
 }
 
