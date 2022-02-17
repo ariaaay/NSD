@@ -758,6 +758,6 @@ if __name__ == "__main__":
 
         for roi_name in roi_names:  
             plt.figure(figsize=(50, 20))
-            ax = sns.barplot(x=roi_name, y="uv_diff", data=df, dodge=True)
+            ax = sns.barplot(x=roi_name, y="uv_diff", data=df, dodge=True, order=list(roi_name_dict[roi_name].values()))
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/%s.png" % roi_name)
