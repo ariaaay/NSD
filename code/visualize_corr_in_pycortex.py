@@ -822,6 +822,9 @@ if __name__ == "__main__":
         PCs = np.load(
             "%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj)
         )
+        PCs = np.load(
+                "%s/output/pca/%s_pca_group_components.npy" % (output_root, "clip"))
+        
         # Normalize the PCs
 
         from util.util import zscore

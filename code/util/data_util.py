@@ -10,9 +10,14 @@ def fill_in_nan_voxels(vals, subj, output_root):
             "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
             % (output_root, subj, subj)
         )
-        tmp = np.zeros(nonzero_mask.shape)
-        tmp[nonzero_mask] = vals
-        vals = tmp
+        if type(vals) == list:
+            tmp = np.zeros(nonzero_mask.shape)
+            tmp[nonzero_mask] = vals
+            vals = tmp
+        elif len(vals.shape) == 2:
+            tmp = np.zeros((vals.shape[0], len(nonzero_mask)))
+            tmp[:, nonzero_mask] = vals
+            vals = tmp
     except FileNotFoundError:
         pass
 
