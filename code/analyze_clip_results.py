@@ -572,7 +572,7 @@ if __name__ == "__main__":
         for m in models:
             print(m)
             try:
-                group_w = np.load("%s/output/pca/weight_matrix_best5000.npy" % args.output_root)
+                group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
             except FileNotFoundError:
                 group_w = []
                 for subj in subjs:
