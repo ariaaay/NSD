@@ -567,6 +567,7 @@ if __name__ == "__main__":
         models = ["clip"]
         subjs = [1,2,5,7]
         num_pc = 20
+        best_voxel_n = 10000
         # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
         for m in models:
             print(m)
@@ -587,12 +588,12 @@ if __name__ == "__main__":
                     rsq = load_model_performance(m, output_root=args.output_root, subj=subj, measure="rsq")
                     nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
                     corrected_rsq = rsq / nc
-                    threshold = corrected_rsq[np.argsort(corrected_rsq)[-5000]] # get the threshold for the best 10000 voxels
+                    threshold = corrected_rsq[np.argsort(corrected_rsq)[-best_voxel_n]] # get the threshold for the best 10000 voxels
                     print(threshold)
                     group_w.append(w[:, corrected_rsq>=threshold])
                     np.save("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj), corrected_rsq>=threshold)
                 group_w = np.hstack(group_w)
-                np.save("%s/output/pca/weight_matrix_best5000.npy" % args.output_root, group_w)
+                np.save("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n), group_w)
             pca = PCA(n_components=num_pc, svd_solver="full")
             pca.fit(group_w)
             np.save(
