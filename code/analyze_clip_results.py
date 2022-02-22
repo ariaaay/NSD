@@ -591,7 +591,7 @@ if __name__ == "__main__":
                     threshold = corrected_rsq[np.argsort(corrected_rsq)[-best_voxel_n]] # get the threshold for the best 10000 voxels
                     print(threshold)
                     group_w.append(w[:, corrected_rsq>=threshold])
-                    np.save("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj), corrected_rsq>=threshold)
+                    np.save("%s/output/pca/pca_voxels_subj%02d_best_%d.npy" % (args.output_root, subj, best_voxel_n), corrected_rsq>=threshold)
                 group_w = np.hstack(group_w)
                 np.save("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n), group_w)
             pca = PCA(n_components=num_pc, svd_solver="full")
@@ -603,7 +603,7 @@ if __name__ == "__main__":
             )
             idx = 0
             for subj in subjs:
-                subj_mask = np.load("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj))
+                subj_mask = np.load("%s/output/pca/pca_voxels_subj%02d_best_%d.npy" % (args.output_root, subj, best_voxel_n))
                 subj_pca = np.zeros((num_pc, len(subj_mask)))
                 subj_pca[:, subj_mask] = zscore(pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1)
                 if not os.path.exists("%s/output/pca/subj%02d" % (args.output_root, subj)):
