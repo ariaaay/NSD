@@ -1,4 +1,6 @@
+import os
 import argparse
+# from msilib.schema import File
 import pickle
 
 import pandas as pd
@@ -560,39 +562,53 @@ if __name__ == "__main__":
     
     if args.group_weight_analysis:
         from util.data_util import load_model_performance, fill_in_nan_voxels
+        from util.util import zscore
+        
         models = ["clip"]
         subjs = [1,2,5,7]
+        num_pc = 20
         # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
         for m in models:
             print(m)
-            group_w = []
-            for subj in subjs:
-                w = np.load(
-                    "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-                    % (args.output_root, subj, m)
-                )
-                w = fill_in_nan_voxels(w, subj, args.output_root)
-                # print(w.shape) # 512 x $voxel
-                # print("NaNs? Finite?:")
-                # print(np.any(np.isnan(w)))
-                # print(np.all(np.isfinite(w)))
-                rsq = load_model_performance(m, output_root=args.output_root, subj=subj, measure="rsq")
-                nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
-                corrected_rsq = rsq / nc
-                threshold = corrected_rsq[np.argsort(corrected_rsq)[-5000]] # get the threshold for the best 10000 voxels
-                print(threshold)
-                group_w.append(w[:, corrected_rsq>=threshold])
-                np.save("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj), corrected_rsq>=threshold, )
-            
-            group_w = np.hstack(group_w)
-            np.save("%s/output/pca/weight_matrix_best5000.npy" % args.output_root, group_w)
-            pca = PCA(n_components=10, svd_solver="full")
+            try:
+                group_w = np.load("%s/output/pca/weight_matrix_best5000.npy" % args.output_root)
+            except FileNotFoundError:
+                group_w = []
+                for subj in subjs:
+                    w = np.load(
+                        "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+                        % (args.output_root, subj, m)
+                    )
+                    w = fill_in_nan_voxels(w, subj, args.output_root)
+                    # print(w.shape) # 512 x $voxel
+                    # print("NaNs? Finite?:")
+                    # print(np.any(np.isnan(w)))
+                    # print(np.all(np.isfinite(w)))
+                    rsq = load_model_performance(m, output_root=args.output_root, subj=subj, measure="rsq")
+                    nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
+                    corrected_rsq = rsq / nc
+                    threshold = corrected_rsq[np.argsort(corrected_rsq)[-5000]] # get the threshold for the best 10000 voxels
+                    print(threshold)
+                    group_w.append(w[:, corrected_rsq>=threshold])
+                    np.save("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj), corrected_rsq>=threshold)
+                group_w = np.hstack(group_w)
+                np.save("%s/output/pca/weight_matrix_best5000.npy" % args.output_root, group_w)
+            pca = PCA(n_components=num_pc, svd_solver="full")
             pca.fit(group_w)
             np.save(
                 "%s/output/pca/%s_pca_group_components.npy"
                 % (args.output_root, m),
                 pca.components_,
             )
+            idx = 0
+            for subj in subjs:
+                subj_mask = np.load("%s/output/pca/pca_voxels_subj%02d.npy" % (args.output_root, subj))
+                subj_pca = np.zeros((num_pc, len(subj_mask)))
+                subj_pca[:, subj_mask] = zscore(pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1)
+                if not os.path.exists("%s/output/pca/subj%02d" % (args.output_root, subj)):
+                    os.mkdir("%s/output/pca/subj%02d" % (args.output_root, subj))
+                np.save("%s/output/pca/subj%02d/%s_pca_group_components.npy" % (args.output_root, subj, m), subj_pca)
+                idx += np.sum(subj_mask)
             
 
     if args.plot_image_wise_performance:

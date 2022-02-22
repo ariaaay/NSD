@@ -314,6 +314,7 @@ if __name__ == "__main__":
     parser.add_argument("--show_pcs", default=False, action="store_true")
     parser.add_argument("--on_cluster", action="store_true")
     # parser.add_argument("--with_noise_ceiling", default=False, action="store_true")
+    parser.add_argument("--show_more", action="store_true")
 
     args = parser.parse_args()
 
@@ -487,7 +488,7 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    if args.subj == 1:
+    if args.subj == 1 & args.show_more:
         volumes["clip_top1_object"] = make_volume(
             subj=args.subj,
             model="clip_top1_object",
@@ -819,18 +820,16 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         pc_vols = []
-        PCs = np.load(
-            "%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj)
-        )
-        PCs = np.load(
-                "%s/output/pca/%s_pca_group_components.npy" % (output_root, "clip"))
-        
-        # Normalize the PCs
+        # PCs = np.load(
+        #     "%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj)
+        # )
+        PCs = np.load("%s/output/pca/subj%02d/%s_pca_group_components.npy" % (output_root, args.subj, "clip"))
 
         from util.util import zscore
 
-        PCs_zscore = zscore(PCs, axis=1)
-
+        # PCs_zscore = zscore(PCs, axis=1)
+        PCs_zscore = PCs
+    
         # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
         for i in range(PCs.shape[0]):
             key = "PC" + str(i)
