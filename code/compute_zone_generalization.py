@@ -31,19 +31,20 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
-    roi_list = ["floc-words", "floc-faces", "floc-places", "prf-visualrois"]
+    roi_list = ["floc-faces", "floc-places", "floc-bodies", "prf-visualrois"]
 
     roi_masks_list, roi_label_list = [], []
 
     for roi in roi_list:
         roi_masks, roi_labels = extract_single_roi(roi, args.output_dir, args.subj)
-        roi_masks_list.append(roi_masks)
-        roi_label_list.append(roi_labels)
+        roi_masks_list += roi_masks
+        roi_label_list += roi_labels
     print(len(roi_masks_list))
+    print(roi_label_list)
 
-    corrs_array = np.zeros((len(roi_masks_list, roi_masks_list)))
-    for i, m1 in enumerate(tqdm(roi_masks)):
-        for j, m2 in enumerate(tqdm(roi_masks)):
+    corrs_array = np.zeros((len(roi_masks_list), len(roi_masks_list)))
+    for i, m1 in enumerate(tqdm(roi_masks_list)):
+        for j, m2 in enumerate(tqdm(roi_masks_list)):
             roi1 = roi_label_list[i]
             roi2 = roi_label_list[j]
             if roi1 == roi2:
