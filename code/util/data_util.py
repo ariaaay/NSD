@@ -5,6 +5,7 @@ import pandas as pd
 from torch import neg
 from util.model_config import COCO_cat, COCO_super_cat
 
+
 def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
     try:  # some subject has zeros voxels masked out
         nonzero_mask = np.load(
@@ -12,7 +13,7 @@ def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
             % (output_root, subj, subj)
         )
         if type(vals) == list:
-            tmp = np.zeros(nonzero_mask.shape)  + fill_in
+            tmp = np.zeros(nonzero_mask.shape) + fill_in
             tmp[nonzero_mask] = vals
             vals = tmp
         elif len(vals.shape) == 2:
@@ -23,6 +24,7 @@ def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
         pass
 
     return vals
+
 
 def load_model_performance(model, output_root=".", subj=1, measure="corr"):
     if measure == "pvalue":
@@ -36,7 +38,7 @@ def load_model_performance(model, output_root=".", subj=1, measure="corr"):
         % (output_root, subj, measure, model),
         allow_pickle=True,
     )
-    
+
     if measure == "corr":
         if pvalue:
             out = np.array(out)[:, 1]
@@ -44,7 +46,7 @@ def load_model_performance(model, output_root=".", subj=1, measure="corr"):
             return out
         else:
             out = np.array(out)[:, 0]
-    
+
     out = fill_in_nan_voxels(out, subj, output_root)
     return out
 
@@ -146,7 +148,7 @@ def extract_test_image_ids(
 
 def extract_single_roi(roi_name, output_dir, subj):
     from util.model_config import roi_name_dict
-    
+
     output_masks, roi_labels = list(), list()
     roi_mask = np.load(
         "%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"

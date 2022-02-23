@@ -154,10 +154,15 @@ def make_volume(
             )
 
         elif (args.sig_method == "nc") and (measure == "rsq"):
-            nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (output_root, subj, subj))
+            nc = np.load(
+                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                % (output_root, subj, subj)
+            )
             vals = vals / nc
             if model2 is None:
-                sig_mask = vals >= 0 # this is plotting the differences therefore we dont threshold here
+                sig_mask = (
+                    vals >= 0
+                )  # this is plotting the differences therefore we dont threshold here
             else:
                 sig_mask = vals >= 0.1
 
@@ -197,7 +202,7 @@ def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
             "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
             % (output_root, subj, subj)
         )
-    
+
     # projecting value back to 3D space
     all_vals = project_vals_to_3d(vals, cortical_mask)
 
@@ -319,9 +324,11 @@ if __name__ == "__main__":
     kastner_volume = make_roi_volume("Kastner2015")
     hcp_volume = make_roi_volume("HCP_MMP1")
     sulc_volume = make_roi_volume("corticalsulc")
-    
-    lang_ROI = np.load("output/voxels_masks/language_ROIs.npy", allow_pickle=True).item()
-    language_vals = lang_ROI['subj%02d' % args.subj]
+
+    lang_ROI = np.load(
+        "output/voxels_masks/language_ROIs.npy", allow_pickle=True
+    ).item()
+    language_vals = lang_ROI["subj%02d" % args.subj]
     language_volume = cortex.Volume(
         language_vals,
         "subj%02d" % args.subj,
@@ -333,14 +340,16 @@ if __name__ == "__main__":
         vmax=np.max(language_vals),
     )
 
-
     # ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj))
     # ev_volume = make_volume(subj=args.subj, vals=ev_vals, measure="rsq")
 
     # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (output_root, args.subj))
     # old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
 
-    nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (output_root, args.subj, args.subj))
+    nc = np.load(
+        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+        % (output_root, args.subj, args.subj)
+    )
     nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
 
     volumes = {
@@ -376,7 +385,7 @@ if __name__ == "__main__":
     volumes["resnet50"] = make_volume(
         subj=args.subj,
         # model="convnet_res50",
-        model = "resnet50_bottleneck",
+        model="resnet50_bottleneck",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
@@ -407,7 +416,7 @@ if __name__ == "__main__":
     volumes["resnet50 R^2"] = make_volume(
         subj=args.subj,
         # model="convnet_res50",
-        model = "resnet50_bottleneck",
+        model="resnet50_bottleneck",
         output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
@@ -416,10 +425,10 @@ if __name__ == "__main__":
     volumes["clip&resnet50-clip R^2"] = make_volume(
         subj=args.subj,
         model=[
-        # "convnet_res50_clip", 
-        # "clip_convnet_res50", 
-        "clip_resnet50_bottleneck", 
-        "resnet50_bottleneck_clip"
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_resnet50_bottleneck",
+            "resnet50_bottleneck_clip",
         ],
         model2="clip",
         output_root=output_root,
@@ -430,10 +439,10 @@ if __name__ == "__main__":
     volumes["clip&resnet50-resnet50 R^2"] = make_volume(
         subj=args.subj,
         model=[
-        # "convnet_res50_clip", 
-        # "clip_convnet_res50", 
-        "clip_resnet50_bottleneck", 
-        "resnet50_bottleneck_clip"
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_resnet50_bottleneck",
+            "resnet50_bottleneck_clip",
         ],
         model2="resnet50_bottleneck",
         output_root=output_root,
@@ -574,7 +583,7 @@ if __name__ == "__main__":
             output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
-        
+
         volumes["resnet-no-person-subset"] = make_volume(
             subj=args.subj,
             model="resnet50_bottleneck_no_person_subset",
@@ -810,13 +819,16 @@ if __name__ == "__main__":
         # PCs = np.load(
         #     "%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj)
         # )
-        PCs = np.load("%s/output/pca/subj%02d/%s_pca_group_components.npy" % (output_root, args.subj, "clip"))
+        PCs = np.load(
+            "%s/output/pca/subj%02d/%s_pca_group_components.npy"
+            % (output_root, args.subj, "clip")
+        )
 
         from util.util import zscore
 
         # PCs_zscore = zscore(PCs, axis=1)
         PCs_zscore = PCs
-    
+
         # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
         for i in range(PCs.shape[0]):
             key = "PC" + str(i)

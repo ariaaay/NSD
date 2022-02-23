@@ -34,7 +34,7 @@ if __name__ == "__main__":
     roi_list = ["floc-words", "floc-faces", "floc-places", "prf-visualrois"]
 
     roi_masks_list, roi_label_list = [], []
-    
+
     for roi in roi_list:
         roi_masks, roi_labels = extract_single_roi(roi, args.output_dir, args.subj)
         roi_masks_list.append(roi_masks)
@@ -63,12 +63,10 @@ if __name__ == "__main__":
                     output_dir=args.output_dir,
                 )
 
-                corrs_array[i, j] = np.mean(corrs[:,0])
+                corrs_array[i, j] = np.mean(corrs[:, 0])
     np.save("%s/roi_gen/corrs_mean.npy")
 
     plt.imshow(corrs_array)
     plt.colorbar()
     plt.xlabel(roi_label_list)
     plt.savefig("figures/roi_gen.png")
-
-

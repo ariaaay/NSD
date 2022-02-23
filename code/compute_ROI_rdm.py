@@ -63,7 +63,9 @@ if __name__ == "__main__":
         else:
             print("extracting RDMs for these rois: " + str(args.single_roi))
             for roi in args.single_roi:
-                roi_masks, roi_labels = extract_single_roi(roi, args.output_dir, args.subj)
+                roi_masks, roi_labels = extract_single_roi(
+                    roi, args.output_dir, args.subj
+                )
                 for i, m in enumerate(roi_masks):
                     try:
                         rdm = np.load(

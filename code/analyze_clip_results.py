@@ -1,5 +1,6 @@
 import os
 import argparse
+
 # from msilib.schema import File
 import pickle
 
@@ -239,7 +240,6 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     from scipy.stats import pearsonr
     from extract_clip_features import load_captions
 
-
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
     test_image_id, _ = extract_test_image_ids(subj)
@@ -378,18 +378,24 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
         % (model2, model1)
     )
 
+
 def make_roi_df(roi_names, subjs, update=False):
     if update:
-        df = pd.read_csv("%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root)
+        df = pd.read_csv(
+            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+        )
     else:
         df = pd.DataFrame()
 
     for subj in subjs:
         try:
-            subj_df = pd.read_csv("%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv" % (args.output_root, subj))
+            subj_df = pd.read_csv(
+                "%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv"
+                % (args.output_root, subj)
+            )
         except FileNotFoundError:
             subj_df = pd.DataFrame(
-                columns = [
+                columns=[
                     "voxel_idx",
                     "var_clip",
                     "var_resnet",
@@ -398,14 +404,30 @@ def make_roi_df(roi_names, subjs, update=False):
                     "uv_diff",
                     "uv_diff_nc",
                     "joint",
-                    "subj"
-                ] + roi_names
+                    "subj",
+                ]
+                + roi_names
             )
-                
-            joint_var = load_model_performance(model="resnet50_bottleneck", output_root=args.output_root, subj=subj, measure="rsq")
-            clip_var = load_model_performance(model="clip", output_root=args.output_root, subj=subj, measure="rsq")
-            resnet_var = load_model_performance(model="resnet50_bottleneck", output_root=args.output_root, subj=subj, measure="rsq")
-            nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
+
+            joint_var = load_model_performance(
+                model="resnet50_bottleneck",
+                output_root=args.output_root,
+                subj=subj,
+                measure="rsq",
+            )
+            clip_var = load_model_performance(
+                model="clip", output_root=args.output_root, subj=subj, measure="rsq"
+            )
+            resnet_var = load_model_performance(
+                model="resnet50_bottleneck",
+                output_root=args.output_root,
+                subj=subj,
+                measure="rsq",
+            )
+            nc = np.load(
+                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                % (args.output_root, subj, subj)
+            )
 
             u_clip = joint_var - resnet_var
             u_resnet = joint_var - clip_var
@@ -421,7 +443,7 @@ def make_roi_df(roi_names, subjs, update=False):
                     vd["uv_clip"] = u_clip[i]
                     vd["uv_resnet"] = u_resnet[i]
                     vd["uv_diff"] = u_clip[i] - u_resnet[i]
-                    vd["uv_diff_nc"] = u_clip[i]/nc[i] - u_resnet[i]/nc[i]
+                    vd["uv_diff_nc"] = u_clip[i] / nc[i] - u_resnet[i] / nc[i]
                     vd["joint"] = joint_var[i]
                     vd["subj"] = subj
                     subj_df = subj_df.append(vd, ignore_index=True)
@@ -433,13 +455,17 @@ def make_roi_df(roi_names, subjs, update=False):
 
             for roi_name in roi_names:
                 if roi_name == "language":
-                    lang_ROI = np.load("%s/output/voxels_masks/language_ROIs.npy" % args.output_root, allow_pickle=True).item()
-                    roi_volume = lang_ROI['subj%02d' % subj]
+                    lang_ROI = np.load(
+                        "%s/output/voxels_masks/language_ROIs.npy" % args.output_root,
+                        allow_pickle=True,
+                    ).item()
+                    roi_volume = lang_ROI["subj%02d" % subj]
                     roi_volume = np.swapaxes(roi_volume, 0, 2)
 
-                else:            
+                else:
                     roi = nib.load(
-                        "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj%02d/func1pt8mm/roi/%s.nii.gz" % (subj, roi_name)
+                        "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj%02d/func1pt8mm/roi/%s.nii.gz"
+                        % (subj, roi_name)
                     )
                     roi_volume = roi.get_fdata()
                 roi_vals = roi_volume[cortical_mask]
@@ -451,12 +477,19 @@ def make_roi_df(roi_names, subjs, update=False):
                 except KeyError:
                     roi_labels = [roi_label_dict[str(int(i))] for i in roi_vals]
                 # print(np.array(list(df["voxel_idx"])).astype(int))
-                subj_df[roi_name] = np.array(roi_labels)[np.array(list(subj_df["voxel_idx"])).astype(int)]
-            
-            subj_df.to_csv("%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv" % (args.output_root, subj))
+                subj_df[roi_name] = np.array(roi_labels)[
+                    np.array(list(subj_df["voxel_idx"])).astype(int)
+                ]
+
+            subj_df.to_csv(
+                "%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv"
+                % (args.output_root, subj)
+            )
         df = pd.concat([df, subj_df])
-        
-    df.to_csv("%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root)
+
+    df.to_csv(
+        "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+    )
     return df
 
 
@@ -559,20 +592,23 @@ if __name__ == "__main__":
                 % (args.output_root, args.subj, m),
                 pca.components_,
             )
-    
+
     if args.group_weight_analysis:
         from util.data_util import load_model_performance, fill_in_nan_voxels
         from util.util import zscore
-        
+
         models = ["clip"]
-        subjs = [1,2,5,7]
+        subjs = [1, 2, 5, 7]
         num_pc = 20
         best_voxel_n = 20000
         # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
         for m in models:
             print(m)
             try:
-                group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
+                group_w = np.load(
+                    "%s/output/pca/weight_matrix_best_%d.npy"
+                    % (args.output_root, best_voxel_n)
+                )
             except FileNotFoundError:
                 group_w = []
                 for subj in subjs:
@@ -585,33 +621,57 @@ if __name__ == "__main__":
                     # print("NaNs? Finite?:")
                     # print(np.any(np.isnan(w)))
                     # print(np.all(np.isfinite(w)))
-                    rsq = load_model_performance(m, output_root=args.output_root, subj=subj, measure="rsq")
-                    nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
+                    rsq = load_model_performance(
+                        m, output_root=args.output_root, subj=subj, measure="rsq"
+                    )
+                    nc = np.load(
+                        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                        % (args.output_root, subj, subj)
+                    )
                     corrected_rsq = rsq / nc
-                    threshold = corrected_rsq[np.argsort(corrected_rsq)[-best_voxel_n]] # get the threshold for the best 10000 voxels
+                    threshold = corrected_rsq[
+                        np.argsort(corrected_rsq)[-best_voxel_n]
+                    ]  # get the threshold for the best 10000 voxels
                     print(threshold)
-                    group_w.append(w[:, corrected_rsq>=threshold])
-                    np.save("%s/output/pca/pca_voxels_subj%02d_best_%d.npy" % (args.output_root, subj, best_voxel_n), corrected_rsq>=threshold)
+                    group_w.append(w[:, corrected_rsq >= threshold])
+                    np.save(
+                        "%s/output/pca/pca_voxels_subj%02d_best_%d.npy"
+                        % (args.output_root, subj, best_voxel_n),
+                        corrected_rsq >= threshold,
+                    )
                 group_w = np.hstack(group_w)
-                np.save("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n), group_w)
+                np.save(
+                    "%s/output/pca/weight_matrix_best_%d.npy"
+                    % (args.output_root, best_voxel_n),
+                    group_w,
+                )
             pca = PCA(n_components=num_pc, svd_solver="full")
             pca.fit(group_w)
             np.save(
-                "%s/output/pca/%s_pca_group_components.npy"
-                % (args.output_root, m),
+                "%s/output/pca/%s_pca_group_components.npy" % (args.output_root, m),
                 pca.components_,
             )
             idx = 0
             for subj in subjs:
-                subj_mask = np.load("%s/output/pca/pca_voxels_subj%02d_best_%d.npy" % (args.output_root, subj, best_voxel_n))
+                subj_mask = np.load(
+                    "%s/output/pca/pca_voxels_subj%02d_best_%d.npy"
+                    % (args.output_root, subj, best_voxel_n)
+                )
                 print(len(subj_mask))
                 subj_pca = np.zeros((num_pc, len(subj_mask)))
-                subj_pca[:, subj_mask] = zscore(pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1)
-                if not os.path.exists("%s/output/pca/subj%02d" % (args.output_root, subj)):
+                subj_pca[:, subj_mask] = zscore(
+                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+                )
+                if not os.path.exists(
+                    "%s/output/pca/subj%02d" % (args.output_root, subj)
+                ):
                     os.mkdir("%s/output/pca/subj%02d" % (args.output_root, subj))
-                np.save("%s/output/pca/subj%02d/%s_pca_group_components.npy" % (args.output_root, subj, m), subj_pca)
+                np.save(
+                    "%s/output/pca/subj%02d/%s_pca_group_components.npy"
+                    % (args.output_root, subj, m),
+                    subj_pca,
+                )
                 idx += np.sum(subj_mask)
-            
 
     if args.plot_image_wise_performance:
         # scatter plot by images
@@ -829,78 +889,96 @@ if __name__ == "__main__":
 
         roi_names = list(roi_name_dict.keys())
         if not args.rerun_df:
-            df = pd.read_csv("%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root)
+            df = pd.read_csv(
+                "%s/output/clip/performance_by_roi_df_nc_corrected.csv"
+                % args.output_root
+            )
         else:
             df = make_roi_df(roi_names, subjs=[1, 2, 5, 7])
 
-        for roi_name in roi_names:  
+        for roi_name in roi_names:
             plt.figure(figsize=(50, 20))
-            ax = sns.barplot(x=roi_name, y="uv_diff", data=df, dodge=True, order=list(roi_name_dict[roi_name].values()))
+            ax = sns.barplot(
+                x=roi_name,
+                y="uv_diff",
+                data=df,
+                dodge=True,
+                order=list(roi_name_dict[roi_name].values()),
+            )
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/uv_diff_%s.png" % roi_name)
-        
-        for roi_name in roi_names:  
+
+        for roi_name in roi_names:
             plt.figure(figsize=(50, 20))
-            ax = sns.barplot(x=roi_name, y="uv_diff_nc", data=df, dodge=True, order=list(roi_name_dict[roi_name].values()))
+            ax = sns.barplot(
+                x=roi_name,
+                y="uv_diff_nc",
+                data=df,
+                dodge=True,
+                order=list(roi_name_dict[roi_name].values()),
+            )
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/uv_nc_diff_%s.png" % roi_name)
-    
+
     if args.group_analysis_by_roi:
         from scipy.stats import ttest_rel
         from util.util import ztransform
 
-        roa_list = [("floc-bodies", "EBA"),
-                ("floc-faces", "FFA-1"),
-                ("floc-places", "RSC"),
-                ("floc-words", "VWFA-1"),
-                ("HCP_MMP1", "MST"),
-                ("HCP_MMP1", "MT"),
-                ("HCP_MMP1", "PH"),
-                ("HCP_MMP1", "TPOJ2"),
-                ("HCP_MMP1", "TPOJ3"),
-                ("HCP_MMP1", "PGp"),
-                ("HCP_MMP1", "V4t"),
-                ("HCP_MMP1", "FST"),
-                ("language", "AG"),
-                ("prf-visualrois", "V1v")
-                ]
+        roa_list = [
+            ("floc-bodies", "EBA"),
+            ("floc-faces", "FFA-1"),
+            ("floc-places", "RSC"),
+            ("floc-words", "VWFA-1"),
+            ("HCP_MMP1", "MST"),
+            ("HCP_MMP1", "MT"),
+            ("HCP_MMP1", "PH"),
+            ("HCP_MMP1", "TPOJ2"),
+            ("HCP_MMP1", "TPOJ3"),
+            ("HCP_MMP1", "PGp"),
+            ("HCP_MMP1", "V4t"),
+            ("HCP_MMP1", "FST"),
+            ("language", "AG"),
+            ("prf-visualrois", "V1v"),
+        ]
 
-        # roa_list = [] 
+        # roa_list = []
         # roi_names = list(roi_name_dict.keys())
         # for roi_name in roi_names:
         #     if df[roi]
 
-        df = pd.read_csv("%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root)
-        subjs = [1,2,5,7]
+        df = pd.read_csv(
+            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+        )
+        subjs = [1, 2, 5, 7]
         roi_by_subj_mean_clip = np.zeros((4, len(roa_list)))
         roi_by_subj_mean_resnet = np.zeros((4, len(roa_list)))
         for s, subj in enumerate(subjs):
-            nc = np.load("%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy" % (args.output_root, subj, subj))
-            varc = df[df["subj"]==subj]["var_clip"] / nc[nc>=0.1]
-            varr = df[df["subj"]==subj]["var_resnet"] / nc[nc>=0.1]
+            nc = np.load(
+                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                % (args.output_root, subj, subj)
+            )
+            varc = df[df["subj"] == subj]["var_clip"] / nc[nc >= 0.1]
+            varr = df[df["subj"] == subj]["var_resnet"] / nc[nc >= 0.1]
             tmp_c = ztransform(varc)
             tmp_r = ztransform(varr)
 
             means_c, means_r = [], []
             for i, (roi_name, roi_lab) in enumerate(roa_list):
-                roiv = df[roi_name]==roi_lab
+                roiv = df[roi_name] == roi_lab
                 roi_by_subj_mean_clip[s, i] = np.mean(tmp_c[roiv])
                 roi_by_subj_mean_resnet[s, i] = np.mean(tmp_r[roiv])
 
-        stats = ttest_rel(roi_by_subj_mean_clip, roi_by_subj_mean_resnet, axis=0, nan_policy='propagate', alternative='two-sided')
+        stats = ttest_rel(
+            roi_by_subj_mean_clip,
+            roi_by_subj_mean_resnet,
+            axis=0,
+            nan_policy="propagate",
+            alternative="two-sided",
+        )
         print(stats)
         results = {}
         for i, r in enumerate(roa_list):
             results[r] = (stats[0][i], stats[1][i])
-        for k,v in results.items():
+        for k, v in results.items():
             print(k, v)
         # print(roa_list)
-    
-
-            
-
-
-
-
-
-        
