@@ -144,3 +144,17 @@ def extract_test_image_ids(
     return test_image_id, test_idx
 
 
+def extract_single_roi(roi_name, output_dir, subj):
+    from util.model_config import roi_name_dict
+    
+    output_masks, roi_labels = list(), list()
+    roi_mask = np.load(
+        "%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+        % (output_dir, subj, subj, roi_name)
+    )
+    roi_dict = roi_name_dict[roi_name]
+    for k, v in roi_dict.items():
+        if k > 0:
+            output_masks.append(roi_mask == k)
+            roi_labels.append(v)
+    return output_masks, roi_labels

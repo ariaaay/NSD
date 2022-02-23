@@ -5,6 +5,7 @@ from compute_feature_rdm import computeID
 from sklearn.cluster import SpectralClustering, SpectralBiclustering
 
 from util.model_config import *
+from util.data_util import extract_single_roi
 import json
 
 
@@ -32,22 +33,7 @@ def add_roi_to_voxel_selected(roi_list, voxel_mask):
     return voxel_mask
 
 
-def extract_single_roi(roi_name):
-    output_masks, roi_labels = list(), list()
-    roi_mask = np.load(
-        "%s/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-        % (args.output_dir, args.subj, args.subj, roi_name)
-    )
-    roi_dict = roi_name_dict[roi_name]
-    for k, v in roi_dict.items():
-        if k > 0:
-            output_masks.append(roi_mask == k)
-            roi_labels.append(v)
-    return output_masks, roi_labels
-
-
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--subj", type=int, default=1)
     parser.add_argument(
@@ -77,7 +63,7 @@ if __name__ == "__main__":
         else:
             print("extracting RDMs for these rois: " + str(args.single_roi))
             for roi in args.single_roi:
-                roi_masks, roi_labels = extract_single_roi(roi)
+                roi_masks, roi_labels = extract_single_roi(roi, args.output_dir, args.subj)
                 for i, m in enumerate(roi_masks):
                     try:
                         rdm = np.load(
