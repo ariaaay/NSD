@@ -567,7 +567,7 @@ if __name__ == "__main__":
         models = ["clip"]
         subjs = [1,2,5,7]
         num_pc = 20
-        best_voxel_n = 10000
+        best_voxel_n = 20000
         # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
         for m in models:
             print(m)
@@ -604,6 +604,7 @@ if __name__ == "__main__":
             idx = 0
             for subj in subjs:
                 subj_mask = np.load("%s/output/pca/pca_voxels_subj%02d_best_%d.npy" % (args.output_root, subj, best_voxel_n))
+                print(len(subj_mask))
                 subj_pca = np.zeros((num_pc, len(subj_mask)))
                 subj_pca[:, subj_mask] = zscore(pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1)
                 if not os.path.exists("%s/output/pca/subj%02d" % (args.output_root, subj)):

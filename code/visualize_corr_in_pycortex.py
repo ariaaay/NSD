@@ -13,6 +13,7 @@ from util.data_util import load_model_performance
 
 
 def project_vals_to_3d(vals, mask):
+    print("projecting: " + str(len(vals)))
     all_vals = np.zeros(mask.shape)
     all_vals[mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
@@ -23,7 +24,6 @@ def visualize_layerwise_max_corr_results(
     model,
     layer_num,
     subj=1,
-    task=None,
     threshold=85,
     mask_with_significance=False,
     start_with_zero=True,
@@ -65,8 +65,8 @@ def visualize_layerwise_max_corr_results(
     if mask_with_significance:
         if args.sig_method == "negtail_fdr":
             sig_mask = np.load(
-                "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
-                % (output_root, subj, model, task, "negtail_fdr", 0.05)
+                "%s/output/voxels_masks/subj%d/%s_%s_%0.2f.npy"
+                % (output_root, subj, model, "negtail_fdr", 0.05)
             )
         else:
             pvalues = load_model_performance(
@@ -100,7 +100,6 @@ def make_volume(
     model=None,
     vals=None,
     model2=None,
-    task=None,
     mask_with_significance=False,
     output_root=".",
     measure="corr",
@@ -128,30 +127,30 @@ def make_volume(
             for model in model_list:
                 try:
                     vals = load_model_performance(
-                        model, task, output_root=output_root, subj=subj, measure=measure
+                        model, output_root=output_root, subj=subj, measure=measure
                     )
                     break
                 except FileNotFoundError:
                     continue
         else:
             vals = load_model_performance(
-                model, task, output_root=output_root, subj=subj, measure=measure
+                model, output_root=output_root, subj=subj, measure=measure
             )
 
         if model2 is not None:  # for variance paritioning
             vals2 = load_model_performance(
-                model2, task, output_root=output_root, subj=subj, measure=measure
+                model2, output_root=output_root, subj=subj, measure=measure
             )
             vals = vals - vals2
 
         print("model:" + model)
         print("max:" + str(max(vals)))
-
+        print("val length:" + str(len(vals)))
     if mask_with_significance:
         if args.sig_method == "negtail_fdr":
             sig_mask = np.load(
-                "%s/output/voxels_masks/subj%d/%s_%s_%s_%0.2f.npy"
-                % (output_root, subj, model, task, "negtail_fdr", 0.05)
+                "%s/output/voxels_masks/subj%d/%s_%s_%0.2f.npy"
+                % (output_root, subj, model, "negtail_fdr", 0.05)
             )
 
         elif (args.sig_method == "nc") and (measure == "rsq"):
@@ -160,11 +159,11 @@ def make_volume(
             if model2 is None:
                 sig_mask = vals >= 0 # this is plotting the differences therefore we dont threshold here
             else:
-                sig_mask = vals>=0.1
+                sig_mask = vals >= 0.1
 
         else:
             pvalues = load_model_performance(
-                model, task, output_root=output_root, subj=subj, measure="pvalue"
+                model, output_root=output_root, subj=subj, measure="pvalue"
             )
             sig_mask = pvalues <= 0.05
 
@@ -198,13 +197,7 @@ def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
             "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
             % (output_root, subj, subj)
         )
-
-    if mask_with_significance:
-        sig_mask = np.load(
-            "%s/output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
-            % (output_root, subj, "negtail_fdr", 0.05)
-        )
-        vals[~sig_mask] = np.nan
+    
     # projecting value back to 3D space
     all_vals = project_vals_to_3d(vals, cortical_mask)
 
@@ -239,12 +232,6 @@ def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
     pc_3d = []
     for i in range(3):
         tmp = PCs[i, :] / np.max(PCs_zscore[i, :]) * 255
-        if mask_with_significance:
-            sig_mask = np.load(
-                "%s/output/voxels_masks/subj%d/taskrepr_superset_mask_%s_%0.02f.npy"
-                % (output_root, subj, "negtail_fdr", 0.05)
-            )
-            tmp[~sig_mask] = 0
         # projecting value back to 3D space
         pc_3d.append(project_vals_to_3d(tmp, cortical_mask))
 

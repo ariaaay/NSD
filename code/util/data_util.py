@@ -1,21 +1,22 @@
 import pickle
+from matplotlib.pyplot import fill
 import numpy as np
 import pandas as pd
 from torch import neg
 from util.model_config import COCO_cat, COCO_super_cat
 
-def fill_in_nan_voxels(vals, subj, output_root):
+def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
     try:  # some subject has zeros voxels masked out
         nonzero_mask = np.load(
             "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
             % (output_root, subj, subj)
         )
         if type(vals) == list:
-            tmp = np.zeros(nonzero_mask.shape)
+            tmp = np.zeros(nonzero_mask.shape)  + fill_in
             tmp[nonzero_mask] = vals
             vals = tmp
         elif len(vals.shape) == 2:
-            tmp = np.zeros((vals.shape[0], len(nonzero_mask)))
+            tmp = np.zeros((vals.shape[0], len(nonzero_mask))) + fill_in
             tmp[:, nonzero_mask] = vals
             vals = tmp
     except FileNotFoundError:
@@ -23,34 +24,29 @@ def fill_in_nan_voxels(vals, subj, output_root):
 
     return vals
 
-def load_model_performance(model, task=None, output_root=".", subj=1, measure="corr"):
+def load_model_performance(model, output_root=".", subj=1, measure="corr"):
     if measure == "pvalue":
         measure = "corr"
         pvalue = True
     else:
         pvalue = False
 
-    if task is None:
-        out = np.load(
-            "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
-            % (output_root, subj, measure, model),
-            allow_pickle=True,
-        )
-    else:
-        out = np.load(
-            "%s/output/encoding_results/subj%d/%s_%s_%s_whole_brain.p"
-            % (output_root, subj, measure, model, task),
-            allow_pickle=True,
-        )
+    out = np.load(
+        "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+        % (output_root, subj, measure, model),
+        allow_pickle=True,
+    )
+    
     if measure == "corr":
-        output = np.array(out)[:, 0]
         if pvalue:
-            output = np.array(out)[:, 1]
-        return output
+            out = np.array(out)[:, 1]
+            out = fill_in_nan_voxels(out, subj, output_root, fill_in=1)
+            return out
+        else:
+            out = np.array(out)[:, 0]
     
     out = fill_in_nan_voxels(out, subj, output_root)
-
-    return np.array(out)
+    return out
 
 
 def load_top1_objects_in_COCO(cid):
