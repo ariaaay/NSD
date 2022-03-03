@@ -145,6 +145,15 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
     )
 
 
+def extract_emb_keywords(embedding, activations, common_words):
+    scores = np.mean(activations.squeeze() @ embedding, axis=1)
+    best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
+    worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
+    print(best_list)
+    print(worst_list)
+    return best_list, worst_list
+
+
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
     sample_corr1 = compute_sample_performance(
         model=model1, output_dir=args.output_root, masking=masking, measure=measure
@@ -536,6 +545,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
+    parser.add_argument("--PC_visualization", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -982,3 +992,43 @@ if __name__ == "__main__":
         for k, v in results.items():
             print(k, v)
         # print(roa_list)
+
+    if args.PC_visualization:
+        subjs = [1, 2, 5, 7]
+        num_pc = 20
+        best_voxel_n = 20000
+
+        with open("output/1000eng.txt") as f:
+            out = f.readlines()
+        common_words = ["photo of " + w[:-1] for w in out]
+        try:
+            activations = np.load(
+                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                % args.output_root
+            )
+        except FileNotFoundError:
+            from nltk.corpus import wordnet
+            import clip
+            import torch
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model, _ = clip.load("ViT-B/32", device=device)
+            activations = extract_text_activations(model, common_words)
+            np.save(
+                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                % args.output_root,
+                activations,
+            )
+        group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
+        pca = PCA(n_components=num_pc, svd_solver="full")
+        pca.fit(group_w.T)
+        np.save(
+                "%s/output/pca/%s_pca_group_components.npy" % (args.output_root, m),
+                pca.components_,
+            )
+        # each components should be 20 x 512?
+        keywords = dict()
+        for i in range(pca.components_.shape[0]):
+            keywords[i] = extract_emb_keywords(pca.components_[i, :], activations, common_words)
+            
+        np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
