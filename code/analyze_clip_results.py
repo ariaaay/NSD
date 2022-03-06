@@ -14,13 +14,13 @@ from tqdm import tqdm
 from PIL import Image
 from sklearn.decomposition import PCA
 
-import torch
+# import torch
 import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import *
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def compute_sample_performance(
@@ -82,21 +82,6 @@ def compute_sample_performance(
     return sample_corrs
 
 
-def extract_text_scores(word_lists, weight):
-    phrase_lists = ["photo of " + w[:-1] for w in word_lists]
-    model, _ = clip.load("ViT-B/32", device=device)
-    activations = []
-    for phrase in phrase_lists:
-        text = clip.tokenize([phrase]).to(device)
-        with torch.no_grad():
-            activations.append(model.encode_text(text).data.numpy())
-
-    scores = np.mean(activations.squeeze() @ weight, axis=1)
-    print(np.array(word_lists)[np.argsort(scores)[:30]])
-    print(np.array(word_lists)[np.argsort(scores)[::-1][:30]])
-    return np.array(scores)
-
-
 def extract_text_activations(model, word_lists):
     activations = []
     for word in word_lists:
@@ -146,12 +131,14 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
 
 
 def extract_emb_keywords(embedding, activations, common_words):
-    scores = np.mean(activations.squeeze() @ embedding, axis=1)
+    scores = activations.squeeze() @ embedding
     best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
     worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
-    print(best_list)
-    print(worst_list)
-    return best_list, worst_list
+    # print(best_list)
+    # print(worst_list)
+    best_list_word_only = [w.split(" ")[-1] for w in best_list]
+    worst_list_word_only = [w.split(" ")[-1] for w in worst_list]
+    return best_list_word_only, worst_list_word_only
 
 
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
@@ -545,7 +532,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
-    parser.add_argument("--PC_visualization", default=False, action="store_true")
+    parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -721,7 +708,7 @@ if __name__ == "__main__":
         coarse_level_semantic_analysis(subj=1)
 
     if args.extract_keywords_for_roi:
-        with open("output/1000eng.txt") as f:
+        with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
             out = f.readlines()
         common_words = ["photo of " + w[:-1] for w in out]
         try:
@@ -993,12 +980,12 @@ if __name__ == "__main__":
             print(k, v)
         # print(roa_list)
 
-    if args.PC_visualization:
+    if args.pc_text_visualization:
         subjs = [1, 2, 5, 7]
         num_pc = 20
         best_voxel_n = 20000
 
-        with open("output/1000eng.txt") as f:
+        with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
             out = f.readlines()
         common_words = ["photo of " + w[:-1] for w in out]
         try:
@@ -1023,12 +1010,19 @@ if __name__ == "__main__":
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(group_w.T)
         np.save(
-                "%s/output/pca/%s_pca_group_components.npy" % (args.output_root, m),
+                "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
                 pca.components_,
             )
         # each components should be 20 x 512?
         keywords = dict()
         for i in range(pca.components_.shape[0]):
             keywords[i] = extract_emb_keywords(pca.components_[i, :], activations, common_words)
+        
+        for k, v in keywords.items():
+            print("****** PC " + str(k) + " ******")
+            print("-Best:")
+            print(v[0])
+            print("-Worst:")
+            print(v[1])
             
         np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
