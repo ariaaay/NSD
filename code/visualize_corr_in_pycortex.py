@@ -13,7 +13,7 @@ from util.data_util import load_model_performance
 
 
 def project_vals_to_3d(vals, mask):
-    print("projecting: " + str(len(vals)))
+    # print("projecting: " + str(len(vals)))
     all_vals = np.zeros(mask.shape)
     all_vals[mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
