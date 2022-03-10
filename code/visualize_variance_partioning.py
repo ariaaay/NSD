@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import cortex
 
-from visualize_corr_in_pycortex import project_vals_to_3d
+from visualize_in_pycortex import project_vals_to_3d
 from util.data_util import load_model_performance
 
 
