@@ -1,6 +1,5 @@
-"This scripts visualize prediction performance with Pycortex."
+"This scripts visualize prediction performance with pycortex."
 
-import pickle
 from nibabel.volumeutils import working_type
 import numpy as np
 
@@ -8,16 +7,25 @@ import argparse
 from numpy.core.fromnumeric import nonzero
 from tqdm import tqdm
 
-from util.model_config import model_features
 from util.data_util import load_model_performance
 
+OUTPUT_ROOT = "/user_data/yuanw3/project_outputs/NSD"
 
 def project_vals_to_3d(vals, mask):
-    print("projecting: " + str(len(vals)))
     all_vals = np.zeros(mask.shape)
     all_vals[mask] = vals
     all_vals = np.swapaxes(all_vals, 0, 2)
     return all_vals
+
+
+def project_vols_to_mni(subj, vol):
+    import cortex
+    xfm = "func1pt8_to_anat0pt8_autoFSbbr"
+    # template = "func1pt8_to_anat0pt8_autoFSbbr"
+    mni_transform = cortex.db.get_mnixfm("subj%02d" % subj, xfm)
+    mni_vol = cortex.mni.transform_to_mni(vol, mni_transform)
+    mni_data = mni_vol.get_fdata().T
+    return mni_data
 
 
 def visualize_layerwise_max_corr_results(
@@ -34,7 +42,7 @@ def visualize_layerwise_max_corr_results(
             continue
         val_array.append(
             load_model_performance(
-                model="%s_%d" % (model, i), output_root=output_root, subj=args.subj
+                model="%s_%d" % (model, i), output_root=OUTPUT_ROOT, subj=args.subj
             )
         )
 
@@ -48,30 +56,21 @@ def visualize_layerwise_max_corr_results(
                 int(np.nonzero(val_array[:, v] >= threshold_performance[v])[0][0]) + 1
             )
             # print(layeridx[i])
-    try:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-            % (output_root, args.subj, args.subj)
-        )
-    except FileNotFoundError:
-        print("loading old mask...")
-        # cortical_mask = np.load(
-        #     "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
-        #     % (output_root, args.subj, args.subj)
-        # )
-    except:
-        pass
+    cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (OUTPUT_ROOT, args.subj, args.subj)
+    )
 
     if mask_with_significance:
         if args.sig_method == "negtail_fdr":
             sig_mask = np.load(
                 "%s/output/voxels_masks/subj%d/%s_%s_%0.2f.npy"
-                % (output_root, subj, model, "negtail_fdr", 0.05)
+                % (OUTPUT_ROOT, subj, model, "negtail_fdr", 0.05)
             )
         else:
             pvalues = load_model_performance(
                 model="%s_%d" % (model, layer_num - 1),
-                output_root=output_root,
+                output_root=OUTPUT_ROOT,
                 subj=args.subj,
                 measure="pvalue",
             )
@@ -101,7 +100,6 @@ def make_volume(
     vals=None,
     model2=None,
     mask_with_significance=False,
-    output_root=".",
     measure="corr",
 ):
     if measure == "corr":
@@ -115,7 +113,7 @@ def make_volume(
 
     cortical_mask = np.load(
         "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-        % (output_root, subj, subj)
+        % (OUTPUT_ROOT, subj, subj)
     )
 
     # load correlation scores of cortical voxels
@@ -127,36 +125,35 @@ def make_volume(
             for model in model_list:
                 try:
                     vals = load_model_performance(
-                        model, output_root=output_root, subj=subj, measure=measure
+                        model, output_root=OUTPUT_ROOT, subj=subj, measure=measure
                     )
                     break
                 except FileNotFoundError:
                     continue
         else:
             vals = load_model_performance(
-                model, output_root=output_root, subj=subj, measure=measure
+                model, output_root=OUTPUT_ROOT, subj=subj, measure=measure
             )
 
         if model2 is not None:  # for variance paritioning
             vals2 = load_model_performance(
-                model2, output_root=output_root, subj=subj, measure=measure
+                model2, output_root=OUTPUT_ROOT, subj=subj, measure=measure
             )
             vals = vals - vals2
 
         print("model:" + model)
         print("max:" + str(max(vals)))
-        print("val length:" + str(len(vals)))
     if mask_with_significance:
         if args.sig_method == "negtail_fdr":
             sig_mask = np.load(
                 "%s/output/voxels_masks/subj%d/%s_%s_%0.2f.npy"
-                % (output_root, subj, model, "negtail_fdr", 0.05)
+                % (OUTPUT_ROOT, subj, model, "negtail_fdr", 0.05)
             )
 
         elif (args.sig_method == "nc") and (measure == "rsq"):
             nc = np.load(
                 "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-                % (output_root, subj, subj)
+                % (OUTPUT_ROOT, subj, subj)
             )
             vals = vals / nc
             if model2 is None:
@@ -168,7 +165,7 @@ def make_volume(
 
         else:
             pvalues = load_model_performance(
-                model, output_root=output_root, subj=subj, measure="pvalue"
+                model, output=OUTPUT_ROOT, subj=subj, measure="pvalue"
             )
             sig_mask = pvalues <= 0.05
 
@@ -188,20 +185,15 @@ def make_volume(
     return vol_data
 
 
-def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
+def make_pc_volume(subj, vals):
+    import cortex
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
-    try:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-            % (output_root, subj, subj)
-        )
-    except FileNotFoundError:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
-            % (output_root, subj, subj)
-        )
+    cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (OUTPUT_ROOT, subj, subj)
+    )
 
     # projecting value back to 3D space
     all_vals = project_vals_to_3d(vals, cortical_mask)
@@ -218,21 +210,15 @@ def make_pc_volume(subj, vals, mask_with_significance=False, output_root="."):
     return vol_data
 
 
-def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
+def make_3pc_volume(subj, PCs, mask_with_significance=False):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
 
-    try:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-            % (output_root, subj, subj)
-        )
-    except FileNotFoundError:
-        cortical_mask = np.load(
-            "%s/output/voxels_masks/subj%d/old/cortical_mask_subj%02d.npy"
-            % (output_root, subj, subj)
-        )
+    cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (OUTPUT_ROOT, subj, subj)
+    )
 
     pc_3d = []
     for i in range(3):
@@ -273,9 +259,7 @@ def make_3pc_volume(subj, PCs, mask_with_significance=False, output_root="."):
 
 
 def make_roi_volume(roi_name):
-    roi = nib.load(
-        "%s/output/voxels_masks/subj%d/%s.nii.gz" % (output_root, args.subj, roi_name)
-    )
+    roi = nib.load("%s/%s.nii.gz" % (ROI_FILE_ROOT, roi_name))
     roi_data = roi.get_fdata()
     roi_data = np.swapaxes(roi_data, 0, 2)
 
@@ -311,9 +295,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.on_cluster:
-        output_root = "/user_data/yuanw3/project_outputs/NSD"
+        ROI_FILE_ROOT = (
+            "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj%02d/func1pt8mm/roi"
+            % args.subj
+        )
     else:
-        output_root = "."
+        OUTPUT_ROOT = "."
+        ROI_FILE_ROOT = "./output/voxels_masks/subj%01d" % args.subj
 
     visual_roi_volume = make_roi_volume("prf-visualrois")
     ecc_roi_volume = make_roi_volume("prf-eccrois")
@@ -326,7 +314,7 @@ if __name__ == "__main__":
     sulc_volume = make_roi_volume("corticalsulc")
 
     lang_ROI = np.load(
-        "output/voxels_masks/language_ROIs.npy", allow_pickle=True
+        "./output/voxels_masks/language_ROIs.npy", allow_pickle=True
     ).item()
     language_vals = lang_ROI["subj%02d" % args.subj]
     language_volume = cortex.Volume(
@@ -340,15 +328,15 @@ if __name__ == "__main__":
         vmax=np.max(language_vals),
     )
 
-    # ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (output_root, args.subj))
+    # ev_vals = np.load("%s/output/evs_subj%02d_zscored.npy" % (OUTPUT_ROOT, args.subj))
     # ev_volume = make_volume(subj=args.subj, vals=ev_vals, measure="rsq")
 
-    # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (output_root, args.subj))
+    # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (OUTPUT_ROOT, args.subj))
     # old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
 
     nc = np.load(
         "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-        % (output_root, args.subj, args.subj)
+        % (OUTPUT_ROOT, args.subj, args.subj)
     )
     nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
 
@@ -371,14 +359,12 @@ if __name__ == "__main__":
     volumes["clip-ViT-last"] = make_volume(
         subj=args.subj,
         model="clip",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
 
     volumes["clip-text-last"] = make_volume(
         subj=args.subj,
         model="clip_text",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
 
@@ -386,21 +372,18 @@ if __name__ == "__main__":
         subj=args.subj,
         # model="convnet_res50",
         model="resnet50_bottleneck",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
 
     volumes["BERT-last"] = make_volume(
         subj=args.subj,
         model="bert_layer_13",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
     )
 
     volumes["clip-ViT-last R^2"] = make_volume(
         subj=args.subj,
         model="clip",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -408,7 +391,6 @@ if __name__ == "__main__":
     volumes["bert-13 R^2"] = make_volume(
         subj=args.subj,
         model="bert_layer_13",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -417,7 +399,6 @@ if __name__ == "__main__":
         subj=args.subj,
         # model="convnet_res50",
         model="resnet50_bottleneck",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -431,7 +412,6 @@ if __name__ == "__main__":
             "resnet50_bottleneck_clip",
         ],
         model2="clip",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -445,7 +425,6 @@ if __name__ == "__main__":
             "resnet50_bottleneck_clip",
         ],
         model2="resnet50_bottleneck",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -454,7 +433,6 @@ if __name__ == "__main__":
         subj=args.subj,
         model=["clip_bert_layer_13", "bert_layer_13_clip"],
         model2="bert_layer_13",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -463,7 +441,6 @@ if __name__ == "__main__":
         subj=args.subj,
         model=["clip_bert_layer_13", "bert_layer_13_clip"],
         model2="clip",
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -471,7 +448,6 @@ if __name__ == "__main__":
     volumes["clip&bert13"] = make_volume(
         subj=args.subj,
         model=["clip_bert_layer_13", "bert_layer_13_clip"],
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -479,7 +455,6 @@ if __name__ == "__main__":
     volumes["clip&resnet50 R^2"] = make_volume(
         subj=args.subj,
         model=["clip_resnet50_bottleneck", "resnet50_bottleneck_clip"],
-        output_root=output_root,
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -488,35 +463,30 @@ if __name__ == "__main__":
         volumes["clip_top1_object"] = make_volume(
             subj=args.subj,
             model="clip_top1_object",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["clip_all_objects"] = make_volume(
             subj=args.subj,
             model="clip_object",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["COCO categories"] = make_volume(
             subj=args.subj,
             model="cat",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["COCO super categories"] = make_volume(
             subj=args.subj,
             model="supcat",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         # volumes["CLIP&CLIP top 1"] = make_volume(
         #     subj=args.subj,
         #     model="clip_clip_top1_object",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         # )
 
@@ -524,7 +494,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="clip_clip_top1_object",
             model2="clip_top1_object",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -533,7 +502,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="clip_clip_top1_object",
             model2="clip",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -541,14 +509,12 @@ if __name__ == "__main__":
         # volumes["CLIP&Cat"] = make_volume(
         #     subj=args.subj,
         #     model="clip_cat",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         # )
 
         volumes["CLIP&Resnet50"] = make_volume(
             subj=args.subj,
             model="clip_resnet50_bottleneck",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
@@ -559,56 +525,48 @@ if __name__ == "__main__":
         #         volumes[model_name] = make_volume(
         #             subj=args.subj,
         #             model=model_name,
-        #             output_root=output_root,
         #             mask_with_significance=args.mask_sig,
         #         )
 
         volumes["clip-person-subset"] = make_volume(
             subj=args.subj,
             model="clip_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["clip-no-person-subset"] = make_volume(
             subj=args.subj,
             model="clip_no_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["resnet-person-subset"] = make_volume(
             subj=args.subj,
             model="resnet50_bottleneck_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["resnet-no-person-subset"] = make_volume(
             subj=args.subj,
             model="resnet50_bottleneck_no_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["cat-person-subset"] = make_volume(
             subj=args.subj,
             model="cat_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["clip-top1-person-subset"] = make_volume(
             subj=args.subj,
             model="clip_top1_object_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         volumes["clip-top1-no-person-subset"] = make_volume(
             subj=args.subj,
             model="clip_top1_object_no_person_subset",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
@@ -616,7 +574,6 @@ if __name__ == "__main__":
         #     volumes["clip-ViT-%s" % str(i + 1)] = make_volume(
         #         subj=args.subj,
         #         model="visual_layer_%d" % i,
-        #         output_root=output_root,
         #         mask_with_significance=args.mask_sig,
         #     )
 
@@ -624,7 +581,6 @@ if __name__ == "__main__":
         #     volumes["clip-text-%s" % str(i + 1)] = make_volume(
         #         subj=args.subj,
         #         model="text_layer_%d" % i,
-        #         output_root=output_root,
         #         mask_with_significance=args.mask_sig,
         #     )
 
@@ -632,20 +588,17 @@ if __name__ == "__main__":
         #     volumes["clip-RN-%s" % str(i + 1)] = make_volume(
         #         subj=args.subj,
         #         model="visual_layer_resnet_%d" % i,
-        #         output_root=output_root,
         #         mask_with_significance=args.mask_sig,
         #     )
         volumes["clip-RN-last"] = make_volume(
             subj=args.subj,
             model="clip_visual_resnet",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
         )
 
         # volumes["clip&bert13 R^2 - old"] = make_volume(
         #     subj=args.subj,
         #     model="clip_bert_layer_13_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -654,7 +607,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model=["resnet50_bottleneck_clip", "clip_resnet50_bottleneck"],
         #     model2="clip_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -662,7 +614,6 @@ if __name__ == "__main__":
         # volumes["clip-ViT-last R^2 - old"] = make_volume(
         #     subj=args.subj,
         #     model="clip_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -670,7 +621,6 @@ if __name__ == "__main__":
         # volumes["clip-ViT-last R^2 - old(rerun)"] = make_volume(
         #     subj=args.subj,
         #     model="clip_old_rerun",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -678,21 +628,18 @@ if __name__ == "__main__":
         # volumes["clip&resnet50 R^2 - old"] = make_volume(
         #     subj=args.subj,
         #     model="clip_convnet_res50",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
         # volumes["resnet50 - old"] = make_volume(
         #     subj=args.subj,
         #     model="resnet50_bottleneck",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         # )
 
         # volumes["bert-13 R^2 - old"] = make_volume(
         #     subj=args.subj,
         #     model="bert_layer_13_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -700,7 +647,6 @@ if __name__ == "__main__":
         # volumes["resnet50 R^2 - old"] = make_volume(
         #     subj=args.subj,
         #     model="resnet50_bottleneck",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -709,7 +655,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model=["resnet50_bottleneck_clip", "clip_resnet50_bottleneck"],
         #     model2="resnet50_bottleneck",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -717,7 +662,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model=["clip_bert_layer_13_old", "bert_layer_13_clip_old"],
         #     model2="bert_layer_13",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -726,7 +670,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model=["clip_bert_layer_13_old", "bert_layer_13_clip_old"],
         #     model2="clip_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -735,7 +678,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model="clip",
         #     model2="clip_old",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -744,7 +686,6 @@ if __name__ == "__main__":
         #     subj=args.subj,
         #     model="clip",
         #     model2="clip_old_rerun",
-        #     output_root=output_root,
         #     mask_with_significance=args.mask_sig,
         #     measure="rsq",
         # )
@@ -752,7 +693,6 @@ if __name__ == "__main__":
         volumes["oscar"] = make_volume(
             subj=args.subj,
             model="oscar",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="corr",
         )
@@ -761,7 +701,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="oscar_clip",
             model2="oscar",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -770,7 +709,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="oscar_clip",
             model2="clip",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -779,7 +717,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="resnet50_bottleneck_oscar",
             model2="resnet50_bottleneck",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -788,7 +725,6 @@ if __name__ == "__main__":
             subj=args.subj,
             model="resnet50_bottleneck_oscar",
             model2="oscar",
-            output_root=output_root,
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
@@ -797,7 +733,6 @@ if __name__ == "__main__":
         #     volumes["bert-%s" % str(i + 1)] = make_volume(
         #         subj=args.subj,
         #         model="bert_layer_%d" % (i + 1),
-        #         output_root=output_root,
         #         mask_with_significance=args.mask_sig,
         #     )
 
@@ -815,18 +750,16 @@ if __name__ == "__main__":
         # )
 
     if args.show_pcs:
+        model = "clip"
         pc_vols = []
         # PCs = np.load(
-        #     "%s/output/pca/subj%d/pca_components.npy" % (output_root, args.subj)
+        #     "%s/output/pca/subj%d/pca_components.npy" % (OUTPUT_ROOT, args.subj)
         # )
         PCs = np.load(
-            "%s/output/pca/subj%02d/%s_pca_group_components.npy"
-            % (output_root, args.subj, "clip")
+            "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+            % (OUTPUT_ROOT, model, args.subj, model)
         )
 
-        from util.util import zscore
-
-        # PCs_zscore = zscore(PCs, axis=1)
         PCs_zscore = PCs
 
         # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
@@ -836,17 +769,36 @@ if __name__ == "__main__":
                 args.subj,
                 PCs_zscore[i, :],
                 mask_with_significance=args.mask_sig,
-                output_root=output_root,
             )
 
         volumes["3PC"] = make_3pc_volume(
             args.subj,
             PCs_zscore,
             mask_with_significance=args.mask_sig,
-            output_root=output_root,
         )
+
+        volume = make_pc_volume(
+                args.subj,
+                PCs_zscore[0, :],
+                mask_with_significance=args.mask_sig,
+            )
+        mni_data = project_vols_to_mni(args.subj, volume)
+        
+        mni_vol = cortex.Volume(
+            mni_data,
+            "fsaverage",
+            "atlas",
+            cmap="BrBG_r",
+        )
+        volumes["PC1 - MNI"] = mni_vol
+
+        # cortex.quickflat.make_figure(mni_vol, with_roi=False)
+        # print("***********")
+        # print(volumes["PC1"])
+
     subj_port = "4111" + str(args.subj)
-    cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
+    # cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
+    cortex.webgl.show(data=volumes, port=int(subj_port))
 
     import pdb
 
