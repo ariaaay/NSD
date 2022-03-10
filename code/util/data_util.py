@@ -15,20 +15,17 @@ def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
         if type(vals) is list:
             tmp = np.zeros(nonzero_mask.shape) + fill_in
             tmp[nonzero_mask] = vals
-            vals = tmp
-            return vals
+            return tmp
         elif len(vals.shape) == 1:
             tmp = np.zeros(nonzero_mask.shape) + fill_in
             tmp[nonzero_mask] = vals
-            vals = tmp
-            return vals
+            return tmp
         elif len(vals.shape) == 2:
             tmp = np.zeros((vals.shape[0], len(nonzero_mask))) + fill_in
             tmp[:, nonzero_mask] = vals
-            vals = tmp
-            return vals
+            return tmp
     except FileNotFoundError:
-        pass
+        return vals
 
 
 
@@ -52,12 +49,10 @@ def load_model_performance(model, output_root=".", subj=1, measure="corr"):
             return out
         else:
             out = np.array(out)[:, 0]
-    # print("before")
-    # print(len(out))
+
     out = fill_in_nan_voxels(out, subj, output_root)
-    # print("after")
-    # print(len(out))
-    return out
+
+    return np.array(out)
 
 
 def load_top1_objects_in_COCO(cid):
