@@ -527,6 +527,7 @@ if __name__ == "__main__":
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
+    parser.add_argument("--pc_image_visualization", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -1034,17 +1035,6 @@ if __name__ == "__main__":
         num_pc = 20
         best_voxel_n = 20000
 
-        stimulus_list = np.load(
-            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, 1)
-        )
-
-        activations = get_preloaded_features(
-            1,
-            stimulus_list,
-            model,
-            features_dir="/user_data/yuanw3/project_outputs/NSD/features",
-        )
-        
         try:
             PCs = np.load("%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root)
         except FileNotFoundError:
@@ -1056,6 +1046,17 @@ if __name__ == "__main__":
                     "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
                     PCs,
                 )
+
+        stimulus_list = np.load(
+            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, 1)
+        )
+
+        activations = get_preloaded_features(
+            1,
+            stimulus_list,
+            model,
+            features_dir="/user_data/yuanw3/project_outputs/NSD/features",
+        )
             
         # each components should be 20 x 512?
         for i in range(PCs.shape[0]):
