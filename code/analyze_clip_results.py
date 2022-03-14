@@ -134,8 +134,6 @@ def extract_emb_keywords(embedding, activations, common_words):
     scores = activations.squeeze() @ embedding
     best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
     worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
-    # print(best_list)
-    # print(worst_list)
     best_list_word_only = [w.split(" ")[-1] for w in best_list]
     worst_list_word_only = [w.split(" ")[-1] for w in worst_list]
     return best_list_word_only, worst_list_word_only
@@ -162,13 +160,9 @@ def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
 def get_coco_image(id):
     try:
         imgIds = coco_train.getImgIds(imgIds=[id])
-        # img = coco.loadImgs(imgIds)[0]
-        # print(imgIds)
         img = coco_train.loadImgs(imgIds)[0]
     except KeyError:
         imgIds = coco_val.getImgIds(imgIds=[id])
-        # img = coco.loadImgs(imgIds)[0]
-        # print(imgIds)
         img = coco_val.loadImgs(imgIds)[0]
     I = io.imread(img["coco_url"])
     return I
@@ -594,9 +588,8 @@ if __name__ == "__main__":
         from util.data_util import load_model_performance, fill_in_nan_voxels
         from util.util import zscore
 
-        models = ["clip"]
-        models = ["resnet50_bottleneck"]
-        # models = ["clip_visual_resnet"]
+        # models = ["clip"]
+        models = ["resnet50_bottleneck", "clip_visual_resnet"]
         subjs = [1, 2, 5, 7]
         num_pc = 20
         best_voxel_n = 20000
@@ -645,33 +638,34 @@ if __name__ == "__main__":
                     % (args.output_root, m, best_voxel_n),
                     group_w,
                 )
-            # pca = PCA(n_components=num_pc, svd_solver="full")
-            # pca.fit(group_w)
-            # np.save(
-            #     "%s/output/pca/%s_pca_group_components.npy" % (args.output_root, m),
-            #     pca.components_,
-            # )
-            # idx = 0
-            # for subj in subjs:
-            #     subj_mask = np.load(
-            #         "%s/output/pca/pca_voxels_subj%02d_best_%d.npy"
-            #         % (args.output_root, subj, best_voxel_n)
-            #     )
-            #     print(len(subj_mask))
-            #     subj_pca = np.zeros((num_pc, len(subj_mask)))
-            #     subj_pca[:, subj_mask] = zscore(
-            #         pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-            #     )
-            #     if not os.path.exists(
-            #         "%s/output/pca/subj%02d" % (args.output_root, subj)
-            #     ):
-            #         os.mkdir("%s/output/pca/subj%02d" % (args.output_root, subj))
-            #     np.save(
-            #         "%s/output/pca/subj%02d/%s_pca_group_components.npy"
-            #         % (args.output_root, subj, m),
-            #         subj_pca,
-            #     )
-            #     idx += np.sum(subj_mask)
+
+            pca = PCA(n_components=num_pc, svd_solver="full")
+            pca.fit(group_w)
+            np.save(
+                "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
+                pca.components_,
+            )
+            idx = 0
+            for subj in subjs:
+                subj_mask = np.load(
+                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+                    % (args.output_root, m, subj, best_voxel_n)
+                )
+                print(len(subj_mask))
+                subj_pca = np.zeros((num_pc, len(subj_mask)))
+                subj_pca[:, subj_mask] = zscore(
+                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+                )
+                if not os.path.exists(
+                    "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
+                ):
+                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
+                np.save(
+                    "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+                    % (args.output_root, m, subj, m),
+                    subj_pca,
+                )
+                idx += np.sum(subj_mask)
 
     if args.plot_image_wise_performance:
         # scatter plot by images
@@ -1029,3 +1023,62 @@ if __name__ == "__main__":
             print(v[1])
             
         np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
+
+    
+    if args.pc_image_visualization:
+        from featureprep.feature_prep import get_preloaded_features
+
+        model = "clip"
+        
+        # subjs = [1, 2, 5, 7]
+        num_pc = 20
+        best_voxel_n = 20000
+
+        stimulus_list = np.load(
+            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, 1)
+        )
+
+        activations = get_preloaded_features(
+            1,
+            stimulus_list,
+            model,
+            features_dir="/user_data/yuanw3/project_outputs/NSD/features",
+        )
+        
+        try:
+            PCs = np.load("%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root)
+        except FileNotFoundError:
+            group_w = np.load("%s/output/pca/clip/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
+            pca = PCA(n_components=num_pc, svd_solver="full")
+            pca.fit(group_w.T)
+            PCs = pca.components_
+            np.save(
+                    "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
+                    PCs,
+                )
+            
+        # each components should be 20 x 512?
+        for i in range(PCs.shape[0]):
+            scores = activations.squeeze() @ PCs[i, :]
+            best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
+            worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
+        
+            # plot images
+            plt.figure()
+            for j, id in enumerate(best_img_ids):
+                plt.subplot(4, 5, j + 1)
+                I = get_coco_image(id)
+                plt.axis("off")
+                plt.imshow(I)
+            plt.tight_layout()
+            plt.savefig("figures/PCA/clip_pc%d_best_images.png" % i)
+
+            plt.figure()
+            for j, id in enumerate(worst_img_ids):
+                plt.subplot(4, 5, j + 1)
+                I = get_coco_image(id)
+                plt.axis("off")
+                plt.imshow(I)
+            plt.tight_layout()
+            plt.savefig("figures/PCA/clip_pc%d_worst_images.png" % i)
+            
