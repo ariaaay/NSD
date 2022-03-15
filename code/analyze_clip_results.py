@@ -1029,26 +1029,26 @@ if __name__ == "__main__":
     if args.pc_image_visualization:
         from featureprep.feature_prep import get_preloaded_features
 
-        model = "clip"
+        model = "resnet50_bottleneck"
         
         # subjs = [1, 2, 5, 7]
         num_pc = 20
         best_voxel_n = 20000
 
         try:
-            PCs = np.load("%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root)
+            PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
         except FileNotFoundError:
-            group_w = np.load("%s/output/pca/clip/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
+            group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
             pca = PCA(n_components=num_pc, svd_solver="full")
             pca.fit(group_w.T)
             PCs = pca.components_
             np.save(
-                    "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
+                    "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
                     PCs,
                 )
 
         stimulus_list = np.load(
-            "%s/coco_ID_of_repeats_subj%02d.npy" % (args.output_dir, 1)
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
         )
 
         activations = get_preloaded_features(
@@ -1057,7 +1057,17 @@ if __name__ == "__main__":
             model,
             features_dir="/user_data/yuanw3/project_outputs/NSD/features",
         )
-            
+        
+        from pycocotools.coco import COCO
+        import skimage.io as io
+
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        annFile_val = (
+            "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        )
+        coco_train = COCO(annFile_train)
+        coco_val = COCO(annFile_val)
+
         # each components should be 20 x 512?
         for i in range(PCs.shape[0]):
             scores = activations.squeeze() @ PCs[i, :]
@@ -1072,7 +1082,8 @@ if __name__ == "__main__":
                 plt.axis("off")
                 plt.imshow(I)
             plt.tight_layout()
-            plt.savefig("figures/PCA/clip_pc%d_best_images.png" % i)
+            plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+            plt.close()
 
             plt.figure()
             for j, id in enumerate(worst_img_ids):
@@ -1081,5 +1092,6 @@ if __name__ == "__main__":
                 plt.axis("off")
                 plt.imshow(I)
             plt.tight_layout()
-            plt.savefig("figures/PCA/clip_pc%d_worst_images.png" % i)
+            plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
+            plt.close()
             
