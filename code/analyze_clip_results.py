@@ -1030,7 +1030,7 @@ if __name__ == "__main__":
         from featureprep.feature_prep import get_preloaded_features
 
         # model = "resnet50_bottleneck"
-        model = "clip_rep_only"
+        model = "resnet50_bottleneck_rep_only"
         num_pc = 20
         best_voxel_n = 20000
 
@@ -1041,7 +1041,7 @@ if __name__ == "__main__":
         activations = get_preloaded_features(
             1,
             stimulus_list,
-            "clip",
+            "%s" % model.strip("_rep_only"),
             features_dir="%s/features" % args.output_root,
         )
 
