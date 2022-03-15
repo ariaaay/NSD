@@ -1041,7 +1041,7 @@ if __name__ == "__main__":
         activations = get_preloaded_features(
             1,
             stimulus_list,
-            "%s" % model.strip("_rep_only"),
+            "%s" % model.replace("_rep_only", ""),
             features_dir="%s/features" % args.output_root,
         )
 
