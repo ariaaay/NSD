@@ -1031,21 +1031,8 @@ if __name__ == "__main__":
 
         # model = "resnet50_bottleneck"
         model = "clip_rep_only"
-        
         num_pc = 20
-        # best_voxel_n = 20000
-
-        # try:
-        #     PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
-        # except FileNotFoundError:
-        #     group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
-        #     pca = PCA(n_components=num_pc, svd_solver="full")
-        #     pca.fit(group_w.T)
-        #     PCs = pca.components_
-        #     np.save(
-        #             "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
-        #             PCs,
-        #         )
+        best_voxel_n = 20000
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -1055,17 +1042,35 @@ if __name__ == "__main__":
             1,
             stimulus_list,
             "clip",
-            features_dir="/user_data/yuanw3/project_outputs/NSD/features",
+            features_dir="%s/features" % args.output_root,
         )
 
-        pca = PCA(n_components=num_pc, svd_solver="full")
-        pca.fit(activations)
-        PCs = pca.components_
-        np.save(
-                "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
-                PCs,
-            )
-        
+        # load PCs
+        if "rep_only" in model:
+            try:
+                PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
+            except FileNotFoundError:
+                pca = PCA(n_components=num_pc, svd_solver="full")
+                pca.fit(activations)
+                PCs = pca.components_
+                np.save(
+                        "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
+                        PCs,
+                    )
+        else:
+            try:
+                PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
+            except FileNotFoundError:
+                group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+                pca = PCA(n_components=num_pc, svd_solver="full")
+                pca.fit(group_w.T)
+                PCs = pca.components_
+                np.save(
+                        "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
+                        PCs,
+                    )
+
+        # getting scores and plotting
         from pycocotools.coco import COCO
         import skimage.io as io
 
