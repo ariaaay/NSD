@@ -1029,23 +1029,23 @@ if __name__ == "__main__":
     if args.pc_image_visualization:
         from featureprep.feature_prep import get_preloaded_features
 
-        model = "resnet50_bottleneck"
+        # model = "resnet50_bottleneck"
+        model = "clip_rep_only"
         
-        # subjs = [1, 2, 5, 7]
         num_pc = 20
-        best_voxel_n = 20000
+        # best_voxel_n = 20000
 
-        try:
-            PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
-        except FileNotFoundError:
-            group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
-            pca = PCA(n_components=num_pc, svd_solver="full")
-            pca.fit(group_w.T)
-            PCs = pca.components_
-            np.save(
-                    "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
-                    PCs,
-                )
+        # try:
+        #     PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
+        # except FileNotFoundError:
+        #     group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+        #     pca = PCA(n_components=num_pc, svd_solver="full")
+        #     pca.fit(group_w.T)
+        #     PCs = pca.components_
+        #     np.save(
+        #             "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
+        #             PCs,
+        #         )
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -1054,9 +1054,17 @@ if __name__ == "__main__":
         activations = get_preloaded_features(
             1,
             stimulus_list,
-            model,
+            "clip",
             features_dir="/user_data/yuanw3/project_outputs/NSD/features",
         )
+
+        pca = PCA(n_components=num_pc, svd_solver="full")
+        pca.fit(activations)
+        PCs = pca.components_
+        np.save(
+                "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
+                PCs,
+            )
         
         from pycocotools.coco import COCO
         import skimage.io as io
