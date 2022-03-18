@@ -100,22 +100,28 @@ if __name__ == "__main__":
         plt.savefig("figures/roi_generalization/roi_gen.png")
 
     if args.pred_to_data is not None:
+        nc = np.load(
+            "%s/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+            % (args.output_dir, args.subj, args.subj)
+        )
         pred_path = "%s/encoding_results/subj%01d/pred_%s_whole_brain.p" % (args.output_dir, args.subj, args.pred_to_data)
         pred, test_data = np.load(pred_path, allow_pickle=True)
 
+        nc_thre = 0.2
         zone_indices, roi_label_list, tick_pos = [], [], []
 
         for roi in roi_list:
             roi_masks, roi_labels = extract_single_roi(roi, args.output_dir, args.subj)
             print(roi_labels)
             for i, m in enumerate(roi_masks):
+                # print(m)
+                m[nc < nc_thre] = 0
                 zone_mask = list(np.where(m > 0)[0])
+
                 zone_indices += zone_mask
                 roi_label_list.append(roi_labels[i]) 
                 tick_pos.append(len(zone_mask))
             
-        print(roi_label_list)
-        # print(zone_indices)
 
         predictions = pred[:,zone_indices]
         test_data = test_data[:,zone_indices]
@@ -133,4 +139,4 @@ if __name__ == "__main__":
         plt.xticks(np.cumsum(tick_pos), roi_label_list, rotation='vertical')
         plt.yticks(np.cumsum(tick_pos), roi_label_list)
 
-        plt.savefig("figures/roi_generalization/roi_gen_%s_subj%02d_%s.png" % (args.pred_to_data, args.subj, args.roi))
+        plt.savefig("figures/roi_generalization/roi_gen_%s_subj%02d_%s_nc%.01f.png" % (args.pred_to_data, args.subj, args.roi, nc_thre))

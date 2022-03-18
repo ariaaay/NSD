@@ -171,6 +171,6 @@ def extract_single_roi(roi_name, output_dir, subj):
     for k, v in roi_dict.items():
         if int(k) > 0:
             if np.sum(roi_mask == int(k)) > 0:
-                output_masks.append(roi_mask == k)
+                output_masks.append(roi_mask == int(k))
                 roi_labels.append(v)
     return output_masks, roi_labels
