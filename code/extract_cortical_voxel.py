@@ -32,7 +32,9 @@ def zscore_by_run(mat, run_n=480):
     return zscored_mat
 
 
-def extract_cortical_mask(subj, roi=""):
+def extract_cortical_mask(subj, roi="", output_dir=None):
+    if output_dir is None:
+        output_dir = args.output_dir
     if roi != "":
         roi_tag = "_" + roi
     else:
@@ -60,7 +62,7 @@ def extract_cortical_mask(subj, roi=""):
         # save a 1D version as well
         cortical = nsd_cortical_mat > -1
         print("from NSD general, cortical voxel number is: %d." % np.sum(cortical))
-        roi_1d_mask = anat_mat[cortical]
+        roi_1d_mask = anat_mat[cortical].astype(int)
         # assert np.sum(roi_1d_mask) == np.sum(mask)
         print("Number of non-zero ROI voxels: " + str(np.sum(roi_1d_mask > 0)))
         print("Number of cortical voxels is: " + str(len(roi_1d_mask)))
@@ -69,13 +71,13 @@ def extract_cortical_mask(subj, roi=""):
         )  # check the roi 1D length is same as cortical numbers in nsd general
         np.save(
             "%s/voxels_masks/subj%d/roi_1d_mask_subj%02d%s.npy"
-            % (args.output_dir, subj, subj, roi_tag),
+            % (output_dir, subj, subj, roi_tag),
             roi_1d_mask,
         )
 
     np.save(
         "%s/voxels_masks/subj%d/cortical_mask_subj%02d%s.npy"
-        % (args.output_dir, subj, subj, roi_tag),
+        % (output_dir, subj, subj, roi_tag),
         mask,
     )
 
