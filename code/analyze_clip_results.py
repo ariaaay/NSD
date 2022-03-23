@@ -528,6 +528,7 @@ if __name__ == "__main__":
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--pc_image_visualization", default=False, action="store_true")
+    parser.add_argument("--proj_feature_pc_to_subj", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -1107,4 +1108,42 @@ if __name__ == "__main__":
             plt.tight_layout()
             plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
             plt.close()
+
+    if args.proj_feature_pc_to_subj:
+        from util.util import zscore
+        # Calculate weight projection onto PC space
+        model = "clip"
+        subjs = [1, 2, 5, 7]
+        num_pc = 20
+        best_voxel_n = 20000
+        PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
+        group_w = np.load(
+                    "%s/output/pca/%s/weight_matrix_best_%d.npy"
+                    % (args.output_root, model, best_voxel_n)
+                )
+        w_transformed = np.dot(group_w.T, PC_feat.T) # (10,0000x512 x 512x20)
+        print(w_transformed.shape) 
+        proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
+
+        idx = 0
+        for subj in subjs:
+            subj_mask = np.load(
+                "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+                % (args.output_root, model, subj, best_voxel_n)
+            )
+            subj_proj = np.zeros((num_pc, len(subj_mask)))
+            subj_proj[:, subj_mask] = zscore(
+                proj[:, idx : idx + np.sum(subj_mask)], axis=1
+            )
+            if not os.path.exists(
+                "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
+            ):
+                os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, model, subj))
+            np.save(
+                "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                % (args.output_root, model, subj, model),
+                subj_proj,
+            )
+            idx += np.sum(subj_mask)
+
             
