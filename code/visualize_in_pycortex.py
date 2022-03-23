@@ -165,7 +165,7 @@ def make_volume(
 
         else:
             pvalues = load_model_performance(
-                model, output=OUTPUT_ROOT, subj=subj, measure="pvalue"
+                model, output_root=OUTPUT_ROOT, subj=subj, measure="pvalue"
             )
             sig_mask = pvalues <= 0.05
 
@@ -210,7 +210,7 @@ def make_pc_volume(subj, vals):
     return vol_data
 
 
-def make_3pc_volume(subj, PCs, mask_with_significance=False):
+def make_3pc_volume(subj, PCs):
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
     )
@@ -768,19 +768,16 @@ if __name__ == "__main__":
             volumes[key] = make_pc_volume(
                 args.subj,
                 PCs_zscore[i, :],
-                mask_with_significance=args.mask_sig,
             )
 
         volumes["3PC"] = make_3pc_volume(
             args.subj,
             PCs_zscore,
-            mask_with_significance=args.mask_sig,
         )
 
         volume = make_pc_volume(
                 args.subj,
                 PCs_zscore[0, :],
-                mask_with_significance=args.mask_sig,
             )
         # mni_data = project_vols_to_mni(args.subj, volume)
         
@@ -795,14 +792,13 @@ if __name__ == "__main__":
         # visualize PC projections
         subj_proj = np.load(
                     "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (args.output_root, model, args.subj, model)
+                    % (OUTPUT_ROOT, model, args.subj, model)
                 )
         for i in range(PCs.shape[0]):
             key = "PC Proj " + str(i)
             volumes[key] = make_pc_volume(
                 args.subj,
                 subj_proj[i, :],
-                mask_with_significance=args.mask_sig,
             )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
