@@ -782,19 +782,34 @@ if __name__ == "__main__":
                 PCs_zscore[0, :],
                 mask_with_significance=args.mask_sig,
             )
-        mni_data = project_vols_to_mni(args.subj, volume)
+        # mni_data = project_vols_to_mni(args.subj, volume)
         
-        mni_vol = cortex.Volume(
-            mni_data,
-            "fsaverage",
-            "atlas",
-            cmap="BrBG_r",
-        )
-        volumes["PC1 - MNI"] = mni_vol
+        # mni_vol = cortex.Volume(
+        #     mni_data,
+        #     "fsaverage",
+        #     "atlas",
+        #     cmap="BrBG_r",
+        # )
+        # volumes["PC1 - MNI"] = mni_vol
+
+        # visualize PC projections
+        subj_proj = np.load(
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                    % (args.output_root, model, args.subj, model)
+                )
+        for i in range(PCs.shape[0]):
+            key = "PC Proj " + str(i)
+            volumes[key] = make_pc_volume(
+                args.subj,
+                subj_proj[i, :],
+                mask_with_significance=args.mask_sig,
+            )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
         # print(volumes["PC1"])
+
+      
 
     subj_port = "4111" + str(args.subj)
     # cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
