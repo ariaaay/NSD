@@ -168,6 +168,16 @@ def get_coco_image(id):
     return I
 
 
+def get_coco_anns(id):
+    try:
+        imgIds = coco_train.getImgIds(imgIds=[id])
+        anns = coco_train.loadAnns(imgIds)[0]
+    except KeyError:
+        imgIds = coco_val.getImgIds(imgIds=[id])
+        anns = coco_val.loadAnns(imgIds)[0]
+    return anns
+
+
 def find_corner_images(
     model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
 ):
@@ -1030,8 +1040,9 @@ if __name__ == "__main__":
     if args.pc_image_visualization:
         from featureprep.feature_prep import get_preloaded_features
 
-        # model = "resnet50_bottleneck"
-        model = "resnet50_bottleneck_rep_only"
+        model = "clip"
+        plotting = False
+        # model = "resnet50_bottleneck_rep_only"
         num_pc = 20
         best_voxel_n = 20000
 
@@ -1070,17 +1081,18 @@ if __name__ == "__main__":
                         "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
                         PCs,
                     )
+        
+        if plotting:
+            # getting scores and plotting
+            from pycocotools.coco import COCO
+            import skimage.io as io
 
-        # getting scores and plotting
-        from pycocotools.coco import COCO
-        import skimage.io as io
-
-        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-        annFile_val = (
-            "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-        )
-        coco_train = COCO(annFile_train)
-        coco_val = COCO(annFile_val)
+            annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+            annFile_val = (
+                "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+            )
+            coco_train = COCO(annFile_train)
+            coco_val = COCO(annFile_val)
 
         # each components should be 20 x 512?
         for i in range(PCs.shape[0]):
@@ -1088,26 +1100,36 @@ if __name__ == "__main__":
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
             worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
         
-            # plot images
-            plt.figure()
-            for j, id in enumerate(best_img_ids):
-                plt.subplot(4, 5, j + 1)
-                I = get_coco_image(id)
-                plt.axis("off")
-                plt.imshow(I)
-            plt.tight_layout()
-            plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
-            plt.close()
+            if plotting:
+                # plot images
+                plt.figure()
+                for j, id in enumerate(best_img_ids):
+                    plt.subplot(4, 5, j + 1)
+                    I = get_coco_image(id)
+                    plt.axis("off")
+                    plt.imshow(I)
+                plt.tight_layout()
+                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+                plt.close()
 
-            plt.figure()
+                plt.figure()
+                for j, id in enumerate(worst_img_ids):
+                    plt.subplot(4, 5, j + 1)
+                    I = get_coco_image(id)
+                    plt.axis("off")
+                    plt.imshow(I)
+                plt.tight_layout()
+                plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
+                plt.close()
+
+            #find corresponding labels of best image and compute consistency
+            for j, id in enumerate(best_img_ids):
+                anns = get_coco_anns(id)
+                print(anns)
+
             for j, id in enumerate(worst_img_ids):
-                plt.subplot(4, 5, j + 1)
-                I = get_coco_image(id)
-                plt.axis("off")
-                plt.imshow(I)
-            plt.tight_layout()
-            plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
-            plt.close()
+                anns = get_coco_anns(id)
+                print(anns)
 
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
