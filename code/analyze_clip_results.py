@@ -159,23 +159,23 @@ def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
 
 def get_coco_image(id):
     try:
-        imgIds = coco_train.getImgIds(imgIds=[id])
-        img = coco_train.loadImgs(imgIds)[0]
+        img = coco_train.loadImgs([id])[0]
     except KeyError:
-        imgIds = coco_val.getImgIds(imgIds=[id])
-        img = coco_val.loadImgs(imgIds)[0]
+        img = coco_val.loadImgs([id])[0]
     I = io.imread(img["coco_url"])
     return I
 
 
 def get_coco_anns(id):
     try:
-        imgIds = coco_train.getImgIds(imgIds=[id])
-        anns = coco_train.loadAnns(imgIds)[0]
+        annIds = coco_train.getAnnIds([id])
+        anns = coco_train.loadAnns(annIds)
     except KeyError:
-        imgIds = coco_val.getImgIds(imgIds=[id])
-        anns = coco_val.loadAnns(imgIds)[0]
-    return anns
+        annIds = coco_val.getAnnIds([id])
+        anns = coco_val.loadAnns(annIds)
+    
+    cats = [ann["category_id"] for ann in anns]
+    return cats
 
 
 def find_corner_images(
@@ -891,7 +891,7 @@ if __name__ == "__main__":
         plt.savefig("figures/CLIP/human_judgement_rsm_comparison_bert13.png")
 
     if args.performance_analysis_by_roi:
-        sns.set(style="whitegrid", font_scale=1.5)
+        sns.set(style="whitegrid", font_scale=4.5)
 
         roi_names = list(roi_name_dict.keys())
         if not args.rerun_df:
@@ -915,7 +915,7 @@ if __name__ == "__main__":
             plt.savefig("figures/CLIP/performances_by_roi/uv_diff_%s.png" % roi_name)
 
         for roi_name in roi_names:
-            plt.figure(figsize=(50, 20))
+            plt.figure(figsize=(70, 35))
             ax = sns.barplot(
                 x=roi_name,
                 y="uv_diff_nc",
@@ -944,6 +944,7 @@ if __name__ == "__main__":
             ("HCP_MMP1", "V4t"),
             ("HCP_MMP1", "FST"),
             ("language", "AG"),
+            ("language", "ATL"),
             ("prf-visualrois", "V1v"),
         ]
 
@@ -1041,7 +1042,7 @@ if __name__ == "__main__":
         from featureprep.feature_prep import get_preloaded_features
 
         model = "clip"
-        plotting = False
+        plotting = True
         # model = "resnet50_bottleneck_rep_only"
         num_pc = 20
         best_voxel_n = 20000
@@ -1082,19 +1083,28 @@ if __name__ == "__main__":
                         PCs,
                     )
         
-        if plotting:
-            # getting scores and plotting
-            from pycocotools.coco import COCO
-            import skimage.io as io
+        # getting scores and plotting
+        from pycocotools.coco import COCO
+        import skimage.io as io
 
-            annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-            annFile_val = (
-                "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-            )
-            coco_train = COCO(annFile_train)
-            coco_val = COCO(annFile_val)
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        coco_train = COCO(annFile_train)
+        coco_val = COCO(annFile_val)
+        
+        cats = coco_train.loadCats(coco_train.getCatIds())
+        id2cat = {}
+        for cat in cats:
+            id2cat[cat['id']] = cat['name']
 
         # each components should be 20 x 512?
+        COCO_cat_feat = get_preloaded_features(
+                    1,
+                    stimulus_list,
+                    "cat",
+                    features_dir="%s/features" % args.output_root,
+                )
+        best_label_corrs, worst_label_corrs = [], []
         for i in range(PCs.shape[0]):
             scores = activations.squeeze() @ PCs[i, :]
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
@@ -1122,14 +1132,52 @@ if __name__ == "__main__":
                 plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
                 plt.close()
 
-            #find corresponding labels of best image and compute consistency
-            for j, id in enumerate(best_img_ids):
-                anns = get_coco_anns(id)
-                print(anns)
+            # #find corresponding labels of best image and compute consistency
+            # best_cats, worst_cats = [], []
+            # for j, id in enumerate(best_img_ids):
+            #     cat_nums = get_coco_anns(id)
+            #     cat = [id2cat[num] for num in cat_nums]
+            #     best_cats.append(cat)
 
+            # for j, id in enumerate(worst_img_ids):
+            #     cat_nums = get_coco_anns(id)
+            #     cat = [id2cat[num] for num in cat_nums]
+            #     worst_cats.append(cat)
+
+            # print(best_cats)
+            # print(worst_cats)
+
+            # calculate label consistency
+            cat_feats = []
+            for j, id in enumerate(best_img_ids):
+                idx = np.where(stimulus_list == id)[0]
+                cat_feats.append(COCO_cat_feat[idx, :])
+
+            cat_feats = np.array(cat_feats).squeeze()
+            corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            best_label_corrs.append(corr)
+
+            cat_feats = []
             for j, id in enumerate(worst_img_ids):
-                anns = get_coco_anns(id)
-                print(anns)
+                idx = np.where(stimulus_list == id)[0]
+                cat_feats.append(COCO_cat_feat[idx, :])
+
+            cat_feats = np.array(cat_feats).squeeze()
+            corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            worst_label_corrs.append(corr)
+        
+        plt.figure()
+        plt.plot(np.arange(20), worst_label_corrs)
+        plt.ylabel("Mean Pairwise Correlation")
+        plt.xlabel("PCs")
+        plt.savefig("figures/PCA/image_vis/%s_pc_worst_label_corr.png" % model)
+
+        plt.figure()
+        plt.plot(np.arange(20), best_label_corrs)
+        plt.ylabel("Mean Pairwise Correlation")
+        plt.xlabel("PCs")
+        plt.savefig("figures/PCA/image_vis/%s_pc_best_label_corr.png" % model)
+
 
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
