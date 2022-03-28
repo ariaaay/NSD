@@ -1154,7 +1154,8 @@ if __name__ == "__main__":
                 cat_feats.append(COCO_cat_feat[idx, :])
 
             cat_feats = np.array(cat_feats).squeeze()
-            corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            corr = np.mean(np.corrcoef(cat_feats))
             best_label_corrs.append(corr)
 
             cat_feats = []
@@ -1163,7 +1164,9 @@ if __name__ == "__main__":
                 cat_feats.append(COCO_cat_feat[idx, :])
 
             cat_feats = np.array(cat_feats).squeeze()
-            corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            print(cat_feats.shape)
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            corr = np.mean(np.corrcoef(cat_feats))
             worst_label_corrs.append(corr)
         
         plt.figure()
