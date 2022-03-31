@@ -301,7 +301,7 @@ if __name__ == "__main__":
         )
     else:
         OUTPUT_ROOT = "."
-        ROI_FILE_ROOT = "./output/voxels_masks/subj%01d" % args.subj
+        ROI_FILE_ROOT = "./roi_data/subj%02d" % args.subj
 
     visual_roi_volume = make_roi_volume("prf-visualrois")
     ecc_roi_volume = make_roi_volume("prf-eccrois")
@@ -310,8 +310,8 @@ if __name__ == "__main__":
     body_roi_volume = make_roi_volume("floc-bodies")
     word_roi_volume = make_roi_volume("floc-words")
     kastner_volume = make_roi_volume("Kastner2015")
-    hcp_volume = make_roi_volume("HCP_MMP1")
-    sulc_volume = make_roi_volume("corticalsulc")
+    # hcp_volume = make_roi_volume("HCP_MMP1")
+    # sulc_volume = make_roi_volume("corticalsulc")
 
     lang_ROI = np.load(
         "./output/voxels_masks/language_ROIs.npy", allow_pickle=True
@@ -334,12 +334,6 @@ if __name__ == "__main__":
     # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (OUTPUT_ROOT, args.subj))
     # old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
 
-    nc = np.load(
-        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-        % (OUTPUT_ROOT, args.subj, args.subj)
-    )
-    nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
-
     volumes = {
         "Visual ROIs": visual_roi_volume,
         "Eccentricity ROIs": ecc_roi_volume,
@@ -348,116 +342,122 @@ if __name__ == "__main__":
         "Bodies ROIs": body_roi_volume,
         "Words ROIs": word_roi_volume,
         "Kastner2015": kastner_volume,
-        "HCP": hcp_volume,
-        "sulcus": sulc_volume,
-        "Language ROIs": language_volume,
-        "Noise Ceiling": nc_volume,
+        # "HCP": hcp_volume,
+        # "sulcus": sulc_volume,
+        # "Language ROIs": language_volume,
+        # "Noise Ceiling": nc_volume,
         # "EV": ev_volume,
         # "EV - old": old_ev_volume,
     }
 
-    volumes["clip-ViT-last"] = make_volume(
-        subj=args.subj,
-        model="clip",
-        mask_with_significance=args.mask_sig,
-    )
+    # nc = np.load(
+    #     "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+    #     % (OUTPUT_ROOT, args.subj, args.subj)
+    # )
+    # nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
 
-    volumes["clip-text-last"] = make_volume(
-        subj=args.subj,
-        model="clip_text",
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["clip-ViT-last"] = make_volume(
+    #     subj=args.subj,
+    #     model="clip",
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["resnet50"] = make_volume(
-        subj=args.subj,
-        # model="convnet_res50",
-        model="resnet50_bottleneck",
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["clip-text-last"] = make_volume(
+    #     subj=args.subj,
+    #     model="clip_text",
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["BERT-last"] = make_volume(
-        subj=args.subj,
-        model="bert_layer_13",
-        mask_with_significance=args.mask_sig,
-    )
+    # volumes["resnet50"] = make_volume(
+    #     subj=args.subj,
+    #     # model="convnet_res50",
+    #     model="resnet50_bottleneck",
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["clip-ViT-last R^2"] = make_volume(
-        subj=args.subj,
-        model="clip",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["BERT-last"] = make_volume(
+    #     subj=args.subj,
+    #     model="bert_layer_13",
+    #     mask_with_significance=args.mask_sig,
+    # )
 
-    volumes["bert-13 R^2"] = make_volume(
-        subj=args.subj,
-        model="bert_layer_13",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip-ViT-last R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="clip",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["resnet50 R^2"] = make_volume(
-        subj=args.subj,
-        # model="convnet_res50",
-        model="resnet50_bottleneck",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["bert-13 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="bert_layer_13",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&resnet50-clip R^2"] = make_volume(
-        subj=args.subj,
-        model=[
-            # "convnet_res50_clip",
-            # "clip_convnet_res50",
-            "clip_resnet50_bottleneck",
-            "resnet50_bottleneck_clip",
-        ],
-        model2="clip",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["resnet50 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     # model="convnet_res50",
+    #     model="resnet50_bottleneck",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&resnet50-resnet50 R^2"] = make_volume(
-        subj=args.subj,
-        model=[
-            # "convnet_res50_clip",
-            # "clip_convnet_res50",
-            "clip_resnet50_bottleneck",
-            "resnet50_bottleneck_clip",
-        ],
-        model2="resnet50_bottleneck",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&resnet50-clip R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=[
+    #         # "convnet_res50_clip",
+    #         # "clip_convnet_res50",
+    #         "clip_resnet50_bottleneck",
+    #         "resnet50_bottleneck_clip",
+    #     ],
+    #     model2="clip",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&bert13-bert13 R^2"] = make_volume(
-        subj=args.subj,
-        model=["clip_bert_layer_13", "bert_layer_13_clip"],
-        model2="bert_layer_13",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&resnet50-resnet50 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=[
+    #         # "convnet_res50_clip",
+    #         # "clip_convnet_res50",
+    #         "clip_resnet50_bottleneck",
+    #         "resnet50_bottleneck_clip",
+    #     ],
+    #     model2="resnet50_bottleneck",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&bert13-clip R^2"] = make_volume(
-        subj=args.subj,
-        model=["clip_bert_layer_13", "bert_layer_13_clip"],
-        model2="clip",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&bert13-bert13 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_bert_layer_13", "bert_layer_13_clip"],
+    #     model2="bert_layer_13",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&bert13"] = make_volume(
-        subj=args.subj,
-        model=["clip_bert_layer_13", "bert_layer_13_clip"],
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&bert13-clip R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_bert_layer_13", "bert_layer_13_clip"],
+    #     model2="clip",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&resnet50 R^2"] = make_volume(
-        subj=args.subj,
-        model=["clip_resnet50_bottleneck", "resnet50_bottleneck_clip"],
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&bert13"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_bert_layer_13", "bert_layer_13_clip"],
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
+
+    # volumes["clip&resnet50 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_resnet50_bottleneck", "resnet50_bottleneck_clip"],
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
     if args.subj == 1 & args.show_more:
         volumes["clip_top1_object"] = make_volume(
@@ -472,10 +472,11 @@ if __name__ == "__main__":
             mask_with_significance=args.mask_sig,
         )
 
-        volumes["COCO categories"] = make_volume(
+        volumes["COCO categories -r^2"] = make_volume(
             subj=args.subj,
             model="cat",
             mask_with_significance=args.mask_sig,
+            measure="rsq"
         )
 
         volumes["COCO super categories"] = make_volume(
@@ -809,7 +810,9 @@ if __name__ == "__main__":
 
     subj_port = "4111" + str(args.subj)
     # cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
-    cortex.webgl.show(data=volumes, port=int(subj_port))
+    cortex.webgl.show(data=volumes, port=int(subj_port), recache=True)
+    # cortex.webgl.make_static(outpath="./viewer", data=volumes, recache=True)
+
 
     import pdb
 
