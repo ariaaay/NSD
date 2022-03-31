@@ -1171,16 +1171,13 @@ if __name__ == "__main__":
             worst_label_corrs.append(corr)
         
         plt.figure()
-        plt.plot(np.arange(20), worst_label_corrs)
-        plt.ylabel("Mean Pairwise Correlation")
-        plt.xlabel("PCs")
-        plt.savefig("figures/PCA/image_vis/%s_pc_worst_label_corr.png" % model)
+        plt.plot(np.arange(20), worst_label_corrs, label="Best")
+        plt.plot(np.arange(20), best_label_corrs, label="Worst")
 
-        plt.figure()
-        plt.plot(np.arange(20), best_label_corrs)
         plt.ylabel("Mean Pairwise Correlation")
         plt.xlabel("PCs")
-        plt.savefig("figures/PCA/image_vis/%s_pc_best_label_corr.png" % model)
+        plt.legend()
+        plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
 
 
     if args.proj_feature_pc_to_subj:
