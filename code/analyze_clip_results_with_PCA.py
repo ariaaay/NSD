@@ -389,7 +389,7 @@ if __name__ == "__main__":
         all_PC_projs = []
         for subj in subjs:
             all_PC_projs.append(np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projection.npy"
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
                     % (args.output_root, model, subj, model)
                 ))
 
