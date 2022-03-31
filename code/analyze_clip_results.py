@@ -535,6 +535,7 @@ if __name__ == "__main__":
         "--extract_keywords_for_roi", default=False, action="store_true"
     )
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
+    parser.add_argument("--summary_statistics", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--pc_image_visualization", default=False, action="store_true")
@@ -1105,7 +1106,7 @@ if __name__ == "__main__":
                     features_dir="%s/features" % args.output_root,
                 )
         best_label_corrs, worst_label_corrs = [], []
-        for i in range(PCs.shape[0]):
+        for i in tqdm(range(PCs.shape[0])):
             scores = activations.squeeze() @ PCs[i, :]
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
             worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
@@ -1219,4 +1220,32 @@ if __name__ == "__main__":
             )
             idx += np.sum(subj_mask)
 
+    if args.summary_statistics:
+        roi_names = list(roi_name_dict.keys())
+        df = pd.read_csv(
+            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+        )
+        for roi_name in roi_names:
+            sns.set(style="whitegrid", font_scale=4.5)
+            plt.figure(figsize=(50, 20))
+            ax = sns.violinplot(
+                    x=roi_name,
+                    y="var_resnet",
+                    data=df,
+                    dodge=True,
+                    order=list(roi_name_dict[roi_name].values()),
+                )
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            plt.savefig("figures/CLIP/performances_by_roi/var_resnet_%s.png" % roi_name)
+
+            plt.figure(figsize=(50, 20))
+            ax = sns.violinplot(
+                    x=roi_name,
+                    y="var_clip",
+                    data=df,
+                    dodge=True,
+                    order=list(roi_name_dict[roi_name].values()),
+                )
             
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            plt.savefig("figures/CLIP/performances_by_roi/var_clip_%s.png" % roi_name)
