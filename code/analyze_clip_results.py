@@ -540,6 +540,7 @@ if __name__ == "__main__":
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--pc_image_visualization", default=False, action="store_true")
     parser.add_argument("--proj_feature_pc_to_subj", default=False, action="store_true")
+    parser.add_argument("--analyze_PCproj_consistency", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -1192,7 +1193,7 @@ if __name__ == "__main__":
                     "%s/output/pca/%s/weight_matrix_best_%d.npy"
                     % (args.output_root, model, best_voxel_n)
                 )
-        w_transformed = np.dot(group_w.T, PC_feat.T) # (10,0000x512 x 512x20)
+        w_transformed = np.dot(group_w.T, PC_feat.T) # (80,000x512 x 512x20)
         print(w_transformed.shape) 
         proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
 
@@ -1246,3 +1247,19 @@ if __name__ == "__main__":
             
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/var_clip_%s.png" % roi_name)
+
+    if args.analyze_PCproj_consistency:
+        from analyze_in_mni import analyze_data_correlation_in_mni
+
+        subjs = [1, 2, 5, 7]
+        model = "clip"
+        # load all PC projection from all four subjs
+        all_PC_projs = []
+        for subj in subjs:
+            all_PC_projs.append(np.load(
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projection.npy"
+                    % (args.output_root, model, subj, model)
+                ))
+
+
+        analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
