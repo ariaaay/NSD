@@ -7,7 +7,7 @@ from visualize_in_pycortex import project_vols_to_mni, make_pc_volume
 
 OUTPUT_ROOT = "/user_data/yuanw3/project_outputs/NSD/"
 
-def analyze_data_correlation_in_mni(data, model, dim, save_name=""):
+def analyze_data_correlation_in_mni(data, model, dim, save_name, subjs):
     n_subj = len(data)
     # make them pycortex volume and project them to mni
     corrs, corrs_mean, corrs_12, corrs_13, corrs_14, corrs_23, corrs_24, corrs_34 = [], [], [], [], [], [], [], []
