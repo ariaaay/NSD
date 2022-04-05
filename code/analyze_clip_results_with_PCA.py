@@ -334,8 +334,8 @@ if __name__ == "__main__":
             worst_label_corrs.append(corr)
         
         plt.figure()
-        plt.plot(np.arange(20), worst_label_corrs, label="Best")
-        plt.plot(np.arange(20), best_label_corrs, label="Worst")
+        plt.plot(np.arange(20), worst_label_corrs, label="Worst")
+        plt.plot(np.arange(20), best_label_corrs, label="Best")
 
         plt.ylabel("Mean Pairwise Correlation")
         plt.xlabel("PCs")
