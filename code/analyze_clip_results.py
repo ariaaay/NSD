@@ -8,6 +8,7 @@ import seaborn as sns
 import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
+import skimage.io as io
 
 from tqdm import tqdm
 from PIL import Image
