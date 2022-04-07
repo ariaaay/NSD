@@ -4,14 +4,12 @@ import argparse
 # from msilib.schema import File
 import pickle
 
-import pandas as pd
 import seaborn as sns
 import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
-from PIL import Image
 from sklearn.decomposition import PCA
 
 # import torch
@@ -19,7 +17,7 @@ import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import *
-from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image
+from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -249,12 +247,16 @@ if __name__ == "__main__":
         
         # getting scores and plotting
         from pycocotools.coco import COCO
-        import skimage.io as io
 
         annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
         annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
+
+        annFile_train_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+        annFile_val_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+        coco_train_cap = COCO(annFile_train_cap)
+        coco_val_cap = COCO(annFile_val_cap)
         
         cats = coco_train.loadCats(coco_train.getCatIds())
         id2cat = {}
@@ -296,20 +298,18 @@ if __name__ == "__main__":
                 plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
                 plt.close()
 
-            # #find corresponding labels of best image and compute consistency
-            # best_cats, worst_cats = [], []
-            # for j, id in enumerate(best_img_ids):
-            #     cat_nums = get_coco_anns(id)
-            #     cat = [id2cat[num] for num in cat_nums]
-            #     best_cats.append(cat)
+            #find corresponding captions of best image 
+            best_cats, worst_cats = [], []
+            for j, id in enumerate(best_img_ids):
+                captions = get_coco_caps(id)
+                best_cats.append(captions)
 
-            # for j, id in enumerate(worst_img_ids):
-            #     cat_nums = get_coco_anns(id)
-            #     cat = [id2cat[num] for num in cat_nums]
-            #     worst_cats.append(cat)
+            for j, id in enumerate(worst_img_ids):
+                captions = get_coco_caps(id)
+                worst_cats.append(captions)
 
-            # print(best_cats)
-            # print(worst_cats)
+            print(best_cats)
+            print(worst_cats)
 
             # calculate label consistency
             cat_feats = []
@@ -379,6 +379,7 @@ if __name__ == "__main__":
                 subj_proj,
             )
             idx += np.sum(subj_mask)
+
 
     if args.analyze_PCproj_consistency:
         from analyze_in_mni import analyze_data_correlation_in_mni

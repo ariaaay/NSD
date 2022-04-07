@@ -176,6 +176,15 @@ def get_coco_anns(id):
     cats = [ann["category_id"] for ann in anns]
     return cats
 
+def get_coco_caps(id):
+    try:
+        annIds = coco_train_caps.getAnnIds([id])
+        anns = coco_train_caps.loadAnns(annIds)
+    except KeyError:
+        annIds = coco_val_caps.getAnnIds([id])
+        anns = coco_val_caps.loadAnns(annIds)
+
+    return anns
 
 def find_corner_images(
     model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
