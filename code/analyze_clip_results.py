@@ -21,6 +21,17 @@ from util.model_config import *
 
 # device = "cuda" if torch.cuda.is_available() else "cpu"
 
+from pycocotools.coco import COCO
+
+annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+coco_train = COCO(annFile_train)
+coco_val = COCO(annFile_val)
+
+annFile_train_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+annFile_val_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+coco_train_cap = COCO(annFile_train_cap)
+coco_val_cap = COCO(annFile_val_cap)
 
 def compute_sample_performance(
     model, output_dir, masking="sig", subj=1, measure="corrs"
