@@ -12,12 +12,25 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.decomposition import PCA
 
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+
+
 # import torch
 import clip
 
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import *
 from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
+
+def make_word_cloud(text, saving_fname):
+    text = " ".join(t for t in text)
+    # print(text)
+    wordcloud = WordCloud(background_color="white").generate(text)
+
+    # Display the generated image:
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    wordcloud.to_file(saving_fname)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -204,7 +217,7 @@ if __name__ == "__main__":
         from featureprep.feature_prep import get_preloaded_features
 
         model = "clip"
-        plotting = True
+        plotting = False
         # model = "resnet50_bottleneck_rep_only"
         num_pc = 20
         best_voxel_n = 20000
@@ -299,17 +312,21 @@ if __name__ == "__main__":
                 plt.close()
 
             #find corresponding captions of best image 
-            best_cats, worst_cats = [], []
+            best_caps, worst_caps = [], []
             for j, id in enumerate(best_img_ids):
                 captions = get_coco_caps(id)
-                best_cats.append(captions)
+                best_caps += captions
 
             for j, id in enumerate(worst_img_ids):
                 captions = get_coco_caps(id)
-                worst_cats.append(captions)
+                worst_caps += captions
 
-            print(best_cats)
-            print(worst_cats)
+            # print(best_caps)
+            # print(worst_caps)
+
+            make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
+            make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
+           
 
             # calculate label consistency
             cat_feats = []
@@ -328,7 +345,7 @@ if __name__ == "__main__":
                 cat_feats.append(COCO_cat_feat[idx, :])
 
             cat_feats = np.array(cat_feats).squeeze()
-            print(cat_feats.shape)
+            # print(cat_feats.shape)
             # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
             corr = np.mean(np.corrcoef(cat_feats))
             worst_label_corrs.append(corr)
