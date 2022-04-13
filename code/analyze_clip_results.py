@@ -29,10 +29,10 @@ annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2
 coco_train = COCO(annFile_train)
 coco_val = COCO(annFile_val)
 
-annFile_train_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-annFile_val_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-coco_train_cap = COCO(annFile_train_cap)
-coco_val_cap = COCO(annFile_val_cap)
+annFile_train_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+annFile_val_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+coco_train_caps = COCO(annFile_train_caps)
+coco_val_caps = COCO(annFile_val_caps)
 
 def compute_sample_performance(
     model, output_dir, masking="sig", subj=1, measure="corrs"
@@ -196,7 +196,8 @@ def get_coco_caps(id):
         annIds = coco_val_caps.getAnnIds([id])
         anns = coco_val_caps.loadAnns(annIds)
 
-    return anns
+    caps = [ann["caption"] for ann in anns]
+    return caps
 
 def find_corner_images(
     model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
