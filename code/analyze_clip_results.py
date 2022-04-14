@@ -431,7 +431,7 @@ def make_roi_df(roi_names, subjs, update=False):
             )
 
             joint_var = load_model_performance(
-                model="resnet50_bottleneck",
+                model=["resnet50_bottleneck_clip_visual_resnet", "clip_visual_resnet_resnet50_bottleneck"],
                 output_root=args.output_root,
                 subj=subj,
                 measure="rsq",
@@ -558,10 +558,7 @@ if __name__ == "__main__":
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
     parser.add_argument("--summary_statistics", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
-    parser.add_argument("--pc_text_visualization", default=False, action="store_true")
-    parser.add_argument("--pc_image_visualization", default=False, action="store_true")
-    parser.add_argument("--proj_feature_pc_to_subj", default=False, action="store_true")
-    parser.add_argument("--analyze_PCproj_consistency", default=False, action="store_true")
+    parser.add_argument("--clip_rsq_across_subject", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     args = parser.parse_args()
 
@@ -940,5 +937,15 @@ if __name__ == "__main__":
             
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/var_clip_%s.png" % roi_name)
+
+    if args.clip_rsq_across_subject:
+        means = []
+        for subj in range(8):
+            subj_var = clip_var = load_model_performance(
+                model="clip", output_root=args.output_root, subj=subj, measure="rsq"
+            )
+            means.append(np.mean(subj_var))
+        print(means)
+
 
     
