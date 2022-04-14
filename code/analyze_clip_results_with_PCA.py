@@ -443,7 +443,38 @@ if __name__ == "__main__":
             plt.imshow(I)
             plt.title(first3)
         plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/image_PC_proj_%s.png" % model)
+        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2max.png" % model)
+        plt.close()
+
+        img_rank = np.argsort(proj_norm)[:20]
+        plt.figure(figsize=(30,10))
+        for i, idx in enumerate(img_rank):
+            coco_id = stimulus_list[idx]
+            I = get_coco_image(coco_id)
+            pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+            first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+            plt.subplot(4, 5, i + 1)
+            plt.axis("off")
+            plt.imshow(I)
+            plt.title(first3)
+        plt.tight_layout()
+        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2min.png" % model)
+        plt.close()
+
+        proj_norm = np.linalg.norm(pc_proj, ord=-np.inf, axis=1)
+        img_rank = np.argsort(proj_norm)[:20]
+        plt.figure(figsize=(30,10))
+        for i, idx in enumerate(img_rank):
+            coco_id = stimulus_list[idx]
+            I = get_coco_image(coco_id)
+            pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+            first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+            plt.subplot(4, 5, i + 1)
+            plt.axis("off")
+            plt.imshow(I)
+            plt.title(first3)
+        plt.tight_layout()
+        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_-inf.png" % model)
         plt.close()
 
     if args.load_and_show_all_word_clouds:
