@@ -437,7 +437,7 @@ def make_roi_df(roi_names, subjs, update=False):
                 measure="rsq",
             )
             clip_var = load_model_performance(
-                model="clip", output_root=args.output_root, subj=subj, measure="rsq"
+                model="clip_visual_resnet", output_root=args.output_root, subj=subj, measure="rsq"
             )
             resnet_var = load_model_performance(
                 model="resnet50_bottleneck",
@@ -817,7 +817,7 @@ if __name__ == "__main__":
                 % args.output_root
             )
         else:
-            df = make_roi_df(roi_names, subjs=[1, 2, 5, 7])
+            df = make_roi_df(roi_names, subjs=np.arange(1,9))
 
         for roi_name in roi_names:
             plt.figure(figsize=(50, 20))
@@ -942,9 +942,13 @@ if __name__ == "__main__":
         means = []
         for subj in range(8):
             subj_var = clip_var = load_model_performance(
-                model="clip", output_root=args.output_root, subj=subj, measure="rsq"
+                model="clip", output_root=args.output_root, subj=subj+1, measure="rsq"
             )
-            means.append(np.mean(subj_var))
+            nc = np.load(
+                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                % (args.output_root, subj+1, subj+1)
+            )
+            means.append(np.mean(subj_var/nc, where=np.isfinite(subj_var/nc)))
         print(means)
 
 
