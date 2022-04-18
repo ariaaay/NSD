@@ -288,7 +288,7 @@ def compare_model_and_brain_performance_on_COCO(subj=1):
     sample_corr_clip = compute_sample_performance("clip", args.output_root)
     sample_corr_clip_text = compute_sample_performance("clip_text", args.output_root)
 
-    plt.figure(figsize=(30, 10))
+    plt.figure(figsize=(10, 30))
     plt.plot(sample_corr_clip, "g", alpha=0.3)
     plt.plot(sample_corr_clip_text, "b", alpha=0.3)
     plt.plot(preds, "r", alpha=0.3)
