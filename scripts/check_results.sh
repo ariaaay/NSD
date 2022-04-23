@@ -6,8 +6,8 @@ clip_visual_resnet \
 clip_text \
 bert_layer_13"
 
-# OUTPUT_DIR="/user_data/yuanw3/project_outputs/NSD/output/encoding_results"
-OUTPUT_DIR="./output/encoding_results"
+OUTPUT_DIR="/user_data/yuanw3/project_outputs/NSD/output/encoding_results"
+# OUTPUT_DIR="./output/encoding_results"
 
 
 for subj in {1..8}; do
