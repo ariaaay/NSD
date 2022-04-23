@@ -105,7 +105,11 @@ def make_volume(
     if measure == "corr":
         vmax = 0.8
     else:
-        vmax = 0.6
+        if model2 is not None: 
+            vmax = 0.2
+        else:
+            vmax = 0.5
+
 
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
@@ -156,9 +160,10 @@ def make_volume(
                 % (OUTPUT_ROOT, subj, subj)
             )
             vals = vals / nc
-            if model2 is None:
+            if model2 is not None:
                 sig_mask = (
-                    vals >= 0
+                    # vals >= 0
+                    np.isfinite(vals)
                 )  # this is plotting the differences therefore we dont threshold here
             else:
                 sig_mask = vals >= 0.1
@@ -303,11 +308,11 @@ if __name__ == "__main__":
         OUTPUT_ROOT = "."
         ROI_FILE_ROOT = "./roi_data/subj%02d" % args.subj
 
-    visual_roi_volume = make_roi_volume("prf-visualrois")
-    ecc_roi_volume = make_roi_volume("prf-eccrois")
-    place_roi_volume = make_roi_volume("floc-places")
-    face_roi_volume = make_roi_volume("floc-faces")
-    body_roi_volume = make_roi_volume("floc-bodies")
+    # visual_roi_volume = make_roi_volume("prf-visualrois")
+    # ecc_roi_volume = make_roi_volume("prf-eccrois")
+    # place_roi_volume = make_roi_volume("floc-places")
+    # face_roi_volume = make_roi_volume("floc-faces")
+    # body_roi_volume = make_roi_volume("floc-bodies")
     word_roi_volume = make_roi_volume("floc-words")
     kastner_volume = make_roi_volume("Kastner2015")
     # hcp_volume = make_roi_volume("HCP_MMP1")
@@ -340,11 +345,11 @@ if __name__ == "__main__":
     nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
 
     volumes = {
-        "Visual ROIs": visual_roi_volume,
-        "Eccentricity ROIs": ecc_roi_volume,
-        "Places ROIs": place_roi_volume,
-        "Faces ROIs": face_roi_volume,
-        "Bodies ROIs": body_roi_volume,
+        # "Visual ROIs": visual_roi_volume,
+        # "Eccentricity ROIs": ecc_roi_volume,
+        # "Places ROIs": place_roi_volume,
+        # "Faces ROIs": face_roi_volume,
+        # "Bodies ROIs": body_roi_volume,
         "Words ROIs": word_roi_volume,
         "Kastner2015": kastner_volume,
         # "HCP": hcp_volume,
@@ -356,26 +361,32 @@ if __name__ == "__main__":
     }
 
 
-    volumes["clip-ViT-last"] = make_volume(
+    volumes["clip-ViT-last r"] = make_volume(
         subj=args.subj,
         model="clip",
         mask_with_significance=args.mask_sig,
     )
 
-    volumes["clip-text-last"] = make_volume(
+    volumes["clip-RN50-last r"] = make_volume(
+        subj=args.subj,
+        model="clip_visual_resnet",
+        mask_with_significance=args.mask_sig,
+    )
+
+    volumes["clip-text-last r"] = make_volume(
         subj=args.subj,
         model="clip_text",
         mask_with_significance=args.mask_sig,
     )
 
-    volumes["resnet50"] = make_volume(
+    volumes["resnet50 r"] = make_volume(
         subj=args.subj,
         # model="convnet_res50",
         model="resnet50_bottleneck",
         mask_with_significance=args.mask_sig,
     )
 
-    volumes["BERT-last"] = make_volume(
+    volumes["BERT-last r"] = make_volume(
         subj=args.subj,
         model="bert_layer_13",
         mask_with_significance=args.mask_sig,
@@ -384,6 +395,13 @@ if __name__ == "__main__":
     volumes["clip-ViT-last R^2"] = make_volume(
         subj=args.subj,
         model="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
+
+    volumes["clip-RN50-last R^2"] = make_volume(
+        subj=args.subj,
+        model="clip_visual_resnet",
         mask_with_significance=args.mask_sig,
         measure="rsq",
     )
@@ -403,7 +421,7 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    volumes["clip&resnet50-clip R^2"] = make_volume(
+    volumes["clip&resnet50-clip ViT R^2"] = make_volume(
         subj=args.subj,
         model=[
             # "convnet_res50_clip",
@@ -416,13 +434,39 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    volumes["clip&resnet50-resnet50 R^2"] = make_volume(
+    volumes["clip&resnet50-clip RN50 R^2"] = make_volume(
+        subj=args.subj,
+        model=[
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_visual_resnet_resnet50_bottleneck",
+            "resnet50_bottleneck_clip_visual_resnet",
+        ],
+        model2="clip_visual_resnet",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
+
+    volumes["clip ViT&resnet50-resnet50 R^2"] = make_volume(
         subj=args.subj,
         model=[
             # "convnet_res50_clip",
             # "clip_convnet_res50",
             "clip_resnet50_bottleneck",
             "resnet50_bottleneck_clip",
+        ],
+        model2="resnet50_bottleneck",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
+
+    volumes["clip RN50&resnet50-resnet50 R^2"] = make_volume(
+        subj=args.subj,
+        model=[
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_visual_resnet_resnet50_bottleneck",
+            "resnet50_bottleneck_clip_visual_resnet",
         ],
         model2="resnet50_bottleneck",
         mask_with_significance=args.mask_sig,
@@ -485,12 +529,6 @@ if __name__ == "__main__":
             mask_with_significance=args.mask_sig,
         )
 
-        # volumes["CLIP&CLIP top 1"] = make_volume(
-        #     subj=args.subj,
-        #     model="clip_clip_top1_object",
-        #     mask_with_significance=args.mask_sig,
-        # )
-
         volumes["CLIP&CLIPtop1 - top1"] = make_volume(
             subj=args.subj,
             model="clip_clip_top1_object",
@@ -506,12 +544,6 @@ if __name__ == "__main__":
             mask_with_significance=args.mask_sig,
             measure="rsq",
         )
-
-        # volumes["CLIP&Cat"] = make_volume(
-        #     subj=args.subj,
-        #     model="clip_cat",
-        #     mask_with_significance=args.mask_sig,
-        # )
 
         volumes["CLIP&Resnet50"] = make_volume(
             subj=args.subj,
@@ -813,6 +845,11 @@ if __name__ == "__main__":
     cortex.webgl.show(data=volumes, port=int(subj_port), recache=True)
     # cortex.webgl.make_static(outpath="./viewer", data=volumes, recache=True)
 
+    # roi_list = ['RSC', 'PPA', 'OPA', 'EarlyVis', 'FFA-1', "FFA-2", "OFA", "mtTL-bodies"]
+    # for k in volumes.keys():
+    #     vol_name = k.replace(" ", "_")
+    #     filename = "./figures/flatmap/subj%d/%s.svg" % (args.subj, vol_name)
+    #     _ = cortex.quickflat.make_png(filename, volumes[k], linewidth=3, recache=False, roi_list=roi_list)
 
     import pdb
 
