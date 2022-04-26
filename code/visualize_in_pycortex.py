@@ -190,7 +190,7 @@ def make_volume(
     return vol_data
 
 
-def make_pc_volume(subj, vals):
+def make_pc_volume(subj, vals, vmin=-2, vmax=2, cmap="BrBG_r"):
     import cortex
     mask = cortex.utils.get_cortical_mask(
         "subj%02d" % subj, "func1pt8_to_anat0pt8_autoFSbbr"
@@ -208,9 +208,9 @@ def make_pc_volume(subj, vals):
         "subj%02d" % subj,
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
-        cmap="BrBG_r",
-        vmin=-2,
-        vmax=2,
+        cmap=cmap,
+        vmin=vmin,
+        vmax=vmax,
     )
     return vol_data
 
@@ -812,6 +812,19 @@ if __name__ == "__main__":
                 args.subj,
                 PCs_zscore[0, :],
             )
+
+        # basis?
+        from sklearn.cluster import KMeans
+        inertia = []
+        for k in range(1,21):
+            kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
+            if k > 3:
+                volumes["basis %d" % k] = make_pc_volume(args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s")
+            import matplotlib.pyplot as plt
+            plt.hist(kmeans.inertia_)
+            plt.savefig("figures/PCA/clustering/inertia.png")
+
+        # MNI
         # mni_data = project_vols_to_mni(args.subj, volume)
         
         # mni_vol = cortex.Volume(
@@ -822,17 +835,17 @@ if __name__ == "__main__":
         # )
         # volumes["PC1 - MNI"] = mni_vol
 
-        # visualize PC projections
-        subj_proj = np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (OUTPUT_ROOT, model, args.subj, model)
-                )
-        for i in range(PCs.shape[0]):
-            key = "PC Proj " + str(i)
-            volumes[key] = make_pc_volume(
-                args.subj,
-                subj_proj[i, :],
-            )
+        # # visualize PC projections
+        # subj_proj = np.load(
+        #             "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+        #             % (OUTPUT_ROOT, model, args.subj, model)
+        #         )
+        # for i in range(PCs.shape[0]):
+        #     key = "PC Proj " + str(i)
+        #     volumes[key] = make_pc_volume(
+        #         args.subj,
+        #         subj_proj[i, :],
+        #     )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
@@ -842,7 +855,7 @@ if __name__ == "__main__":
 
     subj_port = "4111" + str(args.subj)
     # cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
-    cortex.webgl.show(data=volumes, port=int(subj_port), recache=True)
+    cortex.webgl.show(data=volumes, port=int(subj_port), recache=False)
     # cortex.webgl.make_static(outpath="./viewer", data=volumes, recache=True)
 
     # roi_list = ['RSC', 'PPA', 'OPA', 'EarlyVis', 'FFA-1', "FFA-2", "OFA", "mtTL-bodies"]
