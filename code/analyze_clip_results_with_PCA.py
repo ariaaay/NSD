@@ -280,80 +280,98 @@ if __name__ == "__main__":
                     "cat",
                     features_dir="%s/features" % args.output_root,
                 )
+
+        plt.figure(figsize=(30, 30))
         for i in tqdm(range(PCs.shape[0])):
+            n_samples = int(len(stimulus_list) / 20)
+            sample_idx = np.arange(0, len(stimulus_list), n_samples)
+            print(len(sample_idx))
             scores = activations.squeeze() @ PCs[i, :]
-            best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
-            worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
+            sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][sample_idx]]
         
-            if plotting:
-                # plot images
-                plt.figure()
-                for j, id in enumerate(best_img_ids):
-                    plt.subplot(4, 5, j + 1)
-                    I = get_coco_image(id)
-                    plt.axis("off")
-                    plt.imshow(I)
-                plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
-                plt.close()
+            # plot images        
+            for j, id in enumerate(sampled_img_ids):
+                plt.subplot(20, 20, i*20+j+1)
+                I = get_coco_image(id)
+                plt.axis("off")
+                plt.imshow(I)
+        plt.tight_layout()
+        plt.savefig("figures/PCA/image_vis/%s_pc_sampled_images.png" % (model))
 
-                plt.figure()
-                for j, id in enumerate(worst_img_ids):
-                    plt.subplot(4, 5, j + 1)
-                    I = get_coco_image(id)
-                    plt.axis("off")
-                    plt.imshow(I)
-                plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
-                plt.close()
+        # for i in tqdm(range(PCs.shape[0])):
+        #     scores = activations.squeeze() @ PCs[i, :]
+        #     best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
+        #     worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
+        
+        #     if plotting:
+        #         # plot images
+        #         plt.figure()
+        #         for j, id in enumerate(best_img_ids):
+        #             plt.subplot(4, 5, j + 1)
+        #             I = get_coco_image(id)
+        #             plt.axis("off")
+        #             plt.imshow(I)
+        #         plt.tight_layout()
+        #         plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+        #         plt.close()
 
-            #find corresponding captions of best image 
-            best_caps, worst_caps = [], []
-            for j, id in enumerate(best_img_ids):
-                captions = get_coco_caps(id)
-                best_caps += captions
+        #         plt.figure()
+        #         for j, id in enumerate(worst_img_ids):
+        #             plt.subplot(4, 5, j + 1)
+        #             I = get_coco_image(id)
+        #             plt.axis("off")
+        #             plt.imshow(I)
+        #         plt.tight_layout()
+        #         plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
+        #         plt.close()
 
-            for j, id in enumerate(worst_img_ids):
-                captions = get_coco_caps(id)
-                worst_caps += captions
+        #     #find corresponding captions of best image 
+        #     best_caps, worst_caps = [], []
+        #     for j, id in enumerate(best_img_ids):
+        #         captions = get_coco_caps(id)
+        #         best_caps += captions
 
-            # print(best_caps)
-            # print(worst_caps)
+        #     for j, id in enumerate(worst_img_ids):
+        #         captions = get_coco_caps(id)
+        #         worst_caps += captions
 
-            make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
-            make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
+        #     # print(best_caps)
+        #     # print(worst_caps)
+
+        #     make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
+        #     make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
            
 
-            # calculate label consistency
-            cat_feats = []
-            for j, id in enumerate(best_img_ids):
-                idx = np.where(stimulus_list == id)[0]
-                cat_feats.append(COCO_cat_feat[idx, :])
+        #     # calculate label consistency
+        #     cat_feats = []
+        #     for j, id in enumerate(best_img_ids):
+        #         idx = np.where(stimulus_list == id)[0]
+        #         cat_feats.append(COCO_cat_feat[idx, :])
 
-            cat_feats = np.array(cat_feats).squeeze()
-            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
-            corr = np.mean(np.corrcoef(cat_feats))
-            best_label_corrs.append(corr)
+        #     cat_feats = np.array(cat_feats).squeeze()
+        #     # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+        #     corr = np.mean(np.corrcoef(cat_feats))
+        #     best_label_corrs.append(corr)
 
-            cat_feats = []
-            for j, id in enumerate(worst_img_ids):
-                idx = np.where(stimulus_list == id)[0]
-                cat_feats.append(COCO_cat_feat[idx, :])
+        #     cat_feats = []
+        #     for j, id in enumerate(worst_img_ids):
+        #         idx = np.where(stimulus_list == id)[0]
+        #         cat_feats.append(COCO_cat_feat[idx, :])
 
-            cat_feats = np.array(cat_feats).squeeze()
-            # print(cat_feats.shape)
-            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
-            corr = np.mean(np.corrcoef(cat_feats))
-            worst_label_corrs.append(corr)
+        #     cat_feats = np.array(cat_feats).squeeze()
+        #     # print(cat_feats.shape)
+        #     # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+        #     corr = np.mean(np.corrcoef(cat_feats))
+        #     worst_label_corrs.append(corr)
         
-        plt.figure()
-        plt.plot(np.arange(20), worst_label_corrs, label="Worst")
-        plt.plot(np.arange(20), best_label_corrs, label="Best")
+        # plt.figure()
+        # plt.plot(np.arange(20), worst_label_corrs, label="Worst")
+        # plt.plot(np.arange(20), best_label_corrs, label="Best")
 
-        plt.ylabel("Mean Pairwise Correlation")
-        plt.xlabel("PCs")
-        plt.legend()
-        plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
+        # plt.ylabel("Mean Pairwise Correlation")
+        # plt.xlabel("PCs")
+        # plt.legend()
+        # plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
 
 
     if args.proj_feature_pc_to_subj:
@@ -429,53 +447,85 @@ if __name__ == "__main__":
         )
 
         PCs = get_PCs(model=model)
-        pc_proj = np.dot(activations, PCs.T)
-        proj_norm = np.linalg.norm(pc_proj, axis=1)
-        img_rank = np.argsort(proj_norm)[::-1][:20]
-        plt.figure(figsize=(30,10))
-        for i, idx in enumerate(img_rank):
-            coco_id = stimulus_list[idx]
-            I = get_coco_image(coco_id)
-            pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
-            first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-            plt.subplot(4, 5, i + 1)
-            plt.axis("off")
-            plt.imshow(I)
-            plt.title(first3)
-        plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2max.png" % model)
-        plt.close()
+        nPC = PCs.shape[0]
+        pc_proj = np.dot(activations, PCs.T) # returns a 10000 by 20 matrix
+        top2_pcs = np.argsort(np.abs(pc_proj), axis=1)[:, -2:] # returns a 10000 by 2 matrix
+        pc_counter = np.zeros((nPC, nPC))
+        for i in range(top2_pcs.shape[0]):
+            j, k = top2_pcs[i, :]
+            pc_counter[j, k] += 1
+            pc_counter[k, j] += 1
+        
+        plt.imshow(pc_counter, cmap="Blues")
+        plt.xlabel("PCs")
+        plt.ylabel("PCs")
+        plt.xticks(np.arange(nPC))
+        plt.yticks(np.arange(nPC))
+        plt.colorbar()
+        plt.savefig("figures/PCA/top2pc/top2pc.png")
 
-        img_rank = np.argsort(proj_norm)[:20]
-        plt.figure(figsize=(30,10))
-        for i, idx in enumerate(img_rank):
-            coco_id = stimulus_list[idx]
-            I = get_coco_image(coco_id)
-            pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
-            first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-            plt.subplot(4, 5, i + 1)
-            plt.axis("off")
-            plt.imshow(I)
-            plt.title(first3)
-        plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2min.png" % model)
-        plt.close()
+        ind = np.unravel_index(np.argsort(pc_counter, axis=None), pc_counter.shape)
+        best_2_pcs = [(ind[0][::-1][i], ind[1][::-1][i]) for i in np.arange(0, 10, 2)]
+        print(best_2_pcs)
+        for p in best_2_pcs:
+            proj = np.vstack((pc_proj[:, p[0]], pc_proj[:, p[1]])).T
+            proj_norm = np.linalg.norm(proj, axis=1)
+            img_rank = np.argsort(proj_norm)[::-1][:20]
+            plt.figure(figsize=(20,20))
+            for i, idx in enumerate(img_rank):
+                coco_id = stimulus_list[idx]
+                I = get_coco_image(coco_id)
+                plt.subplot(4, 5, i+1)
+                plt.imshow(I)
+                plt.title("proj: %.2f, %.2f" % (pc_proj[idx, p[0]], pc_proj[idx, p[1]]))
+            plt.savefig("figures/PCA/top2pc/top_images_for_PC%d&%d.png" % (p[0], p[1]))
+        
 
-        proj_norm = np.linalg.norm(pc_proj, ord=-np.inf, axis=1)
-        img_rank = np.argsort(proj_norm)[:20]
-        plt.figure(figsize=(30,10))
-        for i, idx in enumerate(img_rank):
-            coco_id = stimulus_list[idx]
-            I = get_coco_image(coco_id)
-            pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
-            first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-            plt.subplot(4, 5, i + 1)
-            plt.axis("off")
-            plt.imshow(I)
-            plt.title(first3)
-        plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_-inf.png" % model)
-        plt.close()
+        # proj_norm = np.linalg.norm(pc_proj, axis=1)
+        # img_rank = np.argsort(proj_norm)[::-1][:20]
+        # plt.figure(figsize=(30,10))
+        # for i, idx in enumerate(img_rank):
+        #     coco_id = stimulus_list[idx]
+        #     I = get_coco_image(coco_id)
+        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:2]
+        #     first2 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+        #     plt.subplot(4, 5, i + 1)
+        #     plt.axis("off")
+        #     plt.imshow(I)
+        #     plt.title(first2)
+        # plt.tight_layout()
+        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2max.png" % model)
+
+        # img_rank = np.argsort(proj_norm)[:20]
+        # plt.figure(figsize=(30,10))
+        # for i, idx in enumerate(img_rank):
+        #     coco_id = stimulus_list[idx]
+        #     I = get_coco_image(coco_id)
+        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+        #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+        #     plt.subplot(4, 5, i + 1)
+        #     plt.axis("off")
+        #     plt.imshow(I)
+        #     plt.title(first3)
+        # plt.tight_layout()
+        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2min.png" % model)
+        # plt.close()
+
+        # proj_norm = np.linalg.norm(pc_proj, ord=-np.inf, axis=1)
+        # img_rank = np.argsort(proj_norm)[:20]
+        # plt.figure(figsize=(30,10))
+        # for i, idx in enumerate(img_rank):
+        #     coco_id = stimulus_list[idx]
+        #     I = get_coco_image(coco_id)
+        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+        #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+        #     plt.subplot(4, 5, i + 1)
+        #     plt.axis("off")
+        #     plt.imshow(I)
+        #     plt.title(first3)
+        # plt.tight_layout()
+        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_-inf.png" % model)
+        # plt.close()
 
     if args.load_and_show_all_word_clouds:
         from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
