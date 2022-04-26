@@ -12,9 +12,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.decomposition import PCA
 
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
-
-
 # import torch
 import clip
 
@@ -72,6 +69,9 @@ if __name__ == "__main__":
     parser.add_argument("--analyze_PCproj_consistency", default=False, action="store_true")
     parser.add_argument("--image2pc", default=False, action="store_true")
     parser.add_argument("--load_and_show_all_word_clouds", default=False, action="store_true")
+    parser.add_argument("--clustering_on_brain_pc", default=False, action="store_true")
+    parser.add_argument("--maximize_clustering_on_brain", default=False, action="store_true")
+
     args = parser.parse_args()
     
     
@@ -528,6 +528,7 @@ if __name__ == "__main__":
         # plt.close()
 
     if args.load_and_show_all_word_clouds:
+        from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
         import matplotlib.image as img
         plt.figure(figsize=(10, 50))
         for i in range(20):
@@ -541,16 +542,75 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig("./figures/PCA/image_vis/word_clouds/all_word_clouds.png")
 
+    if args.clustering_on_brain_pc:
+        from sklearn.cluster import KMeans
+        model = "clip"
+        subj = [1,2,5,7]
+        for s in subj:
+            PCs = np.load(
+                "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+                % (args.output_root, model, s, model)
+            )
+            print(PCs.shape)
+
+            inertia = []
+            for k in range(1,21):
+                kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
+                inertia.append(kmeans.inertia_)
+            plt.plot(inertia, label="subj %d" % s)
+        plt.legend()
+        plt.ylabel("Sum of squared distances")
+        plt.xlabel("# of clusters")
+        plt.savefig("figures/PCA/clustering/inertia.png")
     
-    # if args.basis:
-    #     subj = 1
-    #     m = "clip"
-    #     subj_pca =  np.load("%s/output/pca/%s/subj%02d/%s_pca_group_components.npy" % (args.output_root, m, subj, m))
-    #     print(subj_pca.shape)
-    #     nPC = subj_pca.shape[0]
+    if args.maximize_clustering_on_brain:
+        # verify they are in a patch?
+        from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
+        from featureprep.feature_prep import get_preloaded_features
+
+        model = "clip"
+        plotting = False
+        best_voxel_n = 20000
+        n_clusters = 15
+
+        stimulus_list = np.load(
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
+        )
+
+        activations = get_preloaded_features(
+            1,
+            stimulus_list,
+            "%s" % model.replace("_rep_only", ""),
+            features_dir="%s/features" % args.output_root,
+        )
+
+        group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+        print(group_w.shape)
+
+        # getting scores and plotting
+        from pycocotools.coco import COCO
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        coco_train = COCO(annFile_train)
+        # coco_val = COCO(annFile_val)
+        PCs = np.load(
+            "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+            % (args.output_root, model, args.subj, model)
+        )
+        kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
         
-
-    #     kmeans = KMeans(n_clusters=20, random_state=0).fit(subj_pca.T)
-    #     voxel_label = kmeans.labels_
-
-            
+        for i in tqdm(range(n_clusters)):
+            vox = kmeans.labels_==i
+            scores = activations.squeeze() @ group_w[:, vox]
+            best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
+        
+            if plotting:
+                # plot images
+                plt.figure()
+                for j, id in enumerate(best_img_ids):
+                    plt.subplot(4, 5, j + 1)
+                    I = get_coco_image(id)
+                    plt.axis("off")
+                    plt.imshow(I)
+                plt.tight_layout()
+                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
