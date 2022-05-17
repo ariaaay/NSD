@@ -568,10 +568,16 @@ if __name__ == "__main__":
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
         from featureprep.feature_prep import get_preloaded_features
 
+        from pycocotools.coco import COCO
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        coco_train = COCO(annFile_train)
+        # coco_val = COCO(annFile_val)
+
         model = "clip"
         plotting = False
         best_voxel_n = 20000
-        n_clusters = 15
+        n_clusters = 20
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -584,33 +590,34 @@ if __name__ == "__main__":
             features_dir="%s/features" % args.output_root,
         )
 
-        group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
-        print(group_w.shape)
-
-        # getting scores and plotting
-        from pycocotools.coco import COCO
-        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-        # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-        coco_train = COCO(annFile_train)
-        # coco_val = COCO(annFile_val)
         PCs = np.load(
             "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
             % (args.output_root, model, args.subj, model)
         )
-        kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
+
+        group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+        subj_mask = np.load(
+                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+                    % (args.output_root, model, args.subj, best_voxel_n)
+                )
+        subj_w = np.zeros((group_w.shape[0], len(subj_mask)))
+        subj_w[:, subj_mask] = group_w[:, :np.sum(subj_mask)]
+        print(subj_w.shape)
+
+        from sklearn.cluster import KMeans
+        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(PCs.T)
         
-        for i in tqdm(range(n_clusters)):
-            vox = kmeans.labels_==i
-            scores = activations.squeeze() @ group_w[:, vox]
+        for c in tqdm(range(n_clusters)):
+            vox = kmeans.labels_==c
+            scores = np.mean(activations.squeeze() @ subj_w[:, vox], axis=1)
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
-        
-            if plotting:
-                # plot images
-                plt.figure()
-                for j, id in enumerate(best_img_ids):
-                    plt.subplot(4, 5, j + 1)
-                    I = get_coco_image(id)
-                    plt.axis("off")
-                    plt.imshow(I)
-                plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+    
+            # plot images
+            plt.figure()
+            for j, id in enumerate(best_img_ids):
+                plt.subplot(4, 5, j + 1)
+                I = get_coco_image(id)
+                plt.axis("off")
+                plt.imshow(I)
+            plt.tight_layout()
+            plt.savefig("figures/PCA/clustering/%dclusters/%s_cluster%d_best_images.png" % (n_clusters, model, c))

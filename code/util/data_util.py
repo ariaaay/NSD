@@ -36,12 +36,24 @@ def load_model_performance(model, output_root=".", subj=1, measure="corr"):
     else:
         pvalue = False
 
-    out = np.load(
-        "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
-        % (output_root, subj, measure, model),
-        allow_pickle=True,
-    )
-
+    if type(model) == list:
+        # to accomodate different naming of the same model
+        for m in model:
+            try:
+                out = np.load(
+                    "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+                    % (output_root, subj, measure, m),
+                    allow_pickle=True,
+                )
+            except FileNotFoundError:
+                continue
+    else:
+        out = np.load(
+            "%s/output/encoding_results/subj%d/%s_%s_whole_brain.p"
+            % (output_root, subj, measure, model),
+            allow_pickle=True,
+        )
+    
     if measure == "corr":
         if pvalue:
             out = np.array(out)[:, 1]
