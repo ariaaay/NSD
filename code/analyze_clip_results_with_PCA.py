@@ -112,7 +112,7 @@ if __name__ == "__main__":
         # models = ["resnet50_bottleneck", "clip_visual_resnet"]
         subjs = np.arange(1, 9)
         num_pc = 20
-        best_voxel_n = 15000
+        best_voxel_n = 20000
         
         for m in models:
             print(m)
