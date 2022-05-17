@@ -39,6 +39,14 @@ def get_PCs(model="clip", data=None, num_pc=20):
                 "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
                 PCs,
             )
+
+        import pickle
+        with open("%s/output/pca/%s/%s_pca_group_by_feature.pkl" % (args.output_root, model, model), "wb") as f:
+            pickle.dumps(pca, f)
+        
+        plt.plot(pca.explained_variance_ratio_)
+        plt.savefig("figures/PCA/ev/%s_explained_var_ratio.png")
+        
     return PCs
 
 if __name__ == "__main__":
@@ -75,39 +83,43 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     
-    if args.weight_analysis:
-        models = ["clip", "resnet50_bottleneck", "bert_layer_13"]
-        # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
-        for m in models:
-            print(m)
-            w = np.load(
-                "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-                % (args.output_root, args.subj, m)
-            )
-            print(w.shape)
-            print("NaNs? Finite?:")
-            print(np.any(np.isnan(w)))
-            print(np.all(np.isfinite(w)))
-            pca = PCA(n_components=5, svd_solver="full")
-            pca.fit(w)
-            np.save(
-                "%s/output/pca/subj%d/%s_pca_components.npy"
-                % (args.output_root, args.subj, m),
-                pca.components_,
-            )
+    # if args.weight_analysis:
+    #     models = ["clip", "resnet50_bottleneck", "bert_layer_13"]
+    #     # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
+    #     for m in models:
+    #         print(m)
+    #         w = np.load(
+    #             "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+    #             % (args.output_root, args.subj, m)
+    #         )
+    #         print(w.shape)
+    #         print("NaNs? Finite?:")
+    #         print(np.any(np.isnan(w)))
+    #         print(np.all(np.isfinite(w)))
+    #         pca = PCA(n_components=5, svd_solver="full")
+    #         pca.fit(w)
+    #         np.save(
+    #             "%s/output/pca/subj%d/%s_pca_components.npy"
+    #             % (args.output_root, args.subj, m),
+    #             pca.components_,
+    #         )
 
     if args.group_weight_analysis:
         from util.data_util import load_model_performance, fill_in_nan_voxels
         from util.util import zscore
 
-        # models = ["clip"]
-        models = ["resnet50_bottleneck", "clip_visual_resnet"]
-        subjs = [1, 2, 5, 7]
+        models = ["clip"]
+        # models = ["resnet50_bottleneck", "clip_visual_resnet"]
+        subjs = np.arange(1, 9)
         num_pc = 20
-        best_voxel_n = 20000
+        best_voxel_n = 15000
         
         for m in models:
             print(m)
+            
+            if not os.path.exists("%s/output/pca/%s" % (args.output_root, m)):
+                os.makedirs("%s/output/pca/%s" % (args.output_root, m))
+
             try:
                 group_w = np.load(
                     "%s/output/pca/%s/weight_matrix_best_%d.npy"
@@ -135,10 +147,11 @@ if __name__ == "__main__":
                     corrected_rsq = rsq / nc
                     threshold = corrected_rsq[
                         np.argsort(corrected_rsq)[-best_voxel_n]
-                    ]  # get the threshold for the best 10000 voxels
+                    ]  # get the threshold for the best n voxels
                     print(threshold)
                     print(w.shape)
                     group_w.append(w[:, corrected_rsq >= threshold])
+
                     np.save(
                         "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
                         % (args.output_root, m, subj, best_voxel_n),
@@ -151,33 +164,41 @@ if __name__ == "__main__":
                     group_w,
                 )
 
-            pca = PCA(n_components=num_pc, svd_solver="full")
-            pca.fit(group_w)
-            np.save(
-                "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
-                pca.components_,
-            )
-            idx = 0
-            for subj in subjs:
-                subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-                    % (args.output_root, m, subj, best_voxel_n)
-                )
-                print(len(subj_mask))
-                subj_pca = np.zeros((num_pc, len(subj_mask)))
-                subj_pca[:, subj_mask] = zscore(
-                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-                )
-                if not os.path.exists(
-                    "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
-                ):
-                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
-                np.save(
-                    "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-                    % (args.output_root, m, subj, m),
-                    subj_pca,
-                )
-                idx += np.sum(subj_mask)
+            # pca = PCA(n_components=num_pc, svd_solver="full")
+            # pca.fit(group_w)
+            # np.save(
+            #     "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
+            #     pca.components_,
+            # )
+
+            # import pickle
+            # with open("%s/output/pca/%s/%s_pca_group.pkl" % (args.output_root, m, m), "wb") as f:
+            #     pickle.dumps(pca, f)
+            
+            # plt.plot(pca.explained_variance_ratio_)
+            # plt.savefig("figures/PCA/ev/%s_explained_var_ratio.png")
+
+            # idx = 0
+            # for subj in subjs:
+            #     subj_mask = np.load(
+            #         "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+            #         % (args.output_root, m, subj, best_voxel_n)
+            #     )
+            #     print(len(subj_mask))
+            #     subj_pca = np.zeros((num_pc, len(subj_mask)))
+            #     subj_pca[:, subj_mask] = zscore(
+            #         pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+            #     )
+            #     if not os.path.exists(
+            #         "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
+            #     ):
+            #         os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
+            #     np.save(
+            #         "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+            #         % (args.output_root, m, subj, m),
+            #         subj_pca,
+            #     )
+            #     idx += np.sum(subj_mask)
 
     if args.pc_text_visualization:
         subjs = [1, 2, 5, 7]
