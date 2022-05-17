@@ -42,10 +42,10 @@ def get_PCs(model="clip", data=None, num_pc=20):
 
         import pickle
         with open("%s/output/pca/%s/%s_pca_group_by_feature.pkl" % (args.output_root, model, model), "wb") as f:
-            pickle.dumps(pca, f)
+            pickle.dump(pca, f)
         
         plt.plot(pca.explained_variance_ratio_)
-        plt.savefig("figures/PCA/ev/%s_explained_var_ratio.png")
+        plt.savefig("figures/PCA/ev/%s_pca_group_by_feature.png" % model)
         
     return PCs
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         
         for m in models:
             print(m)
-            
+
             if not os.path.exists("%s/output/pca/%s" % (args.output_root, m)):
                 os.makedirs("%s/output/pca/%s" % (args.output_root, m))
 
@@ -164,88 +164,88 @@ if __name__ == "__main__":
                     group_w,
                 )
 
-            # pca = PCA(n_components=num_pc, svd_solver="full")
-            # pca.fit(group_w)
-            # np.save(
-            #     "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
-            #     pca.components_,
-            # )
-
-            # import pickle
-            # with open("%s/output/pca/%s/%s_pca_group.pkl" % (args.output_root, m, m), "wb") as f:
-            #     pickle.dumps(pca, f)
-            
-            # plt.plot(pca.explained_variance_ratio_)
-            # plt.savefig("figures/PCA/ev/%s_explained_var_ratio.png")
-
-            # idx = 0
-            # for subj in subjs:
-            #     subj_mask = np.load(
-            #         "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-            #         % (args.output_root, m, subj, best_voxel_n)
-            #     )
-            #     print(len(subj_mask))
-            #     subj_pca = np.zeros((num_pc, len(subj_mask)))
-            #     subj_pca[:, subj_mask] = zscore(
-            #         pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-            #     )
-            #     if not os.path.exists(
-            #         "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
-            #     ):
-            #         os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
-            #     np.save(
-            #         "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-            #         % (args.output_root, m, subj, m),
-            #         subj_pca,
-            #     )
-            #     idx += np.sum(subj_mask)
-
-    if args.pc_text_visualization:
-        subjs = [1, 2, 5, 7]
-        num_pc = 20
-        best_voxel_n = 20000
-
-        with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
-            out = f.readlines()
-        common_words = ["photo of " + w[:-1] for w in out]
-        try:
-            activations = np.load(
-                "%s/output/clip/word_interpretation/1000eng_activation.npy"
-                % args.output_root
-            )
-        except FileNotFoundError:
-            from nltk.corpus import wordnet
-            import clip
-            import torch
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            model, _ = clip.load("ViT-B/32", device=device)
-            activations = extract_text_activations(model, common_words)
+            pca = PCA(n_components=num_pc, svd_solver="full")
+            pca.fit(group_w)
             np.save(
-                "%s/output/clip/word_interpretation/1000eng_activation.npy"
-                % args.output_root,
-                activations,
-            )
-        group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
-        pca = PCA(n_components=num_pc, svd_solver="full")
-        pca.fit(group_w.T)
-        np.save(
-                "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
+                "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
                 pca.components_,
             )
-        # each components should be 20 x 512?
-        keywords = dict()
-        for i in range(pca.components_.shape[0]):
-            keywords[i] = extract_emb_keywords(pca.components_[i, :], activations, common_words)
-        
-        for k, v in keywords.items():
-            print("****** PC " + str(k) + " ******")
-            print("-Best:")
-            print(v[0])
-            print("-Worst:")
-            print(v[1])
+
+            import pickle
+            with open("%s/output/pca/%s/%s_pca_group.pkl" % (args.output_root, m, m), "wb") as f:
+                pickle.dump(pca, f)
             
-        np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
+            plt.plot(pca.explained_variance_ratio_)
+            plt.savefig("figures/PCA/ev/%s_pca_group.png" % m)
+
+            idx = 0
+            for subj in subjs:
+                subj_mask = np.load(
+                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+                    % (args.output_root, m, subj, best_voxel_n)
+                )
+                print(len(subj_mask))
+                subj_pca = np.zeros((num_pc, len(subj_mask)))
+                subj_pca[:, subj_mask] = zscore(
+                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+                )
+                if not os.path.exists(
+                    "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
+                ):
+                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
+                np.save(
+                    "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+                    % (args.output_root, m, subj, m),
+                    subj_pca,
+                )
+                idx += np.sum(subj_mask)
+
+    # if args.pc_text_visualization:
+    #     subjs = [1, 2, 5, 7]
+    #     num_pc = 20
+    #     best_voxel_n = 20000
+
+    #     with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
+    #         out = f.readlines()
+    #     common_words = ["photo of " + w[:-1] for w in out]
+    #     try:
+    #         activations = np.load(
+    #             "%s/output/clip/word_interpretation/1000eng_activation.npy"
+    #             % args.output_root
+    #         )
+    #     except FileNotFoundError:
+    #         from nltk.corpus import wordnet
+    #         import clip
+    #         import torch
+
+    #         device = "cuda" if torch.cuda.is_available() else "cpu"
+    #         model, _ = clip.load("ViT-B/32", device=device)
+    #         activations = extract_text_activations(model, common_words)
+    #         np.save(
+    #             "%s/output/clip/word_interpretation/1000eng_activation.npy"
+    #             % args.output_root,
+    #             activations,
+    #         )
+    #     group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
+    #     pca = PCA(n_components=num_pc, svd_solver="full")
+    #     pca.fit(group_w.T)
+    #     np.save(
+    #             "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
+    #             pca.components_,
+    #         )
+    #     # each components should be 20 x 512?
+    #     keywords = dict()
+    #     for i in range(pca.components_.shape[0]):
+    #         keywords[i] = extract_emb_keywords(pca.components_[i, :], activations, common_words)
+        
+    #     for k, v in keywords.items():
+    #         print("****** PC " + str(k) + " ******")
+    #         print("-Best:")
+    #         print(v[0])
+    #         print("-Worst:")
+    #         print(v[1])
+            
+    #     np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
 
     
     if args.pc_image_visualization:
@@ -253,7 +253,7 @@ if __name__ == "__main__":
         from featureprep.feature_prep import get_preloaded_features
 
         model = "clip"
-        plotting = False
+        plotting = True
         # model = "resnet50_bottleneck_rep_only"
         best_voxel_n = 20000
 
@@ -302,6 +302,7 @@ if __name__ == "__main__":
                     features_dir="%s/features" % args.output_root,
                 )
 
+        # plot sampled images
         plt.figure(figsize=(30, 30))
         for i in tqdm(range(PCs.shape[0])):
             n_samples = int(len(stimulus_list) / 20)
@@ -319,87 +320,87 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig("figures/PCA/image_vis/%s_pc_sampled_images.png" % (model))
 
-        # for i in tqdm(range(PCs.shape[0])):
-        #     scores = activations.squeeze() @ PCs[i, :]
-        #     best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
-        #     worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
+        for i in tqdm(range(PCs.shape[0])):
+            scores = activations.squeeze() @ PCs[i, :]
+            best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
+            worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
         
-        #     if plotting:
-        #         # plot images
-        #         plt.figure()
-        #         for j, id in enumerate(best_img_ids):
-        #             plt.subplot(4, 5, j + 1)
-        #             I = get_coco_image(id)
-        #             plt.axis("off")
-        #             plt.imshow(I)
-        #         plt.tight_layout()
-        #         plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
-        #         plt.close()
+            if plotting:
+                # plot images
+                plt.figure()
+                for j, id in enumerate(best_img_ids):
+                    plt.subplot(4, 5, j + 1)
+                    I = get_coco_image(id)
+                    plt.axis("off")
+                    plt.imshow(I)
+                plt.tight_layout()
+                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+                plt.close()
 
-        #         plt.figure()
-        #         for j, id in enumerate(worst_img_ids):
-        #             plt.subplot(4, 5, j + 1)
-        #             I = get_coco_image(id)
-        #             plt.axis("off")
-        #             plt.imshow(I)
-        #         plt.tight_layout()
-        #         plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
-        #         plt.close()
+                plt.figure()
+                for j, id in enumerate(worst_img_ids):
+                    plt.subplot(4, 5, j + 1)
+                    I = get_coco_image(id)
+                    plt.axis("off")
+                    plt.imshow(I)
+                plt.tight_layout()
+                plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
+                plt.close()
 
-        #     #find corresponding captions of best image 
-        #     best_caps, worst_caps = [], []
-        #     for j, id in enumerate(best_img_ids):
-        #         captions = get_coco_caps(id)
-        #         best_caps += captions
+            #find corresponding captions of best image 
+            best_caps, worst_caps = [], []
+            for j, id in enumerate(best_img_ids):
+                captions = get_coco_caps(id)
+                best_caps += captions
 
-        #     for j, id in enumerate(worst_img_ids):
-        #         captions = get_coco_caps(id)
-        #         worst_caps += captions
+            for j, id in enumerate(worst_img_ids):
+                captions = get_coco_caps(id)
+                worst_caps += captions
 
-        #     # print(best_caps)
-        #     # print(worst_caps)
+            # print(best_caps)
+            # print(worst_caps)
 
-        #     make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
-        #     make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
+            make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
+            make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
            
 
-        #     # calculate label consistency
-        #     cat_feats = []
-        #     for j, id in enumerate(best_img_ids):
-        #         idx = np.where(stimulus_list == id)[0]
-        #         cat_feats.append(COCO_cat_feat[idx, :])
+            # calculate label consistency
+            cat_feats = []
+            for j, id in enumerate(best_img_ids):
+                idx = np.where(stimulus_list == id)[0]
+                cat_feats.append(COCO_cat_feat[idx, :])
 
-        #     cat_feats = np.array(cat_feats).squeeze()
-        #     # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
-        #     corr = np.mean(np.corrcoef(cat_feats))
-        #     best_label_corrs.append(corr)
+            cat_feats = np.array(cat_feats).squeeze()
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            corr = np.mean(np.corrcoef(cat_feats))
+            best_label_corrs.append(corr)
 
-        #     cat_feats = []
-        #     for j, id in enumerate(worst_img_ids):
-        #         idx = np.where(stimulus_list == id)[0]
-        #         cat_feats.append(COCO_cat_feat[idx, :])
+            cat_feats = []
+            for j, id in enumerate(worst_img_ids):
+                idx = np.where(stimulus_list == id)[0]
+                cat_feats.append(COCO_cat_feat[idx, :])
 
-        #     cat_feats = np.array(cat_feats).squeeze()
-        #     # print(cat_feats.shape)
-        #     # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
-        #     corr = np.mean(np.corrcoef(cat_feats))
-        #     worst_label_corrs.append(corr)
+            cat_feats = np.array(cat_feats).squeeze()
+            # print(cat_feats.shape)
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            corr = np.mean(np.corrcoef(cat_feats))
+            worst_label_corrs.append(corr)
         
-        # plt.figure()
-        # plt.plot(np.arange(20), worst_label_corrs, label="Worst")
-        # plt.plot(np.arange(20), best_label_corrs, label="Best")
+        plt.figure()
+        plt.plot(np.arange(20), worst_label_corrs, label="Worst")
+        plt.plot(np.arange(20), best_label_corrs, label="Best")
 
-        # plt.ylabel("Mean Pairwise Correlation")
-        # plt.xlabel("PCs")
-        # plt.legend()
-        # plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
+        plt.ylabel("Mean Pairwise Correlation")
+        plt.xlabel("PCs")
+        plt.legend()
+        plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
 
 
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
         # Calculate weight projection onto PC space
         model = "clip"
-        subjs = [1, 2, 5, 7]
+        subjs = np.arange(1,9)
         num_pc = 20
         best_voxel_n = 20000
         PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
@@ -436,7 +437,7 @@ if __name__ == "__main__":
     if args.analyze_PCproj_consistency:
         from analyze_in_mni import analyze_data_correlation_in_mni
 
-        subjs = [1, 2, 5, 7]
+        subjs = np.arange(1,9)
         model = "clip"
         # load all PC projection from all four subjs
         all_PC_projs = []
@@ -566,7 +567,7 @@ if __name__ == "__main__":
     if args.clustering_on_brain_pc:
         from sklearn.cluster import KMeans
         model = "clip"
-        subj = [1,2,5,7]
+        subj = np.arange(1,9)
         for s in subj:
             PCs = np.load(
                 "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
