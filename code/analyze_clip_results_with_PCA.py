@@ -19,6 +19,7 @@ from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import *
 
 def make_word_cloud(text, saving_fname):
+    from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
     text = " ".join(t for t in text)
     # print(text)
     wordcloud = WordCloud(background_color="white").generate(text)
@@ -434,21 +435,21 @@ if __name__ == "__main__":
             idx += np.sum(subj_mask)
 
 
-    if args.analyze_PCproj_consistency:
-        from analyze_in_mni import analyze_data_correlation_in_mni
+    # if args.analyze_PCproj_consistency:
+    #     from analyze_in_mni import analyze_data_correlation_in_mni
 
-        subjs = np.arange(1,9)
-        model = "clip"
-        # load all PC projection from all four subjs
-        all_PC_projs = []
-        for subj in subjs:
-            all_PC_projs.append(np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (args.output_root, model, subj, model)
-                ))
+    #     subjs = np.arange(1,9)
+    #     model = "clip"
+    #     # load all PC projection from all 8 subjs
+    #     all_PC_projs = []
+    #     for subj in subjs:
+    #         all_PC_projs.append(np.load(
+    #                 "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+    #                 % (args.output_root, model, subj, model)
+    #             ))
 
-
-        analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
+    #     # remember to `run module load fsl-6.0.3` on cluster
+    #     analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
 
 
     if args.image2pc:
@@ -550,7 +551,6 @@ if __name__ == "__main__":
         # plt.close()
 
     if args.load_and_show_all_word_clouds:
-        from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
         import matplotlib.image as img
         plt.figure(figsize=(10, 50))
         for i in range(20):

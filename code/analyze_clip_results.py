@@ -28,15 +28,15 @@ from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
-# annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-# annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-# coco_train = COCO(annFile_train)
-# coco_val = COCO(annFile_val)
+annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+coco_train = COCO(annFile_train)
+coco_val = COCO(annFile_val)
 
-# annFile_train_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-# annFile_val_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-# coco_train_caps = COCO(annFile_train_caps)
-# coco_val_caps = COCO(annFile_val_caps)
+annFile_train_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+annFile_val_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+coco_train_caps = COCO(annFile_train_caps)
+coco_val_caps = COCO(annFile_val_caps)
 
 def compute_sample_performance(
     model, subj, output_dir, masking="sig", measure="corrs"
