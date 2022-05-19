@@ -8,7 +8,7 @@ from numpy.core.fromnumeric import nonzero
 from tqdm import tqdm
 
 from util.data_util import load_model_performance
-from save_3d_views import save_3d_views
+
 OUTPUT_ROOT = "/user_data/yuanw3/project_outputs/NSD"
 
 def project_vals_to_3d(vals, mask):
@@ -104,13 +104,13 @@ def make_volume(
     noise_corrected=False,
 ):
     if measure == "rsq":
-        vmax = 0.5
+        vmax = 0.6
     else:
         vmax = 0.8
     if model2 is not None: 
         vmax -= 0.3
     if noise_corrected:
-        vmax = 0.95
+        vmax = 0.85
     if measure == "pvalue":
         vmax = 0.06
     
@@ -188,7 +188,7 @@ def make_volume(
         "subj%02d" % subj,
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
-        cmap="hot",
+        cmap="inferno",
         vmin=0,
         vmax=vmax,
     )
@@ -321,7 +321,7 @@ if __name__ == "__main__":
     # body_roi_volume = make_roi_volume("floc-bodies")
     # word_roi_volume = make_roi_volume("floc-words")
     # kastner_volume = make_roi_volume("Kastner2015")
-    hcp_volume = make_roi_volume("HCP_MMP1")
+    # hcp_volume = make_roi_volume("HCP_MMP1")
     # sulc_volume = make_roi_volume("corticalsulc")
 
     # lang_ROI = np.load(
@@ -344,30 +344,30 @@ if __name__ == "__main__":
 
     # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (OUTPUT_ROOT, args.subj))
     # old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
-    nc = np.load(
-        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-        % (OUTPUT_ROOT, args.subj, args.subj)
-    )
+    # nc = np.load(
+    #     "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+    #     % (OUTPUT_ROOT, args.subj, args.subj)
+    # )
     # nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
 
-    food = np.load("%s/output/subj01_food_v_all_FDR.npy" % (OUTPUT_ROOT))
-    food_volume = make_volume(subj=args.subj, vals=food, measure="pvalue", mask_with_significance=True)
+    # food = np.load("%s/output/subj01_food_v_all_FDR.npy" % (OUTPUT_ROOT))
+    # food_volume = make_volume(subj=args.subj, vals=food, measure="pvalue", mask_with_significance=True)
 
     # Food maks
-    regions_nums_to_include = [136, 138, 163, 7, 22, 154, 6] #"TE2p", "PH", "VVC", "v8", "PIT", "VMV3", "v4"
-    food_mask = np.zeros(hcp_volume.data.shape)
-    for region_num in regions_nums_to_include:
-        food_mask[np.where(hcp_volume.data == region_num)] = 1
-    food_mask_volume = cortex.Volume(
-        food_mask,
-        "subj%02d" % args.subj,
-        "func1pt8_to_anat0pt8_autoFSbbr",
-        mask=cortex.utils.get_cortical_mask(
-            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
-        ),
-        vmin=np.min(food_mask),
-        vmax=np.max(food_mask),
-    )
+    # regions_nums_to_include = [136, 138, 163, 7, 22, 154, 6] #"TE2p", "PH", "VVC", "v8", "PIT", "VMV3", "v4"
+    # food_mask = np.zeros(hcp_volume.data.shape)
+    # for region_num in regions_nums_to_include:
+    #     food_mask[np.where(hcp_volume.data == region_num)] = 1
+    # food_mask_volume = cortex.Volume(
+    #     food_mask,
+    #     "subj%02d" % args.subj,
+    #     "func1pt8_to_anat0pt8_autoFSbbr",
+    #     mask=cortex.utils.get_cortical_mask(
+    #         "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+    #     ),
+    #     vmin=np.min(food_mask),
+    #     vmax=np.max(food_mask),
+    # )
 
     volumes = {
         # "Visual ROIs": visual_roi_volume,
@@ -377,14 +377,14 @@ if __name__ == "__main__":
         # "Bodies ROIs": body_roi_volume,
         # "Words ROIs": word_roi_volume,
         # "Kastner2015": kastner_volume,
-        "HCP": hcp_volume,
+        # "HCP": hcp_volume,
         # "sulcus": sulc_volume,
         # "Language ROIs": language_volume,
         # "Noise Ceiling": nc_volume,
         # "EV": ev_volume,
         # "EV - old": old_ev_volume,
-        "food": food_volume,
-        "food_mask": food_mask_volume
+        # "food": food_volume,
+        # "food_mask": food_mask_volume
     }
 
 
@@ -465,18 +465,18 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    # volumes["clip&resnet50-clip ViT R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model=[
-    #         # "convnet_res50_clip",
-    #         # "clip_convnet_res50",
-    #         "clip_resnet50_bottleneck",
-    #         "resnet50_bottleneck_clip",
-    #     ],
-    #     model2="clip",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    # )
+    volumes["clip&resnet50-clip ViT R^2"] = make_volume(
+        subj=args.subj,
+        model=[
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_resnet50_bottleneck",
+            "resnet50_bottleneck_clip",
+        ],
+        model2="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
 
     volumes["clip&resnet50-clip RN50 R^2"] = make_volume(
         subj=args.subj,
@@ -533,19 +533,25 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    volumes["clip&bert13"] = make_volume(
-        subj=args.subj,
-        model=["clip_bert_layer_13", "bert_layer_13_clip"],
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&bert13"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_bert_layer_13", "bert_layer_13_clip"],
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
 
-    volumes["clip&resnet50 R^2"] = make_volume(
-        subj=args.subj,
-        model=["clip_resnet50_bottleneck", "resnet50_bottleneck_clip"],
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-    )
+    # volumes["clip&resnet50 R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model=["clip_resnet50_bottleneck", "resnet50_bottleneck_clip"],
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    # )
+
+    # clipRN50_resnet50_unique = cortex.Volume2D(vol1, vol2, cmap="PU_PinkBlue_covar", vmin=0, vmax=0.15, vmin2=0, vmax2=0.15) 
+    volumes["clipViT_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip ViT R^2"], volumes["clip ViT&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar", vmin=0, vmax=0.15, vmin2=0, vmax2=0.15)
+    volumes["clipRN50_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip RN50 R^2"], volumes["clip RN50&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar", vmin=0, vmax=0.15, vmin2=0, vmax2=0.15)
+    volumes["clip_v_bert_unique"] = cortex.Volume2D(volumes["clip&bert13-clip R^2"], volumes["clip&bert13-bert13 R^2"], cmap="PU_BuOr_covar", vmin=0, vmax=0.15, vmin2=0, vmax2=0.15)
+
 
     if args.subj == 1 & args.show_more:
         volumes["clip_top1_object"] = make_volume(
@@ -828,75 +834,53 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         model = "clip"
+        best_voxel_n = 20000
         pc_vols = []
-        # PCs = np.load(
-        #     "%s/output/pca/subj%d/pca_components.npy" % (OUTPUT_ROOT, args.subj)
-        # )
-        PCs = np.load(
+        PCs_zscore = np.load(
             "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
             % (OUTPUT_ROOT, model, args.subj, model)
         )
-
-        PCs_zscore = PCs
-
+        subj_mask = np.load(
+                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+                    % (OUTPUT_ROOT, model, args.subj, best_voxel_n)
+                )
+        PCs_zscore[:, ~subj_mask] = np.nan
+        PC_val_only = PCs_zscore[:, subj_mask]
+        
         # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
-        for i in range(PCs.shape[0]):
+        for i in range(PCs_zscore.shape[0]):
             key = "PC" + str(i)
             volumes[key] = make_pc_volume(
                 args.subj,
                 PCs_zscore[i, :],
             )
 
-        volumes["3PC"] = make_3pc_volume(
-            args.subj,
-            PCs_zscore,
-        )
-
-        volume = make_pc_volume(
-                args.subj,
-                PCs_zscore[0, :],
-            )
+        # volumes["3PC"] = make_3pc_volume(
+        #     args.subj,
+        #     PCs_zscore,
+        # )
 
         # basis?
-        from sklearn.cluster import KMeans
-        inertia = []
-        for k in range(1,21):
-            kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
-            if k > 3:
-                volumes["basis 20-%d" % k] = make_pc_volume(args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s")
-            import matplotlib.pyplot as plt
-            inertia.append(kmeans.inertia_)
-        plt.plot(inertia, label="20 PCS")
+        def kmean_sweep_on_PC(n_pc):
+            from sklearn.cluster import KMeans
+            inertia = []
+            for k in range(3,11):
+                kmeans = KMeans(n_clusters=k, random_state=0).fit(PC_val_only[:n_pc, :].T)
+                labels = PCs_zscore[0,:].copy()
+                labels[subj_mask] = kmeans.labels_+1
+                volumes["basis %d-%d" % (n_pc, k)] = make_pc_volume(args.subj, labels, vmin=1, vmax=k, cmap="J4s")
+                inertia.append(kmeans.inertia_)
+            return inertia
+                
+        import matplotlib.pyplot as plt
+        plt.figure()
+        n_pcs = [3,4,5]
+        for n in n_pcs:
+            inertia = kmean_sweep_on_PC(n)
+            plt.plot(inertia, label="%d PCS" % n)
+        plt.savefig("figures/pca/clustering/inertia_across_pc_num.png")
 
-        inertia = []
-        for k in range(1,21):
-            kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs[:7, :].T)
-            if k > 3:
-                volumes["basis 7-%d" % k] = make_pc_volume(args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s")
-            import matplotlib.pyplot as plt
-            inertia.append(kmeans.inertia_)
-        plt.plot(inertia, label="7 PCS")
 
-        inertia = []
-        for k in range(1,21):
-            kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs[:4, :].T)
-            if k > 3:
-                volumes["basis 4-%d" % k] = make_pc_volume(args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s")
-            import matplotlib.pyplot as plt
-            inertia.append(kmeans.inertia_)
-        plt.plot(inertia, label="4 PCS")
-
-        inertia = []
-        for k in range(1,21):
-            kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs[:3, :].T)
-            if k > 3:
-                volumes["basis 4-%d" % k] = make_pc_volume(args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s")
-            import matplotlib.pyplot as plt
-            inertia.append(kmeans.inertia_)
-        plt.plot(inertia, label="3 PCS")
-        
-        plt.legend()
-        plt.savefig("figures/PCA/clustering/inertia_across_pc_num.png")
 
         # MNI
         # mni_data = project_vols_to_mni(args.subj, volume)
@@ -932,19 +916,25 @@ if __name__ == "__main__":
         cortex.webgl.show(data=volumes, port=int(subj_port), recache=False)
 
     elif args.vis_method == "quickflat":
-        cortex.webgl.make_static(outpath="./viewer", data=volumes, recache=False)
-
-        roi_list = ['RSC', 'PPA', 'OPA', 'EarlyVis', 'FFA-1', "FFA-2", "OFA", "mtTL-bodies"]
+        roi_list = ['RSC', 'PPA', 'OPA', 'EarlyVis', 'FFA-1', "FFA-2"]
         for k in volumes.keys():
-            vol_name = k.replace(" ", "_")
-            filename = "./figures/flatmap/subj%d/%s.svg" % (args.subj, vol_name)
+            # vol_name = k.replace(" ", "_")
+            filename = "./figures/flatmap/subj%d/%s.png" % (args.subj, k)
             _ = cortex.quickflat.make_png(filename, volumes[k], linewidth=3, recache=False, roi_list=roi_list)
 
     elif args.vis_method == "3d_views":
+        from save_3d_views import save_3d_views
+
         for k, v in volumes.items():
             root = "figures/3d_views/subj%s" % args.subj
-            _ = save_3d_views(v, root, k, list_views =['lateral', "bottom", "back"],list_surfaces = ['inflated', "flatmap"], with_labels = True,
+            _ = save_3d_views(v, root, k, list_views =['lateral', "bottom", "back"],list_surfaces = ['inflated'], with_labels = True,
                     size=(1024*4, 768*4), trim=True)
+
+
+                
+             
+                
+                
 
     import pdb
     pdb.set_trace()
