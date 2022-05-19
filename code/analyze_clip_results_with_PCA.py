@@ -585,7 +585,7 @@ if __name__ == "__main__":
         plt.xlabel("# of clusters")
         plt.savefig("figures/PCA/clustering/inertia.png")
     
-    if args.maximize_clustering_on_brain:
+    if args.maximize_input_for_clustering_on_brain:
         # verify they are in a patch?
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
         from featureprep.feature_prep import get_preloaded_features
@@ -599,39 +599,47 @@ if __name__ == "__main__":
         model = "clip"
         plotting = False
         best_voxel_n = 20000
-        n_clusters = 20
+        n_clusters = 6
+        n_pcs = 3
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
         )
 
-        activations = get_preloaded_features(
+        img_activations = get_preloaded_features(
             1,
             stimulus_list,
-            "%s" % model.replace("_rep_only", ""),
+            "clip",
             features_dir="%s/features" % args.output_root,
         )
 
         PCs = np.load(
             "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
             % (args.output_root, model, args.subj, model)
-        )
-
-        group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+        )[:n_pcs,:]
         subj_mask = np.load(
                     "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
                     % (args.output_root, model, args.subj, best_voxel_n)
                 )
-        subj_w = np.zeros((group_w.shape[0], len(subj_mask)))
-        subj_w[:, subj_mask] = group_w[:, :np.sum(subj_mask)]
-        print(subj_w.shape)
+        PC_val_only = PCs[:, subj_mask]
+
+        subj_w = np.load(
+                    "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+                    % (args.output_root, subj, model)
+                )
+        subj_w = fill_in_nan_voxels(w, subj, args.output_root)
+        masked_weight = subj_w[:, subj_mask]
+
 
         from sklearn.cluster import KMeans
         kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(PCs.T)
         
+        max_text = dict()
         for c in tqdm(range(n_clusters)):
             vox = kmeans.labels_==c
-            scores = np.mean(activations.squeeze() @ subj_w[:, vox], axis=1)
+
+            #maximize image
+            scores = np.mean(activations.squeeze() @ masked_weight[:, vox], axis=1)
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
     
             # plot images
@@ -642,4 +650,21 @@ if __name__ == "__main__":
                 plt.axis("off")
                 plt.imshow(I)
             plt.tight_layout()
-            plt.savefig("figures/PCA/clustering/%dclusters/%s_cluster%d_best_images.png" % (n_clusters, model, c))
+            fig_root = "figures/PCA/clustering/%dclusters_maximization" % n_clusters
+            if not os.path.exists(fig_root):
+                os.makedirs(fig_root)
+            plt.savefig("%s/%s_cluster%d_best_images.png" % (fig_root, model, c))
+
+            #maximize text
+            from analyze_clip_results import extract_emb_keywords
+            with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
+                out = f.readlines()
+            common_words = ["photo of " + w[:-1] for w in out]
+            activations = np.load(
+                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                % args.output_root
+            )
+            
+            b, w = extract_emb_keywords(masked_weight[:, vox], activations, common_words)
+            dict[c] = [b ,w]
+
