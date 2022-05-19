@@ -147,6 +147,9 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
 
 def extract_emb_keywords(embedding, activations, common_words):
     scores = activations.squeeze() @ embedding
+    if len(embedding.shape) > 1:
+        scores = np.mean(scores, axis=1)
+
     best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
     worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
     best_list_word_only = [w.split(" ")[-1] for w in best_list]
