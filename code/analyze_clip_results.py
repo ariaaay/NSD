@@ -146,6 +146,7 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
 
 
 def extract_emb_keywords(embedding, activations, common_words):
+    print(embedding.size)
     scores = activations.squeeze() @ embedding
     best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
     worst_list = list(np.array(common_words)[np.argsort(scores)[:30]])
