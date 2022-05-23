@@ -3,6 +3,7 @@ import argparse
 
 # from msilib.schema import File
 import pickle
+from unicodedata import name
 
 import seaborn as sns
 import nibabel as nib
@@ -113,19 +114,26 @@ if __name__ == "__main__":
         # models = ["resnet50_bottleneck", "clip_visual_resnet"]
         subjs = np.arange(1, 9)
         num_pc = 20
-        best_voxel_n = 20000
+        # best_voxel_n = 15000
+        threshold = 0.3
+        mask_out_roi = "prf-visualrois"
         
         for m in models:
             print(m)
+            
+            name_modifier = "acc_%.1f_minus_%s" % (threshold, mask_out_roi)
+            group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, m, name_modifier)
 
             if not os.path.exists("%s/output/pca/%s" % (args.output_root, m)):
                 os.makedirs("%s/output/pca/%s" % (args.output_root, m))
 
             try:
-                group_w = np.load(
-                    "%s/output/pca/%s/weight_matrix_best_%d.npy"
-                    % (args.output_root, m, best_voxel_n)
-                )
+                # pgroup_w = np.load(
+                #     "%s/output/pca/%s/weight_matrix_best_%d_minus_%s.npy"
+                #     % (args.output_root, m, best_voxel_n)
+                # )
+                group_w = np.load(group_w_path)
+                    
             except FileNotFoundError:
                 group_w = []
                 for subj in subjs:
@@ -134,56 +142,57 @@ if __name__ == "__main__":
                         % (args.output_root, subj, m)
                     )
                     w = fill_in_nan_voxels(w, subj, args.output_root)
-                    # print(w.shape) # 512 x $voxel
-                    # print("NaNs? Finite?:")
-                    # print(np.any(np.isnan(w)))
-                    # print(np.all(np.isfinite(w)))
+                    if mask_out_roi is not None:
+                        roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
+                        roi_mask = roi_mask > 0
+                        weight_mask = ~roi_mask
+                        print("masking out %d voxels..." % sum(roi_mask))
+                    else:
+                        weight_mask = np.ones(w.shape[1])
                     rsq = load_model_performance(
                         m, output_root=args.output_root, subj=subj, measure="rsq"
                     )
+                    
                     nc = np.load(
                         "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
                         % (args.output_root, subj, subj)
                     )
                     corrected_rsq = rsq / nc
-                    threshold = corrected_rsq[
-                        np.argsort(corrected_rsq)[-best_voxel_n]
-                    ]  # get the threshold for the best n voxels
-                    print(threshold)
-                    print(w.shape)
-                    group_w.append(w[:, corrected_rsq >= threshold])
+                    # threshold = corrected_rsq[
+                    #     np.argsort(corrected_rsq)[-best_voxel_n]
+                    # ]  # get the threshold for the best n voxels
+                    acc_mask = corrected_rsq >= threshold
+                    weight_mask = weight_mask*acc_mask
+                    print("Total voxels left: %d" % sum(weight_mask))
+                    group_w.append(w[:, weight_mask])
 
                     np.save(
-                        "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-                        % (args.output_root, m, subj, best_voxel_n),
+                        "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                        % (args.output_root, m, subj, name_modifier),
                         corrected_rsq >= threshold,
                     )
                 group_w = np.hstack(group_w)
-                np.save(
-                    "%s/output/pca/%s/weight_matrix_best_%d.npy"
-                    % (args.output_root, m, best_voxel_n),
-                    group_w,
-                )
+                np.save(group_w_path, group_w)
 
             pca = PCA(n_components=num_pc, svd_solver="full")
             pca.fit(group_w)
             np.save(
-                "%s/output/pca/%s/%s_pca_group_components.npy" % (args.output_root, m, m),
+                "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, m, m, name_modifier),
                 pca.components_,
             )
 
             import pickle
-            with open("%s/output/pca/%s/%s_pca_group.pkl" % (args.output_root, m, m), "wb") as f:
+            with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, m, m, name_modifier), "wb") as f:
                 pickle.dump(pca, f)
             
             plt.plot(pca.explained_variance_ratio_)
-            plt.savefig("figures/PCA/ev/%s_pca_group.png" % m)
+            plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (m, name_modifier))
 
             idx = 0
             for subj in subjs:
                 subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-                    % (args.output_root, m, subj, best_voxel_n)
+                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                    % (args.output_root, m, subj, name_modifier)
                 )
                 print(len(subj_mask))
                 subj_pca = np.zeros((num_pc, len(subj_mask)))
@@ -195,8 +204,8 @@ if __name__ == "__main__":
                 ):
                     os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
                 np.save(
-                    "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-                    % (args.output_root, m, subj, m),
+                    "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
+                    % (args.output_root, m, subj, m, name_modifier),
                     subj_pca,
                 )
                 idx += np.sum(subj_mask)
