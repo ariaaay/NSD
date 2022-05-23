@@ -167,46 +167,46 @@ if __name__ == "__main__":
                     np.save(
                         "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
                         % (args.output_root, m, subj, name_modifier),
-                        corrected_rsq >= threshold,
+                        weight_mask,
                     )
                 group_w = np.hstack(group_w)
                 np.save(group_w_path, group_w)
 
-            pca = PCA(n_components=num_pc, svd_solver="full")
-            pca.fit(group_w)
-            np.save(
-                "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, m, m, name_modifier),
-                pca.components_,
-            )
+            # pca = PCA(n_components=num_pc, svd_solver="full")
+            # pca.fit(group_w)
+            # np.save(
+            #     "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, m, m, name_modifier),
+            #     pca.components_,
+            # )
 
-            import pickle
-            with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, m, m, name_modifier), "wb") as f:
-                pickle.dump(pca, f)
+            # import pickle
+            # with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, m, m, name_modifier), "wb") as f:
+            #     pickle.dump(pca, f)
             
-            plt.plot(pca.explained_variance_ratio_)
-            plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (m, name_modifier))
+            # plt.plot(pca.explained_variance_ratio_)
+            # plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (m, name_modifier))
 
-            idx = 0
-            for subj in subjs:
-                subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-                    % (args.output_root, m, subj, name_modifier)
-                )
-                print(len(subj_mask))
-                subj_pca = np.zeros((num_pc, len(subj_mask)))
-                subj_pca[:, subj_mask] = zscore(
-                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-                )
-                if not os.path.exists(
-                    "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
-                ):
-                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
-                np.save(
-                    "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
-                    % (args.output_root, m, subj, m, name_modifier),
-                    subj_pca,
-                )
-                idx += np.sum(subj_mask)
+            # idx = 0
+            # for subj in subjs:
+            #     subj_mask = np.load(
+            #         "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+            #         % (args.output_root, m, subj, name_modifier)
+            #     )
+            #     print(len(subj_mask))
+            #     subj_pca = np.zeros((num_pc, len(subj_mask)))
+            #     subj_pca[:, subj_mask] = zscore(
+            #         pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+            #     )
+            #     if not os.path.exists(
+            #         "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
+            #     ):
+            #         os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
+            #     np.save(
+            #         "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
+            #         % (args.output_root, m, subj, m, name_modifier),
+            #         subj_pca,
+            #     )
+            #     idx += np.sum(subj_mask)
 
     # if args.pc_text_visualization:
     #     subjs = [1, 2, 5, 7]
