@@ -31,24 +31,24 @@ def make_word_cloud(text, saving_fname):
     plt.axis("off")
     wordcloud.to_file(saving_fname)
 
-def get_PCs(model="clip", data=None, num_pc=20):
+def get_PCs(model="clip", data=None, num_pc=20, name_modifier=None):
     try:
-        PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
+        PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature_%s.npy" % (args.output_root, model, model, name_modifier))
     except FileNotFoundError:
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
         np.save(
-                "%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model), 
+                "%s/output/pca/%s/%s_pca_group_components_by_feature_%s.npy" % (args.output_root, model, model, name_modifier), 
                 PCs,
             )
 
         import pickle
-        with open("%s/output/pca/%s/%s_pca_group_by_feature.pkl" % (args.output_root, model, model), "wb") as f:
+        with open("%s/output/pca/%s/%s_pca_group_by_feature_%s.pkl" % (args.output_root, model, model, name_modifier), "wb") as f:
             pickle.dump(pca, f)
         
         plt.plot(pca.explained_variance_ratio_)
-        plt.savefig("figures/PCA/ev/%s_pca_group_by_feature.png" % model)
+        plt.savefig("figures/PCA/ev/%s_pca_group_by_feature_%s.png" % (model, name_modifier))
         
     return PCs
 
@@ -263,7 +263,11 @@ if __name__ == "__main__":
         model = "clip"
         plotting = True
         # model = "resnet50_bottleneck_rep_only"
-        best_voxel_n = 20000
+        # best_voxel_n = 20000
+        threshold = 0.3
+        mask_out_roi = "prf-visualrois"
+        name_modifier = "acc_%.1f_minus_%s" % (threshold, mask_out_roi)
+        group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -278,10 +282,10 @@ if __name__ == "__main__":
         if "rep_only" in model:
             data_to_fit = activations
         else:
-            group_w = np.load("%s/output/pca/%s/weight_matrix_best_%d.npy" % (args.output_root, model, best_voxel_n))
+            group_w = np.load(group_w_path)
             data_to_fit = group_w.T
         # load PCs
-        PCs = get_PCs(model=model, data=data_to_fit)
+        PCs = get_PCs(model=model, data=data_to_fit, name_modifier=name_modifier)
         
         # getting scores and plotting
         from pycocotools.coco import COCO
@@ -326,7 +330,7 @@ if __name__ == "__main__":
                 plt.axis("off")
                 plt.imshow(I)
         plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/%s_pc_sampled_images.png" % (model))
+        plt.savefig("figures/PCA/image_vis/%s_%s_pc_sampled_images.png" % (model, name_modifier))
 
         for i in tqdm(range(PCs.shape[0])):
             scores = activations.squeeze() @ PCs[i, :]
@@ -342,7 +346,7 @@ if __name__ == "__main__":
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_pc%d_best_images.png" % (model, i))
+                plt.savefig("figures/PCA/image_vis/%s_%s_pc%d_best_images.png" % (model, name_modifier, i))
                 plt.close()
 
                 plt.figure()
@@ -352,24 +356,24 @@ if __name__ == "__main__":
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_pc%d_worst_images.png" % (model, i))
+                plt.savefig("figures/PCA/image_vis/%s_%s_pc%d_worst_images.png" % (model, name_modifier ,i))
                 plt.close()
 
-            #find corresponding captions of best image 
-            best_caps, worst_caps = [], []
-            for j, id in enumerate(best_img_ids):
-                captions = get_coco_caps(id)
-                best_caps += captions
+            # #find corresponding captions of best image 
+            # best_caps, worst_caps = [], []
+            # for j, id in enumerate(best_img_ids):
+            #     captions = get_coco_caps(id)
+            #     best_caps += captions
 
-            for j, id in enumerate(worst_img_ids):
-                captions = get_coco_caps(id)
-                worst_caps += captions
+            # for j, id in enumerate(worst_img_ids):
+            #     captions = get_coco_caps(id)
+            #     worst_caps += captions
 
-            # print(best_caps)
-            # print(worst_caps)
+            # # print(best_caps)
+            # # print(worst_caps)
 
-            make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
-            make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
+            # make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
+            # make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
            
 
             # calculate label consistency
@@ -401,7 +405,7 @@ if __name__ == "__main__":
         plt.ylabel("Mean Pairwise Correlation")
         plt.xlabel("PCs")
         plt.legend()
-        plt.savefig("figures/PCA/image_vis/%s_pc_label_corr.png" % model)
+        plt.savefig("figures/PCA/image_vis/%s_%s_pc_label_corr.png" % (name_modifier, model))
 
 
     if args.proj_feature_pc_to_subj:
