@@ -47,18 +47,18 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
     handle = cortex.webgl.show(data,labels_visible=labels_visible)
 
     time.sleep(5.0)
-
+    set_opacity=1
 
     basic = dict()#radius=400)#projection=['orthographic'], #radius=260, visL=True, visR=True)
 
-    views = dict(lateral=dict(altitude=90.5, azimuth=181, pivot=180.5),
-                 lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5),
-                 lateral_right=dict(altitude=90.5, azimuth=270.5, pivot=0.5),
-                 medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5),
-                 front=dict(altitude=90.5, azimuth=0, pivot=0),
-                 back=dict(altitude=90.5, azimuth=181, pivot=0),
-                 top=dict(altitude=0, azimuth=180, pivot=0),
-                 bottom=dict(altitude=180, azimuth=0, pivot=0)
+    views = dict(lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, opacity=set_opacity),
+                 lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, opacity=set_opacity),
+                 lateral_right=dict(altitude=90.5, azimuth=270.5, pivot=0.5, opacity=set_opacity),
+                 medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, opacity=set_opacity),
+                 front=dict(altitude=90.5, azimuth=0, pivot=0, opacity=set_opacity),
+                 back=dict(altitude=90.5, azimuth=181, pivot=0, opacity=set_opacity),
+                 top=dict(altitude=0, azimuth=180, pivot=0, opacity=set_opacity),
+                 bottom=dict(altitude=180, azimuth=0, pivot=0, opacity=set_opacity)
                 )
 
     surfaces = dict(inflated=dict(unfold= 0.5) ,
@@ -69,7 +69,8 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
     param_dict = dict(unfold = 'surface.{subject}.unfold',
                       altitude = 'camera.altitude',
                       azimuth = 'camera.azimuth',
-                      pivot = 'surface.{subject}.pivot')
+                      pivot = 'surface.{subject}.pivot',
+                      opacity = 'surface.{subject}.opacity')
                       # radius = 'surface.{subject}.radius') # unknown parameter
 
 
