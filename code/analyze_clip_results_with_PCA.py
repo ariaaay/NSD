@@ -15,8 +15,9 @@ from sklearn.decomposition import PCA
 # import torch
 import clip
 
-from util.data_util import load_model_performance, extract_test_image_ids
+from util.data_util import load_model_performance, extract_test_image_ids, fill_in_nan_voxels
 from util.model_config import *
+from util.util import zscore
 
 def make_word_cloud(text, saving_fname):
     from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
@@ -79,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument("--image2pc", default=False, action="store_true")
     parser.add_argument("--load_and_show_all_word_clouds", default=False, action="store_true")
     parser.add_argument("--clustering_on_brain_pc", default=False, action="store_true")
-    parser.add_argument("--maximize_clustering_on_brain", default=False, action="store_true")
+    parser.add_argument("--maximize_input_for_cluster", default=False, action="store_true")
 
     args = parser.parse_args()
     
@@ -106,9 +107,6 @@ if __name__ == "__main__":
     #         )
 
     if args.group_weight_analysis:
-        from util.data_util import load_model_performance, fill_in_nan_voxels
-        from util.util import zscore
-
         models = ["clip"]
         # models = ["resnet50_bottleneck", "clip_visual_resnet"]
         subjs = np.arange(1, 9)
@@ -585,7 +583,7 @@ if __name__ == "__main__":
         plt.xlabel("# of clusters")
         plt.savefig("figures/PCA/clustering/inertia.png")
     
-    if args.maximize_input_for_clustering_on_brain:
+    if args.maximize_input_for_cluster:
         # verify they are in a patch?
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
         from featureprep.feature_prep import get_preloaded_features
@@ -599,14 +597,14 @@ if __name__ == "__main__":
         model = "clip"
         plotting = False
         best_voxel_n = 20000
-        n_clusters = 6
+        n_clusters = 4
         n_pcs = 3
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
         )
 
-        img_activations = get_preloaded_features(
+        activations = get_preloaded_features(
             1,
             stimulus_list,
             "clip",
@@ -625,18 +623,20 @@ if __name__ == "__main__":
 
         subj_w = np.load(
                     "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-                    % (args.output_root, subj, model)
+                    % (args.output_root, args.subj, model)
                 )
-        subj_w = fill_in_nan_voxels(w, subj, args.output_root)
+        subj_w = fill_in_nan_voxels(subj_w, args.subj, args.output_root)
         masked_weight = subj_w[:, subj_mask]
 
 
         from sklearn.cluster import KMeans
-        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(PCs.T)
+        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(PC_val_only.T)
         
         max_text = dict()
+        print(masked_weight.shape)
         for c in tqdm(range(n_clusters)):
             vox = kmeans.labels_==c
+            print(np.sum(vox))
 
             #maximize image
             scores = np.mean(activations.squeeze() @ masked_weight[:, vox], axis=1)
@@ -666,5 +666,14 @@ if __name__ == "__main__":
             )
             
             b, w = extract_emb_keywords(masked_weight[:, vox], activations, common_words)
-            dict[c] = [b ,w]
+            max_text[c] = [b, w]
+        pickle.dump(
+            max_text,
+            open(
+                "%s/output/pca/%s/subj%02d/max_text.json"
+                % (args.output_root, model, args.subj),
+                "wb",
+            ),
+        )
+        print(max_text)
 

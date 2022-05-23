@@ -99,7 +99,7 @@ def load_objects_in_COCO(cid):
         supcat = np.load(
             "/lab_data/tarrlab/common/datasets/features/NSD/COCO_Cat/supcat.npy"
         )
-    except:
+    except FileNotFoundError:
         cat = np.load("features/cat.npy")
         supcat = np.load("features/supcat.npy")
 
