@@ -31,26 +31,118 @@ def make_word_cloud(text, saving_fname):
     plt.axis("off")
     wordcloud.to_file(saving_fname)
 
-def get_PCs(model="clip", data=None, num_pc=20, name_modifier=None):
+def load_weight_matrix_from_subjs_for_pca(model, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
+    subjs = np.arange(1, 9)
+    group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
+
+    if not os.path.exists("%s/output/pca/%s" % (args.output_root, model)):
+        os.makedirs("%s/output/pca/%s" % (args.output_root, model))
+
     try:
-        PCs = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature_%s.npy" % (args.output_root, model, model, name_modifier))
+        group_w = np.load(group_w_path)
+            
     except FileNotFoundError:
+        group_w = []
+        for subj in subjs:
+            w = np.load(
+                "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+                % (args.output_root, subj, model)
+            )
+            w = fill_in_nan_voxels(w, subj, args.output_root)
+            if mask_out_roi is not None:
+                roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
+                roi_mask = roi_mask > 0
+                weight_mask = ~roi_mask
+                print("masking out %d voxels..." % sum(roi_mask))
+            else:
+                weight_mask = np.ones(w.shape[1])
+            rsq = load_model_performance(
+                model, output_root=args.output_root, subj=subj, measure="rsq"
+            )
+            if nc_corrected:
+                nc = np.load(
+                    "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                    % (args.output_root, subj, subj)
+                )
+                rsq = rsq / nc
+            if threshold == 0: # then selecting voxels based on number of accuracy
+                threshold = rsq[np.argsort(rsq)[-best_voxel_n]]  # get the threshold for the best n voxels
+            
+            acc_mask = rsq >= threshold
+            weight_mask = weight_mask*acc_mask
+            print("Total voxels left: %d" % sum(weight_mask))
+            group_w.append(w[:, weight_mask])
+
+            np.save(
+                "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                % (args.output_root, model, subj, name_modifier),
+                weight_mask,
+            )
+        group_w = np.hstack(group_w)
+        np.save(group_w_path, group_w)
+    return group_w
+
+
+def get_PCs(model="clip", data=None, num_pc=20, by_feature=False, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
+    if threshold == 0:
+        name_modifier = "best_%d_voxels" % best_voxel_n
+    else:
+        name_modifier = "acc_%.1f" % threshold
+    
+    if mask_out_roi is not None:
+        name_modifier += "_minus_%s" % mask_out_roi
+    
+    if nc_corrected:
+        name_modifier += "_nc"
+
+    if by_feature:
+        name_modifier = "_by_feature_" + name_modifier
+    
+    try:
+        PCs = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
+    except FileNotFoundError:
+        if data is None:
+            data = load_weight_matrix_from_subjs_for_pca(model=model)
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
         np.save(
-                "%s/output/pca/%s/%s_pca_group_components_by_feature_%s.npy" % (args.output_root, model, model, name_modifier), 
+                "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier), 
                 PCs,
             )
-
+            
         import pickle
-        with open("%s/output/pca/%s/%s_pca_group_by_feature_%s.pkl" % (args.output_root, model, model, name_modifier), "wb") as f:
+        with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, model, model, name_modifier), "wb") as f:
             pickle.dump(pca, f)
         
         plt.plot(pca.explained_variance_ratio_)
-        plt.savefig("figures/PCA/ev/%s_pca_group_by_feature_%s.png" % (model, name_modifier))
+        plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (model, name_modifier))
         
-    return PCs
+        # save pca component on brain too
+        if not by_feature:
+            idx = 0
+            for subj in np.arange(1,9):
+                subj_mask = np.load(
+                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                    % (args.output_root, model, subj, name_modifier)
+                )
+                print(len(subj_mask))
+                subj_pca = np.zeros((num_pc, len(subj_mask)))
+                subj_pca[:, subj_mask] = zscore(
+                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
+                )
+                if not os.path.exists(
+                    "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
+                ):
+                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, model, subj))
+                np.save(
+                    "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
+                    % (args.output_root, model, subj, model, name_modifier),
+                    subj_pca,
+                )
+                idx += np.sum(subj_mask)
+
+    return PCs, name_modifier
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -108,153 +200,7 @@ if __name__ == "__main__":
     #         )
 
     if args.group_weight_analysis:
-        models = ["clip"]
-        # models = ["resnet50_bottleneck", "clip_visual_resnet"]
-        subjs = np.arange(1, 9)
-        num_pc = 20
-        # best_voxel_n = 15000
-        threshold = 0.3
-        mask_out_roi = "prf-visualrois"
-        
-        for m in models:
-            print(m)
-            
-            name_modifier = "acc_%.1f_minus_%s" % (threshold, mask_out_roi)
-            group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, m, name_modifier)
-
-            if not os.path.exists("%s/output/pca/%s" % (args.output_root, m)):
-                os.makedirs("%s/output/pca/%s" % (args.output_root, m))
-
-            try:
-                # pgroup_w = np.load(
-                #     "%s/output/pca/%s/weight_matrix_best_%d_minus_%s.npy"
-                #     % (args.output_root, m, best_voxel_n)
-                # )
-                group_w = np.load(group_w_path)
-                    
-            except FileNotFoundError:
-                group_w = []
-                for subj in subjs:
-                    w = np.load(
-                        "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-                        % (args.output_root, subj, m)
-                    )
-                    w = fill_in_nan_voxels(w, subj, args.output_root)
-                    if mask_out_roi is not None:
-                        roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
-                        roi_mask = roi_mask > 0
-                        weight_mask = ~roi_mask
-                        print("masking out %d voxels..." % sum(roi_mask))
-                    else:
-                        weight_mask = np.ones(w.shape[1])
-                    rsq = load_model_performance(
-                        m, output_root=args.output_root, subj=subj, measure="rsq"
-                    )
-                    
-                    nc = np.load(
-                        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-                        % (args.output_root, subj, subj)
-                    )
-                    corrected_rsq = rsq / nc
-                    # threshold = corrected_rsq[
-                    #     np.argsort(corrected_rsq)[-best_voxel_n]
-                    # ]  # get the threshold for the best n voxels
-                    acc_mask = corrected_rsq >= threshold
-                    weight_mask = weight_mask*acc_mask
-                    print("Total voxels left: %d" % sum(weight_mask))
-                    group_w.append(w[:, weight_mask])
-
-                    np.save(
-                        "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-                        % (args.output_root, m, subj, name_modifier),
-                        weight_mask,
-                    )
-                group_w = np.hstack(group_w)
-                np.save(group_w_path, group_w)
-
-            pca = PCA(n_components=num_pc, svd_solver="full")
-            pca.fit(group_w)
-            np.save(
-                "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, m, m, name_modifier),
-                pca.components_,
-            )
-
-            import pickle
-            with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, m, m, name_modifier), "wb") as f:
-                pickle.dump(pca, f)
-            
-            plt.plot(pca.explained_variance_ratio_)
-            plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (m, name_modifier))
-
-            idx = 0
-            for subj in subjs:
-                subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-                    % (args.output_root, m, subj, name_modifier)
-                )
-                print(len(subj_mask))
-                subj_pca = np.zeros((num_pc, len(subj_mask)))
-                subj_pca[:, subj_mask] = zscore(
-                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-                )
-                if not os.path.exists(
-                    "%s/output/pca/%s/subj%02d" % (args.output_root, m, subj)
-                ):
-                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, m, subj))
-                np.save(
-                    "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
-                    % (args.output_root, m, subj, m, name_modifier),
-                    subj_pca,
-                )
-                idx += np.sum(subj_mask)
-
-    # if args.pc_text_visualization:
-    #     subjs = [1, 2, 5, 7]
-    #     num_pc = 20
-    #     best_voxel_n = 20000
-
-    #     with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
-    #         out = f.readlines()
-    #     common_words = ["photo of " + w[:-1] for w in out]
-    #     try:
-    #         activations = np.load(
-    #             "%s/output/clip/word_interpretation/1000eng_activation.npy"
-    #             % args.output_root
-    #         )
-    #     except FileNotFoundError:
-    #         from nltk.corpus import wordnet
-    #         import clip
-    #         import torch
-
-    #         device = "cuda" if torch.cuda.is_available() else "cpu"
-    #         model, _ = clip.load("ViT-B/32", device=device)
-    #         activations = extract_text_activations(model, common_words)
-    #         np.save(
-    #             "%s/output/clip/word_interpretation/1000eng_activation.npy"
-    #             % args.output_root,
-    #             activations,
-    #         )
-    #     group_w = np.load("%s/output/pca/weight_matrix_best_%d.npy" % (args.output_root, best_voxel_n))
-    #     pca = PCA(n_components=num_pc, svd_solver="full")
-    #     pca.fit(group_w.T)
-    #     np.save(
-    #             "%s/output/pca/clip_pca_group_components_by_feature.npy" % args.output_root,
-    #             pca.components_,
-    #         )
-    #     # each components should be 20 x 512?
-    #     keywords = dict()
-    #     for i in range(pca.components_.shape[0]):
-    #         keywords[i] = extract_emb_keywords(pca.components_[i, :], activations, common_words)
-        
-    #     for k, v in keywords.items():
-    #         print("****** PC " + str(k) + " ******")
-    #         print("-Best:")
-    #         print(v[0])
-    #         print("-Worst:")
-    #         print(v[1])
-            
-    #     np.save("%s/output/clip/word_interpretation/group_pc_keywords.json" % (args.output_root), keywords)
-
+        PCs = get_PCs(model="clip", num_pc=20, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=False)
     
     if args.pc_image_visualization:
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
@@ -262,12 +208,8 @@ if __name__ == "__main__":
 
         model = "clip"
         plotting = True
-        # model = "resnet50_bottleneck_rep_only"
-        # best_voxel_n = 20000
         threshold = 0.3
         mask_out_roi = "prf-visualrois"
-        name_modifier = "acc_%.1f_minus_%s" % (threshold, mask_out_roi)
-        group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -276,17 +218,12 @@ if __name__ == "__main__":
         activations = get_preloaded_features(
             1,
             stimulus_list,
-            "%s" % model.replace("_rep_only", ""),
+            "%s" % model,
             features_dir="%s/features" % args.output_root,
         )
-        if "rep_only" in model:
-            data_to_fit = activations
-        else:
-            group_w = np.load(group_w_path)
-            data_to_fit = group_w.T
+
         # load PCs
-        PCs = get_PCs(model=model, data=data_to_fit, name_modifier=name_modifier)
-        
+        PCs, name_modifier = get_PCs(model=model, by_feature=True, threshold=threshold, mask_out_roi=mask_out_roi)      
         # getting scores and plotting
         from pycocotools.coco import COCO
 
@@ -294,11 +231,6 @@ if __name__ == "__main__":
         # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
         coco_train = COCO(annFile_train)
         # coco_val = COCO(annFile_val)
-
-        # annFile_train_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-        # annFile_val_cap = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-        # coco_train_cap = COCO(annFile_train_cap)
-        # coco_val_cap = COCO(annFile_val_cap)
         
         cats = coco_train.loadCats(coco_train.getCatIds())
         id2cat = {}
