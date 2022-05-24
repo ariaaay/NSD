@@ -835,15 +835,15 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         model = "clip"
-        best_voxel_n = 20000
+        name_modifier = "acc_0.3_minus_prf-visualrois"
         pc_vols = []
         PCs_zscore = np.load(
-            "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-            % (OUTPUT_ROOT, model, args.subj, model)
+            "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
+            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
         )
         subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-                    % (OUTPUT_ROOT, model, args.subj, best_voxel_n)
+                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                    % (OUTPUT_ROOT, model, args.subj, name_modifier)
                 )
         PCs_zscore[:, ~subj_mask] = np.nan
         PC_val_only = PCs_zscore[:, subj_mask]
