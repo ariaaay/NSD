@@ -200,7 +200,7 @@ if __name__ == "__main__":
     #         )
 
     if args.group_weight_analysis:
-        PCs = get_PCs(model="clip", num_pc=20, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=False)
+        PCs, _ = get_PCs(model="clip", num_pc=20, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=False)
     
     if args.pc_image_visualization:
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
@@ -412,7 +412,7 @@ if __name__ == "__main__":
             features_dir="%s/features" % args.output_root,
         )
 
-        PCs = get_PCs(model=model)
+        PCs, name_modifier = get_PCs(model=model)
         nPC = PCs.shape[0]
         pc_proj = np.dot(activations, PCs.T) # returns a 10000 by 20 matrix
         top2_pcs = np.argsort(np.abs(pc_proj), axis=1)[:, -2:] # returns a 10000 by 2 matrix
@@ -444,7 +444,7 @@ if __name__ == "__main__":
                 plt.subplot(4, 5, i+1)
                 plt.imshow(I)
                 plt.title("proj: %.2f, %.2f" % (pc_proj[idx, p[0]], pc_proj[idx, p[1]]))
-            plt.savefig("figures/PCA/top2pc/top_images_for_PC%d&%d.png" % (p[0], p[1]))
+            plt.savefig("figures/PCA/top2pc/top_images_for_PC%d&%d_%s.png" % (p[0], p[1], name_modifier))
         
 
         # proj_norm = np.linalg.norm(pc_proj, axis=1)
