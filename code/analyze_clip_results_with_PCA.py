@@ -102,7 +102,7 @@ def get_PCs(model="clip", data=None, num_pc=20, by_feature=False, threshold=0, b
         PCs = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
     except FileNotFoundError:
         if data is None:
-            data = load_weight_matrix_from_subjs_for_pca(model=model)
+            data = load_weight_matrix_from_subjs_for_pca(model=model, threshold=threshold, best_voxel_n=best_voxel_n, mask_out_roi=mask_out_roi, nc_corrected=nc_corrected)
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
@@ -342,16 +342,12 @@ if __name__ == "__main__":
 
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
-        # Calculate weight projection onto PC space
-        model = "clip"
-        subjs = np.arange(1,9)
         num_pc = 20
-        best_voxel_n = 20000
-        PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_by_feature.npy" % (args.output_root, model, model))
-        group_w = np.load(
-                    "%s/output/pca/%s/weight_matrix_best_%d.npy"
-                    % (args.output_root, model, best_voxel_n)
-                )
+        # Calculate weight projection onto PC space
+        PC_feat, name_modifier = get_PCs(model="clip", num_pc=num_pc, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
+        subjs = np.arange(1,9)
+        PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
+        group_w = load_weight_matrix_from_subjs_for_pca(model=model)
         w_transformed = np.dot(group_w.T, PC_feat.T) # (80,000x512 x 512x20)
         print(w_transformed.shape) 
         proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
@@ -359,8 +355,8 @@ if __name__ == "__main__":
         idx = 0
         for subj in subjs:
             subj_mask = np.load(
-                "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
-                % (args.output_root, model, subj, best_voxel_n)
+                "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                % (args.output_root, model, subj, name_modifier)
             )
             subj_proj = np.zeros((num_pc, len(subj_mask)))
             subj_proj[:, subj_mask] = zscore(
@@ -371,8 +367,8 @@ if __name__ == "__main__":
             ):
                 os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, model, subj))
             np.save(
-                "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                % (args.output_root, model, subj, model),
+                "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
+                % (args.output_root, model, subj, model, name_modifier),
                 subj_proj,
             )
             idx += np.sum(subj_mask)
