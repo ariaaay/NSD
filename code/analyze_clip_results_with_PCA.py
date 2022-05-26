@@ -31,8 +31,61 @@ def make_word_cloud(text, saving_fname):
     plt.axis("off")
     wordcloud.to_file(saving_fname)
 
-def load_weight_matrix_from_subjs_for_pca(model, name_modifier, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
+def make_name_modifier(threshold, best_voxel_n, mask_out_roi, nc_corrected, by_feature=False):
+    if threshold == 0:
+        name_modifier = "best_%d_voxels" % best_voxel_n
+    else:
+        name_modifier = "acc_%.1f" % threshold
+    
+    if mask_out_roi is not None:
+        name_modifier += "_minus_%s" % mask_out_roi
+    
+    if not nc_corrected:
+        name_modifier += "_rawr2"
+
+    if by_feature:
+        name_modifier = "by_feature_" + name_modifier
+    return name_modifier
+
+def extract_single_subject_weight(subj, model, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
+    name_modifier = make_name_modifier(threshold, best_voxel_n, mask_out_roi, nc_corrected)
+    w = np.load(
+        "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+        % (args.output_root, subj, model)
+    )
+    w = fill_in_nan_voxels(w, subj, args.output_root)
+    if mask_out_roi is not None:
+        roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
+        roi_mask = roi_mask > 0
+        weight_mask = ~roi_mask
+        print("masking out %d voxels..." % sum(roi_mask))
+    else:
+        weight_mask = np.ones(w.shape[1])
+    rsq = load_model_performance(
+        model, output_root=args.output_root, subj=subj, measure="rsq"
+    )
+    if nc_corrected:
+        nc = np.load(
+            "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+            % (args.output_root, subj, subj)
+        )
+        rsq = rsq / nc
+    if threshold == 0: # then selecting voxels based on number of accuracy
+        threshold = rsq[np.argsort(rsq)[-best_voxel_n]]  # get the threshold for the best n voxels
+    
+    acc_mask = rsq >= threshold
+    weight_mask = (weight_mask*acc_mask).astype(bool)
+    print("Total voxels left: %d" % sum(weight_mask))
+    np.save(
+            "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+            % (args.output_root, model, subj, name_modifier),
+            weight_mask,
+            )
+    return w[:, weight_mask]
+
+def load_weight_matrix_from_subjs_for_pca(model, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
     subjs = np.arange(1, 9)
+    name_modifier = make_name_modifier(threshold, best_voxel_n, mask_out_roi, nc_corrected)
     group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
 
     if not os.path.exists("%s/output/pca/%s" % (args.output_root, model)):
@@ -42,67 +95,24 @@ def load_weight_matrix_from_subjs_for_pca(model, name_modifier, threshold=0, bes
         group_w = np.load(group_w_path)
             
     except FileNotFoundError:
+        print("Generating new weight matrix")
         group_w = []
         for subj in subjs:
-            w = np.load(
-                "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-                % (args.output_root, subj, model)
-            )
-            w = fill_in_nan_voxels(w, subj, args.output_root)
-            if mask_out_roi is not None:
-                roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
-                roi_mask = roi_mask > 0
-                weight_mask = ~roi_mask
-                print("masking out %d voxels..." % sum(roi_mask))
-            else:
-                weight_mask = np.ones(w.shape[1])
-            rsq = load_model_performance(
-                model, output_root=args.output_root, subj=subj, measure="rsq"
-            )
-            if nc_corrected:
-                nc = np.load(
-                    "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-                    % (args.output_root, subj, subj)
-                )
-                rsq = rsq / nc
-            if threshold == 0: # then selecting voxels based on number of accuracy
-                threshold = rsq[np.argsort(rsq)[-best_voxel_n]]  # get the threshold for the best n voxels
-            
-            acc_mask = rsq >= threshold
-            weight_mask = weight_mask*acc_mask
-            print("Total voxels left: %d" % sum(weight_mask))
-            group_w.append(w[:, weight_mask])
-
-            np.save(
-                "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-                % (args.output_root, model, subj, name_modifier),
-                weight_mask,
-            )
+            subj_w = extract_single_subject_weight(subj, model, threshold, best_voxel_n, mask_out_roi, nc_corrected)
+            group_w.append(subj_w)
         group_w = np.hstack(group_w)
         np.save(group_w_path, group_w)
     return group_w
 
 
 def get_PCs(model="clip", data=None, num_pc=20, by_feature=False, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
-    if threshold == 0:
-        name_modifier = "best_%d_voxels" % best_voxel_n
-    else:
-        name_modifier = "acc_%.1f" % threshold
-    
-    if mask_out_roi is not None:
-        name_modifier += "_minus_%s" % mask_out_roi
-    
-    if nc_corrected:
-        name_modifier += "_nc"
-
-    if by_feature:
-        name_modifier = "_by_feature_" + name_modifier
-    
+    name_modifier = make_name_modifier(threshold, best_voxel_n, mask_out_roi, nc_corrected, by_feature)
     try:
         PCs = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
     except FileNotFoundError:
+        print("Running PCA of: " + name_modifier)
         if data is None:
-            data = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=threshold, best_voxel_n=best_voxel_n, mask_out_roi=mask_out_roi, nc_corrected=nc_corrected)
+            data = load_weight_matrix_from_subjs_for_pca(model=model, threshold=threshold, best_voxel_n=best_voxel_n, mask_out_roi=mask_out_roi, nc_corrected=nc_corrected)
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
@@ -174,6 +184,7 @@ if __name__ == "__main__":
     parser.add_argument("--load_and_show_all_word_clouds", default=False, action="store_true")
     parser.add_argument("--clustering_on_brain_pc", default=False, action="store_true")
     parser.add_argument("--maximize_input_for_cluster", default=False, action="store_true")
+    parser.add_argument("--clustering_on_weight", default=False, action="store_true")
 
     args = parser.parse_args()
     
@@ -343,8 +354,9 @@ if __name__ == "__main__":
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
         num_pc = 20
+        model="clip"
         # Calculate weight projection onto PC space
-        PC_feat, name_modifier = get_PCs(model="clip", num_pc=num_pc, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
+        PC_feat, name_modifier = get_PCs(model=model, num_pc=num_pc, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
         subjs = np.arange(1,9)
         PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
         group_w = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True)
@@ -352,6 +364,9 @@ if __name__ == "__main__":
         print(w_transformed.shape) 
         proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
 
+        name_modifier = name_modifier.replace("by_feature_", "")
+        print(name_modifier)
+        
         idx = 0
         for subj in subjs:
             subj_mask = np.load(
@@ -618,3 +633,18 @@ if __name__ == "__main__":
         )
         print(max_text)
 
+    if args.clustering_on_weight:
+        
+        subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
+        from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
+        Z = linkage(subj_w.T, method="centroid", metric='euclidean')
+        # labelList=range(1, subj_w.shape[1]+1)
+        plt.figure()
+        dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=10)
+        plt.savefig("figures/CLIP/hclustering/euclidean_centroid.png")
+
+        max_c = 10
+        # R = inconsistent(Z)
+        # MI = maxinconsts(Z, R)
+        label = fcluster(Z, t=max_c, criterion='maxclust')
+        np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
