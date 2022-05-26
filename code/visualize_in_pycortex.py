@@ -894,17 +894,17 @@ if __name__ == "__main__":
         # )
         # volumes["PC1 - MNI"] = mni_vol
 
-        # # visualize PC projections
-        # subj_proj = np.load(
-        #             "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-        #             % (OUTPUT_ROOT, model, args.subj, model)
-        #         )
-        # for i in range(PCs.shape[0]):
-        #     key = "PC Proj " + str(i)
-        #     volumes[key] = make_pc_volume(
-        #         args.subj,
-        #         subj_proj[i, :],
-        #     )
+        # visualize PC projections
+        subj_proj = np.load(
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                    % (OUTPUT_ROOT, model, args.subj, model)
+                )
+        for i in range(PCs.shape[0]):
+            key = "PC Proj " + str(i)
+            volumes[key] = make_pc_volume(
+                args.subj,
+                subj_proj[i, :],
+            )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
