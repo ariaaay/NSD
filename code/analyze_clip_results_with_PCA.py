@@ -31,7 +31,7 @@ def make_word_cloud(text, saving_fname):
     plt.axis("off")
     wordcloud.to_file(saving_fname)
 
-def load_weight_matrix_from_subjs_for_pca(model, name_modifier, threshold=0, best_voxel_n=20000, mask_out_roi=None, nc_corrected=False):
+def load_weight_matrix_from_subjs_for_pca(model, threshold=0, best_voxel_n=20000, mask_out_roi=None, roi_only=None, nc_corrected=False):
     subjs = np.arange(1, 9)
     group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
 
@@ -49,7 +49,10 @@ def load_weight_matrix_from_subjs_for_pca(model, name_modifier, threshold=0, bes
                 % (args.output_root, subj, model)
             )
             w = fill_in_nan_voxels(w, subj, args.output_root)
-            if mask_out_roi is not None:
+            if roi_only is not None:
+                roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, roi_only))
+                weight_mask = roi_mask > 0
+            elif mask_out_roi is not None:
                 roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
                 roi_mask = roi_mask > 0
                 weight_mask = ~roi_mask
@@ -202,7 +205,7 @@ if __name__ == "__main__":
     if args.group_weight_analysis:
         PCs, _ = get_PCs(model="clip", num_pc=20, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=False)
     
-    if args.pc_image_visualization:
+    # if args.pc_image_visualization:
         from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
         from featureprep.feature_prep import get_preloaded_features
 
@@ -347,7 +350,7 @@ if __name__ == "__main__":
         PC_feat, name_modifier = get_PCs(model="clip", num_pc=num_pc, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
         subjs = np.arange(1,9)
         PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
-        group_w = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=0.3, mask_out_roi="prf-visualrois", nc_corrected=True)
+        group_w = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=0.3, roi_only="floc-bodies", nc_corrected=False)
         w_transformed = np.dot(group_w.T, PC_feat.T) # (80,000x512 x 512x20)
         print(w_transformed.shape) 
         proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
