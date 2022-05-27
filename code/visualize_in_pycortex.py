@@ -835,11 +835,12 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         model = "clip"
-        name_modifier = "acc_0.3_minus_prf-visualrois"
+        # name_modifier = "_acc_0.3_minus_prf-visualrois"
+        name_modifier = "best_20000"
         pc_vols = []
         PCs_zscore = np.load(
-            "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
-            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
+            "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
+            % (OUTPUT_ROOT, model, args.subj, model)
         )
         subj_mask = np.load(
                     "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
@@ -854,6 +855,19 @@ if __name__ == "__main__":
             volumes[key] = make_pc_volume(
                 args.subj,
                 PCs_zscore[i, :],
+            )
+
+        # visualize PC projections
+        subj_proj = np.load(
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                    % (OUTPUT_ROOT, model, args.subj, model)
+                )
+        
+        for i in range(subj_proj.shape[0]):
+            key = "PC Proj " + str(i)
+            volumes[key] = make_pc_volume(
+                args.subj,
+                subj_proj[i, :],
             )
 
         # volumes["3PC"] = make_3pc_volume(
@@ -894,17 +908,7 @@ if __name__ == "__main__":
         # )
         # volumes["PC1 - MNI"] = mni_vol
 
-        # visualize PC projections
-        subj_proj = np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (OUTPUT_ROOT, model, args.subj, model)
-                )
-        for i in range(PCs.shape[0]):
-            key = "PC Proj " + str(i)
-            volumes[key] = make_pc_volume(
-                args.subj,
-                subj_proj[i, :],
-            )
+        
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")

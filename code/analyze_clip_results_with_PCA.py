@@ -149,7 +149,7 @@ def get_PCs(model="clip", data=None, num_pc=20, by_feature=False, threshold=0, b
                 subj_pca = np.zeros((num_pc, len(subj_mask)))
                 subj_pca[:, subj_mask] = zscore(
                     pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-                )
+                ) # TODO
                 if not os.path.exists(
                     "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
                 ):
@@ -385,7 +385,7 @@ if __name__ == "__main__":
             subj_proj = np.zeros((args.num_pc, len(subj_mask)))
             subj_proj[:, subj_mask] = zscore(
                 proj[:, idx : idx + np.sum(subj_mask)], axis=1
-            )
+            ) #TODO:
             if not os.path.exists(
                 "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
             ):
