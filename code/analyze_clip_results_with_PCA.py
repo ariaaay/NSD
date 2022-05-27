@@ -38,7 +38,7 @@ def make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corre
 
     if threshold != 0:
         name_modifier = "acc_%.1f" % threshold
-    elif best_voxel_n == 0:
+    elif best_voxel_n != 0:
         name_modifier = "best_%d_voxels" % best_voxel_n        
     
     if mask_out_roi is not None:
@@ -367,7 +367,7 @@ if __name__ == "__main__":
         # Calculate weight projection onto PC space
         PC_feat, name_modifier = get_PCs(model=model, num_pc=args.num_pc, threshold=args.threshold, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
         subjs = np.arange(1,9)
-        PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
+        # PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
         group_w = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=0.3, roi_only="floc-bodies", nc_corrected=False)
         w_transformed = np.dot(group_w.T, PC_feat.T) # (80,000x512 x 512x20)
         print(w_transformed.shape) 
@@ -385,7 +385,7 @@ if __name__ == "__main__":
             subj_proj = np.zeros((args.num_pc, len(subj_mask)))
             subj_proj[:, subj_mask] = zscore(
                 proj[:, idx : idx + np.sum(subj_mask)], axis=1
-            )
+            ) # TODO
             if not os.path.exists(
                 "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
             ):
@@ -648,7 +648,7 @@ if __name__ == "__main__":
         Z = linkage(subj_w.T, method="centroid", metric='euclidean')
         # labelList=range(1, subj_w.shape[1]+1)
         plt.figure()
-        dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=10)
+        dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=30)
         plt.savefig("figures/CLIP/hclustering/euclidean_centroid.png")
 
         max_c = 10
