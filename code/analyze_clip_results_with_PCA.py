@@ -17,33 +17,45 @@ from sklearn.decomposition import PCA
 # import torch
 import clip
 
-from util.data_util import load_model_performance, extract_test_image_ids, fill_in_nan_voxels
+from util.data_util import (
+    load_model_performance,
+    extract_test_image_ids,
+    fill_in_nan_voxels,
+)
 from util.model_config import *
 from util.util import zscore
 
+
 def make_word_cloud(text, saving_fname):
     from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+
     text = " ".join(t for t in text)
     # print(text)
     wordcloud = WordCloud(background_color="white").generate(text)
 
     # Display the generated image:
-    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
     wordcloud.to_file(saving_fname)
 
-def make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature=False):
+
+def make_name_modifier(
+    threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature=False
+):
+    if (threshold == 0) and (best_voxel_n==0) and (roi_only is None):
+        raise NameError("One of the selection criteria has to be used.")
+
     if roi_only:
         name_modifier = "%s_only" % roi_only
 
     if threshold != 0:
         name_modifier = "acc_%.1f" % threshold
     elif best_voxel_n != 0:
-        name_modifier = "best_%d_voxels" % best_voxel_n        
-    
+        name_modifier = "best_%d" % best_voxel_n
+
     if mask_out_roi is not None:
         name_modifier += "_minus_%s" % mask_out_roi
-    
+
     if not nc_corrected:
         name_modifier += "_rawr2"
 
@@ -51,18 +63,35 @@ def make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corre
         name_modifier = "by_feature_" + name_modifier
     return name_modifier
 
-def extract_single_subject_weight(subj, model, threshold=0, best_voxel_n=0, roi_only=None, mask_out_roi=None, nc_corrected=False):
-    name_modifier = make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected)
+
+def extract_single_subject_weight(
+    subj,
+    model,
+    threshold=0,
+    best_voxel_n=0,
+    roi_only=None,
+    mask_out_roi=None,
+    nc_corrected=False,
+):
+    name_modifier = make_name_modifier(
+        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected
+    )
     w = np.load(
         "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
         % (args.output_root, subj, model)
     )
     w = fill_in_nan_voxels(w, subj, args.output_root)
     if roi_only is not None:
-        roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, roi_only))
+        roi_mask = np.load(
+            "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.output_root, subj, subj, roi_only)
+        )
         weight_mask = roi_mask > 0
     elif mask_out_roi is not None:
-        roi_mask = np.load("%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy" % (args.output_root, subj, subj, mask_out_roi))
+        roi_mask = np.load(
+            "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.output_root, subj, subj, mask_out_roi)
+        )
         roi_mask = roi_mask > 0
         weight_mask = ~roi_mask
         print("masking out %d voxels..." % sum(roi_mask))
@@ -77,91 +106,144 @@ def extract_single_subject_weight(subj, model, threshold=0, best_voxel_n=0, roi_
             % (args.output_root, subj, subj)
         )
         rsq = rsq / nc
-    if threshold == 0: # then selecting voxels based on number of accuracy
+    if threshold == 0:  # then selecting voxels based on number of accuracy
         if best_voxel_n != 0:
-            threshold = rsq[np.argsort(rsq)[-best_voxel_n]]  # get the threshold for the best n voxels
+            threshold = rsq[
+                np.argsort(rsq)[-best_voxel_n]
+            ]  # get the threshold for the best n voxels
         else:
-            threshold = 0 # select all voxels
+            threshold = 0  # select all voxels
     acc_mask = rsq >= threshold
-    weight_mask = (weight_mask*acc_mask).astype(bool)
+    weight_mask = (weight_mask * acc_mask).astype(bool)
     print("Total voxels left: %d" % sum(weight_mask))
     np.save(
-            "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-            % (args.output_root, model, subj, name_modifier),
-            weight_mask,
-            )
+        "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
+        % (args.output_root, model, subj, name_modifier),
+        weight_mask,
+    )
     return w[:, weight_mask]
 
-def load_weight_matrix_from_subjs_for_pca(model, threshold=0, best_voxel_n=0, roi_only=None, mask_out_roi=None, nc_corrected=False):
+
+def load_weight_matrix_from_subjs_for_pca(
+    model,
+    threshold=0,
+    best_voxel_n=0,
+    roi_only=None,
+    mask_out_roi=None,
+    nc_corrected=False,
+):
     subjs = np.arange(1, 9)
-    name_modifier = make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected)
-    group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (args.output_root, model, name_modifier)
+    name_modifier = make_name_modifier(
+        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected
+    )
+    group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (
+        args.output_root,
+        model,
+        name_modifier,
+    )
 
     if not os.path.exists("%s/output/pca/%s" % (args.output_root, model)):
         os.makedirs("%s/output/pca/%s" % (args.output_root, model))
 
     try:
         group_w = np.load(group_w_path)
-            
+
     except FileNotFoundError:
         print("Generating new weight matrix")
         group_w = []
         for subj in subjs:
-            subj_w = extract_single_subject_weight(subj, model, threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected)
+            subj_w = extract_single_subject_weight(
+                subj,
+                model,
+                threshold,
+                best_voxel_n,
+                roi_only,
+                mask_out_roi,
+                nc_corrected,
+            )
             group_w.append(subj_w)
         group_w = np.hstack(group_w)
         np.save(group_w_path, group_w)
     return group_w
 
 
-def get_PCs(model="clip", data=None, num_pc=20, by_feature=False, threshold=0, best_voxel_n=0, roi_only=None, mask_out_roi=None, nc_corrected=False):
-    name_modifier = make_name_modifier(threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature)
+def get_PCs(
+    model="clip",
+    data=None,
+    num_pc=20,
+    by_feature=False,
+    threshold=0,
+    best_voxel_n=0,
+    roi_only=None,
+    mask_out_roi=None,
+    nc_corrected=False,
+):
+    name_modifier = make_name_modifier(
+        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature
+    )
     try:
-        PCs = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
+        PCs = np.load(
+            "%s/output/pca/%s/%s_pca_group_components_%s.npy"
+            % (args.output_root, model, model, name_modifier)
+        )
     except FileNotFoundError:
         print("Running PCA of: " + name_modifier)
         if data is None:
-            data = load_weight_matrix_from_subjs_for_pca(model=model, threshold=threshold, best_voxel_n=best_voxel_n, roi_only=roi_only, mask_out_roi=mask_out_roi, nc_corrected=nc_corrected)
+            data = load_weight_matrix_from_subjs_for_pca(
+                model=model,
+                threshold=threshold,
+                best_voxel_n=best_voxel_n,
+                roi_only=roi_only,
+                mask_out_roi=mask_out_roi,
+                nc_corrected=nc_corrected,
+            )
         pca = PCA(n_components=num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
         np.save(
-                "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier), 
-                PCs,
-            )
-            
+            "%s/output/pca/%s/%s_pca_group_components_%s.npy"
+            % (args.output_root, model, model, name_modifier),
+            PCs,
+        )
+
         import pickle
-        with open("%s/output/pca/%s/%s_pca_group_%s.pkl" % (args.output_root, model, model, name_modifier), "wb") as f:
+
+        with open(
+            "%s/output/pca/%s/%s_pca_group_%s.pkl"
+            % (args.output_root, model, model, name_modifier),
+            "wb",
+        ) as f:
             pickle.dump(pca, f)
-        
+
         plt.plot(pca.explained_variance_ratio_)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (model, name_modifier))
-        
-        # save pca component on brain too
+
         if not by_feature:
-            idx = 0
-            for subj in np.arange(1,9):
-                subj_mask = np.load(
-                    "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
-                    % (args.output_root, model, subj, name_modifier)
-                )
-                print(len(subj_mask))
-                subj_pca = np.zeros((num_pc, len(subj_mask)))
-                subj_pca[:, subj_mask] = zscore(
-                    pca.components_[:, idx : idx + np.sum(subj_mask)], axis=1
-                ) # TODO
-                if not os.path.exists(
-                    "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
-                ):
-                    os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, model, subj))
-                np.save(
-                    "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
-                    % (args.output_root, model, subj, model, name_modifier),
-                    subj_pca,
-                )
-                idx += np.sum(subj_mask)
+            save_group_pc_per_subject(pca, name_modifier)
 
     return PCs, name_modifier
+
+
+def save_group_pc_per_subject(pca, name_modifier):
+    # save pca component on brain too
+    idx = 0
+    for subj in np.arange(1, 9):
+        subj_mask = np.load(
+            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
+            % (args.output_root, args.model, subj, name_modifier)
+        )
+        print(len(subj_mask))
+        subj_pca = np.zeros((args.num_pc, len(subj_mask)))
+        subj_pca[:, subj_mask] = pca.components_[:, idx : idx + np.sum(subj_mask)]
+        save_dir = "%s/output/pca/%s/subj%02d" % (args.output_root, args.model, subj)
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        np.save(
+            "%s/%s_pca_group_components_%s.npy" % (save_dir, args.model, name_modifier),
+            subj_pca,
+        )
+        idx += np.sum(subj_mask)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -177,61 +259,56 @@ if __name__ == "__main__":
         default="/user_data/yuanw3/project_outputs/NSD",
         help="Specify the path to the output directory",
     )
-    parser.add_argument("--roi", type=str)
-    
-    parser.add_argument("--weight_analysis", default=False, action="store_true")
-    parser.add_argument(
-        "--extract_keywords_for_roi", default=False, action="store_true"
-    )
     parser.add_argument("--model", default="clip")
     parser.add_argument("--threshold", default=0)
     parser.add_argument("--num_pc", default=20)
-    parser.add_argument("--best_voxel_n", default=0)
+    parser.add_argument("--best_voxel_n", type=int, default=0)
     parser.add_argument("--roi_only", default=None)
     parser.add_argument("--mask_out_roi", default=None)
+    parser.add_argument("--nc_corrected", default=False, action="store_true")
     parser.add_argument("--plotting", default=True)
+    parser.add_argument(
+        "--extract_keywords_for_roi", default=False, action="store_true"
+    )
     parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--pc_image_visualization", default=False, action="store_true")
     parser.add_argument("--proj_feature_pc_to_subj", default=False, action="store_true")
-    parser.add_argument("--analyze_PCproj_consistency", default=False, action="store_true")
+    parser.add_argument(
+        "--analyze_PCproj_consistency", default=False, action="store_true"
+    )
     parser.add_argument("--image2pc", default=False, action="store_true")
-    parser.add_argument("--load_and_show_all_word_clouds", default=False, action="store_true")
+    parser.add_argument(
+        "--load_and_show_all_word_clouds", default=False, action="store_true"
+    )
     parser.add_argument("--clustering_on_brain_pc", default=False, action="store_true")
-    parser.add_argument("--maximize_input_for_cluster", default=False, action="store_true")
+    parser.add_argument(
+        "--maximize_input_for_cluster", default=False, action="store_true"
+    )
     parser.add_argument("--clustering_on_weight", default=False, action="store_true")
 
     args = parser.parse_args()
-    
-    
-    # if args.weight_analysis:
-    #     models = ["clip", "resnet50_bottleneck", "bert_layer_13"]
-    #     # models = ["convnet_res50", "clip_visual_resnet", "bert_layer_13"]
-    #     for m in models:
-    #         print(m)
-    #         w = np.load(
-    #             "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-    #             % (args.output_root, args.subj, m)
-    #         )
-    #         print(w.shape)
-    #         print("NaNs? Finite?:")
-    #         print(np.any(np.isnan(w)))
-    #         print(np.all(np.isfinite(w)))
-    #         pca = PCA(n_components=5, svd_solver="full")
-    #         pca.fit(w)
-    #         np.save(
-    #             "%s/output/pca/subj%d/%s_pca_components.npy"
-    #             % (args.output_root, args.subj, m),
-    #             pca.components_,
-    #         )
 
     if args.group_weight_analysis:
-        from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
+        from analyze_clip_results import (
+            extract_text_activations,
+            extract_emb_keywords,
+            get_coco_anns,
+            get_coco_image,
+            get_coco_caps,
+        )
         from featureprep.feature_prep import get_preloaded_features
 
-        PCs, name_modifier = get_PCs(model=args.model, num_pc=args.num_pc, threshold=args.threshold, mask_out_roi=args.mask_out_roi, roi_only=args.roi_only, nc_corrected=False)
-    
+        PCs, name_modifier = get_PCs(
+            model=args.model,
+            num_pc=args.num_pc,
+            threshold=args.threshold,
+            mask_out_roi=args.mask_out_roi,
+            roi_only=args.roi_only,
+            nc_corrected=False,
+        )
+
         ############## pc_image_visualization ##############
 
         stimulus_list = np.load(
@@ -252,20 +329,20 @@ if __name__ == "__main__":
         # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
         coco_train = COCO(annFile_train)
         # coco_val = COCO(annFile_val)
-        
+
         cats = coco_train.loadCats(coco_train.getCatIds())
         id2cat = {}
         for cat in cats:
-            id2cat[cat['id']] = cat['name']
+            id2cat[cat["id"]] = cat["name"]
 
         # compute label embedding correlation
         best_label_corrs, worst_label_corrs = [], []
         COCO_cat_feat = get_preloaded_features(
-                    1,
-                    stimulus_list,
-                    "cat",
-                    features_dir="%s/features" % args.output_root,
-                )
+            1,
+            stimulus_list,
+            "cat",
+            features_dir="%s/features" % args.output_root,
+        )
 
         # plot sampled images
         plt.figure(figsize=(30, 30))
@@ -275,21 +352,24 @@ if __name__ == "__main__":
             print(len(sample_idx))
             scores = activations.squeeze() @ PCs[i, :]
             sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][sample_idx]]
-        
-            # plot images        
+
+            # plot images
             for j, id in enumerate(sampled_img_ids):
-                plt.subplot(20, 20, i*20+j+1)
+                plt.subplot(20, 20, i * 20 + j + 1)
                 I = get_coco_image(id)
                 plt.axis("off")
                 plt.imshow(I)
         plt.tight_layout()
-        plt.savefig("figures/PCA/image_vis/%s_%s_pc_sampled_images.png" % (args.model, name_modifier))
+        plt.savefig(
+            "figures/PCA/image_vis/%s_%s_pc_sampled_images.png"
+            % (args.model, name_modifier)
+        )
 
         for i in tqdm(range(PCs.shape[0])):
             scores = activations.squeeze() @ PCs[i, :]
             best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
             worst_img_ids = stimulus_list[np.argsort(scores)[:20]]
-        
+
             if args.plotting:
                 # plot images
                 plt.figure()
@@ -299,7 +379,10 @@ if __name__ == "__main__":
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_%s_pc%d_best_images.png" % (args.model, name_modifier, i))
+                plt.savefig(
+                    "figures/PCA/image_vis/%s_%s_pc%d_best_images.png"
+                    % (args.model, name_modifier, i)
+                )
                 plt.close()
 
                 plt.figure()
@@ -309,10 +392,13 @@ if __name__ == "__main__":
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
-                plt.savefig("figures/PCA/image_vis/%s_%s_pc%d_worst_images.png" % (args.model, name_modifier ,i))
+                plt.savefig(
+                    "figures/PCA/image_vis/%s_%s_pc%d_worst_images.png"
+                    % (args.model, name_modifier, i)
+                )
                 plt.close()
 
-            # #find corresponding captions of best image 
+            # #find corresponding captions of best image
             # best_caps, worst_caps = [], []
             # for j, id in enumerate(best_img_ids):
             #     captions = get_coco_caps(id)
@@ -327,7 +413,6 @@ if __name__ == "__main__":
 
             # make_word_cloud(best_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_best_captions.png" % i)
             # make_word_cloud(worst_caps, saving_fname="./figures/PCA/image_vis/word_clouds/PC%d_worst_captions.png" % i)
-           
 
             # calculate label consistency
             cat_feats = []
@@ -336,7 +421,7 @@ if __name__ == "__main__":
                 cat_feats.append(COCO_cat_feat[idx, :])
 
             cat_feats = np.array(cat_feats).squeeze()
-            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc)
             corr = np.mean(np.corrcoef(cat_feats))
             best_label_corrs.append(corr)
 
@@ -347,10 +432,10 @@ if __name__ == "__main__":
 
             cat_feats = np.array(cat_feats).squeeze()
             # print(cat_feats.shape)
-            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc) 
+            # corr = (np.sum(np.corrcoef(cat_feats)) - num_pc) / (num_pc^2-num_pc)
             corr = np.mean(np.corrcoef(cat_feats))
             worst_label_corrs.append(corr)
-        
+
         plt.figure()
         plt.plot(np.arange(20), worst_label_corrs, label="Worst")
         plt.plot(np.arange(20), best_label_corrs, label="Best")
@@ -358,45 +443,63 @@ if __name__ == "__main__":
         plt.ylabel("Mean Pairwise Correlation")
         plt.xlabel("PCs")
         plt.legend()
-        plt.savefig("figures/PCA/image_vis/%s_%s_pc_label_corr.png" % (name_modifier, args.model))
-
+        plt.savefig(
+            "figures/PCA/image_vis/%s_%s_pc_label_corr.png"
+            % (name_modifier, args.model)
+        )
 
     if args.proj_feature_pc_to_subj:
         from util.util import zscore
-        model = "clip"
+
         # Calculate weight projection onto PC space
-        PC_feat, name_modifier = get_PCs(model=model, num_pc=args.num_pc, threshold=args.threshold, mask_out_roi="prf-visualrois", nc_corrected=True, by_feature=True)
-        subjs = np.arange(1,9)
-        # PC_feat = np.load("%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, model, model, name_modifier))
-        group_w = load_weight_matrix_from_subjs_for_pca(model=model, name_modifier=name_modifier, threshold=0.3, roi_only="floc-bodies", nc_corrected=False)
-        w_transformed = np.dot(group_w.T, PC_feat.T) # (80,000x512 x 512x20)
-        print(w_transformed.shape) 
-        proj = w_transformed.T # should be (# of PCs) x (# of voxels) 
+        PC_feat, name_modifier = get_PCs(
+            model=args.model,
+            num_pc=args.num_pc,
+            threshold=args.threshold,
+            best_voxel_n=args.best_voxel_n,
+            mask_out_roi=args.mask_out_roi,
+            nc_corrected=args.nc_corrected,
+            by_feature=True,
+        )
+        print("Projecting PC to subject: %s" % name_modifier)
+
+        group_w = load_weight_matrix_from_subjs_for_pca(
+            model=args.model,
+            best_voxel_n=args.best_voxel_n,
+            threshold=args.threshold,
+            roi_only=args.roi_only,
+            mask_out_roi=args.mask_out_roi,
+            nc_corrected=args.nc_corrected,
+        )
+        w_transformed = np.dot(group_w.T, PC_feat.T)  # (80,000x512 x 512x20)
+        print(w_transformed.shape)
+        proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
 
         name_modifier = name_modifier.replace("by_feature_", "")
         print(name_modifier)
-        
+
+        subjs = np.arange(1, 9)
         idx = 0
         for subj in subjs:
             subj_mask = np.load(
-                "%s/output/pca/%s/pca_voxels_subj%02d_%s.npy"
+                "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
                 % (args.output_root, args.model, subj, name_modifier)
             )
             subj_proj = np.zeros((args.num_pc, len(subj_mask)))
-            subj_proj[:, subj_mask] = zscore(
-                proj[:, idx : idx + np.sum(subj_mask)], axis=1
-            ) #TODO:
-            if not os.path.exists(
-                "%s/output/pca/%s/subj%02d" % (args.output_root, model, subj)
-            ):
-                os.mkdir("%s/output/pca/%s/subj%02d" % (args.output_root, model, subj))
+            subj_proj[:, subj_mask] = proj[:, idx : idx + np.sum(subj_mask)]
+            save_dir = "%s/output/pca/%s/subj%02d" % (
+                args.output_root,
+                args.model,
+                subj,
+            )
+            if not os.path.exists(save_dir):
+                os.mkdir(save_dir)
             np.save(
-                "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
-                % (args.output_root, model, subj, model, name_modifier),
+                "%s/%s_feature_pca_projections_%s.npy"
+                % (save_dir, args.model, name_modifier),
                 subj_proj,
             )
             idx += np.sum(subj_mask)
-
 
     # if args.analyze_PCproj_consistency:
     #     from analyze_in_mni import analyze_data_correlation_in_mni
@@ -414,12 +517,10 @@ if __name__ == "__main__":
     #     # remember to `run module load fsl-6.0.3` on cluster
     #     analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
 
-
     # if args.image2pc:
     #     from featureprep.feature_prep import get_preloaded_features
     #     from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
 
-        
     #     model = "clip"
     #     stimulus_list = np.load(
     #         "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -441,7 +542,7 @@ if __name__ == "__main__":
     #         j, k = top2_pcs[i, :]
     #         pc_counter[j, k] += 1
     #         pc_counter[k, j] += 1
-        
+
     #     plt.imshow(pc_counter, cmap="Blues")
     #     plt.xlabel("PCs")
     #     plt.ylabel("PCs")
@@ -465,53 +566,52 @@ if __name__ == "__main__":
     #             plt.imshow(I)
     #             plt.title("proj: %.2f, %.2f" % (pc_proj[idx, p[0]], pc_proj[idx, p[1]]))
     #         plt.savefig("figures/PCA/top2pc/top_images_for_PC%d&%d_%s.png" % (p[0], p[1], name_modifier))
-        
 
-        # proj_norm = np.linalg.norm(pc_proj, axis=1)
-        # img_rank = np.argsort(proj_norm)[::-1][:20]
-        # plt.figure(figsize=(30,10))
-        # for i, idx in enumerate(img_rank):
-        #     coco_id = stimulus_list[idx]
-        #     I = get_coco_image(coco_id)
-        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:2]
-        #     first2 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-        #     plt.subplot(4, 5, i + 1)
-        #     plt.axis("off")
-        #     plt.imshow(I)
-        #     plt.title(first2)
-        # plt.tight_layout()
-        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2max.png" % model)
+    # proj_norm = np.linalg.norm(pc_proj, axis=1)
+    # img_rank = np.argsort(proj_norm)[::-1][:20]
+    # plt.figure(figsize=(30,10))
+    # for i, idx in enumerate(img_rank):
+    #     coco_id = stimulus_list[idx]
+    #     I = get_coco_image(coco_id)
+    #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:2]
+    #     first2 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+    #     plt.subplot(4, 5, i + 1)
+    #     plt.axis("off")
+    #     plt.imshow(I)
+    #     plt.title(first2)
+    # plt.tight_layout()
+    # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2max.png" % model)
 
-        # img_rank = np.argsort(proj_norm)[:20]
-        # plt.figure(figsize=(30,10))
-        # for i, idx in enumerate(img_rank):
-        #     coco_id = stimulus_list[idx]
-        #     I = get_coco_image(coco_id)
-        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
-        #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-        #     plt.subplot(4, 5, i + 1)
-        #     plt.axis("off")
-        #     plt.imshow(I)
-        #     plt.title(first3)
-        # plt.tight_layout()
-        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2min.png" % model)
-        # plt.close()
+    # img_rank = np.argsort(proj_norm)[:20]
+    # plt.figure(figsize=(30,10))
+    # for i, idx in enumerate(img_rank):
+    #     coco_id = stimulus_list[idx]
+    #     I = get_coco_image(coco_id)
+    #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+    #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+    #     plt.subplot(4, 5, i + 1)
+    #     plt.axis("off")
+    #     plt.imshow(I)
+    #     plt.title(first3)
+    # plt.tight_layout()
+    # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_l2min.png" % model)
+    # plt.close()
 
-        # proj_norm = np.linalg.norm(pc_proj, ord=-np.inf, axis=1)
-        # img_rank = np.argsort(proj_norm)[:20]
-        # plt.figure(figsize=(30,10))
-        # for i, idx in enumerate(img_rank):
-        #     coco_id = stimulus_list[idx]
-        #     I = get_coco_image(coco_id)
-        #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
-        #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
-        #     plt.subplot(4, 5, i + 1)
-        #     plt.axis("off")
-        #     plt.imshow(I)
-        #     plt.title(first3)
-        # plt.tight_layout()
-        # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_-inf.png" % model)
-        # plt.close()
+    # proj_norm = np.linalg.norm(pc_proj, ord=-np.inf, axis=1)
+    # img_rank = np.argsort(proj_norm)[:20]
+    # plt.figure(figsize=(30,10))
+    # for i, idx in enumerate(img_rank):
+    #     coco_id = stimulus_list[idx]
+    #     I = get_coco_image(coco_id)
+    #     pref_pc = np.argsort(pc_proj[idx,:])[::-1][:3]
+    #     first3 = ["%d:%.2f" % (pc, pc_proj[idx, pc]) for pc in pref_pc]
+    #     plt.subplot(4, 5, i + 1)
+    #     plt.axis("off")
+    #     plt.imshow(I)
+    #     plt.title(first3)
+    # plt.tight_layout()
+    # plt.savefig("figures/PCA/image_vis/image2PC/image_PC_proj_%s_-inf.png" % model)
+    # plt.close()
 
     # if args.load_and_show_all_word_clouds:
     #     import matplotlib.image as img
@@ -547,7 +647,7 @@ if __name__ == "__main__":
     #     plt.ylabel("Sum of squared distances")
     #     plt.xlabel("# of clusters")
     #     plt.savefig("figures/PCA/clustering/inertia.png")
-    
+
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
     #     from analyze_clip_results import extract_text_activations, extract_emb_keywords, get_coco_anns, get_coco_image, get_coco_caps
@@ -581,7 +681,7 @@ if __name__ == "__main__":
     #         % (args.output_root, model, args.subj, model)
     #     )[:n_pcs,:]
     #     subj_mask = np.load(
-    #                 "%s/output/pca/%s/pca_voxels_subj%02d_best_%d.npy"
+    #                 "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_best_%d.npy"
     #                 % (args.output_root, model, args.subj, best_voxel_n)
     #             )
     #     PC_val_only = PCs[:, subj_mask]
@@ -593,10 +693,9 @@ if __name__ == "__main__":
     #     subj_w = fill_in_nan_voxels(subj_w, args.subj, args.output_root)
     #     masked_weight = subj_w[:, subj_mask]
 
-
     #     from sklearn.cluster import KMeans
     #     kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(PC_val_only.T)
-        
+
     #     max_text = dict()
     #     print(masked_weight.shape)
     #     for c in tqdm(range(n_clusters)):
@@ -606,7 +705,7 @@ if __name__ == "__main__":
     #         #maximize image
     #         scores = np.mean(activations.squeeze() @ masked_weight[:, vox], axis=1)
     #         best_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
-    
+
     #         # plot images
     #         plt.figure()
     #         for j, id in enumerate(best_img_ids):
@@ -629,7 +728,7 @@ if __name__ == "__main__":
     #             "%s/output/clip/word_interpretation/1000eng_activation.npy"
     #             % args.output_root
     #         )
-            
+
     #         b, w = extract_emb_keywords(masked_weight[:, vox], activations, common_words)
     #         max_text[c] = [b, w]
     #     pickle.dump(
@@ -643,16 +742,24 @@ if __name__ == "__main__":
     #     print(max_text)
 
     if args.clustering_on_weight:
-        subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
-        from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
-        Z = linkage(subj_w.T, method="centroid", metric='euclidean')
-        # labelList=range(1, subj_w.shape[1]+1)
-        plt.figure()
-        dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=30)
-        plt.savefig("figures/CLIP/hclustering/euclidean_centroid.png")
+        name_modifier = "best_20000"
+        with open(
+            "/user_data/yuanw3/project_outputs/NSD/output/pca/clip/clip_pca_group_%s.pkl"
+            % name_modifier,
+            "rb",
+        ) as f:
+            pca = pca = pickle.load(f)
+            save_group_pc_per_subject(pca, name_modifier=name_modifier)
+        # subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
+        # from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
+        # Z = linkage(subj_w.T, method="centroid", metric='euclidean')
+        # # labelList=range(1, subj_w.shape[1]+1)
+        # plt.figure()
+        # dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=30)
+        # plt.savefig("figures/CLIP/hclustering/euclidean_centroid.png")
 
-        max_c = 10
-        # R = inconsistent(Z)
-        # MI = maxinconsts(Z, R)
-        label = fcluster(Z, t=max_c, criterion='maxclust')
-        np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
+        # max_c = 10
+        # # R = inconsistent(Z)
+        # # MI = maxinconsts(Z, R)
+        # label = fcluster(Z, t=max_c, criterion='maxclust')
+        # np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
