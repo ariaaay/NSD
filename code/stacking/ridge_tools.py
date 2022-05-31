@@ -141,7 +141,7 @@ def ridge_by_lambda_sk(X, Y, Xval, Yval, lambdas=np.array([0.1, 1, 10, 100, 1000
 
 def ridge_svd(X, Y, lmbda):
     U, s, Vt = svd(X, full_matrices=False)
-    d = s / (s ** 2 + lmbda)
+    d = s / (s**2 + lmbda)
     return np.dot(Vt, np.diag(d).dot(U.T.dot(Y)))
 
 
@@ -149,7 +149,7 @@ def ridge_by_lambda_svd(X, Y, Xval, Yval, lambdas=np.array([0.1, 1, 10, 100, 100
     error = np.zeros((lambdas.shape[0], Y.shape[1]))
     U, s, Vt = svd(X, full_matrices=False)
     for idx, lmbda in enumerate(lambdas):
-        d = s / (s ** 2 + lmbda)
+        d = s / (s**2 + lmbda)
         weights = np.dot(Vt, np.diag(d).dot(U.T.dot(Y)))
         error[idx] = 1 - R2(np.dot(Xval, weights), Yval)
     return error
@@ -169,7 +169,7 @@ def kernel_ridge_by_lambda(X, Y, Xval, Yval, lambdas=np.array([0.1, 1, 10, 100, 
 
 def kernel_ridge_svd(X, Y, lmbda):
     U, s, Vt = svd(X.T, full_matrices=False)
-    d = s / (s ** 2 + lmbda)
+    d = s / (s**2 + lmbda)
     return np.dot(np.dot(U, np.diag(d).dot(Vt)), Y)
 
 
@@ -179,7 +179,7 @@ def kernel_ridge_by_lambda_svd(
     error = np.zeros((lambdas.shape[0], Y.shape[1]))
     U, s, Vt = svd(X.T, full_matrices=False)
     for idx, lmbda in enumerate(lambdas):
-        d = s / (s ** 2 + lmbda)
+        d = s / (s**2 + lmbda)
         weights = np.dot(np.dot(U, np.diag(d).dot(Vt)), Y)
         error[idx] = 1 - R2(np.dot(Xval, weights), Yval)
     return error
@@ -189,7 +189,7 @@ def cross_val_ridge(
     train_features,
     train_data,
     n_splits=10,
-    lambdas=np.array([10 ** i for i in range(-6, 10)]),
+    lambdas=np.array([10**i for i in range(-6, 10)]),
     method="plain",
     do_plot=False,
 ):
@@ -264,7 +264,7 @@ def cross_val_lasso(
     train_features,
     train_data,
     n_splits=10,
-    lambdas=np.array([10 ** i for i in range(-6, 10)]),
+    lambdas=np.array([10**i for i in range(-6, 10)]),
     method="plain",
     do_plot=False,
 ):
@@ -333,7 +333,7 @@ def cross_val_ols(
     train_features,
     train_data,
     n_splits=10,
-    lambdas=np.array([10 ** i for i in range(-6, 10)]),
+    lambdas=np.array([10**i for i in range(-6, 10)]),
     method="plain",
     do_plot=False,
 ):
@@ -397,7 +397,7 @@ def cross_val_ols(
 
 
 def GCV_ridge(
-    train_features, train_data, lambdas=np.array([10 ** i for i in range(-6, 10)])
+    train_features, train_data, lambdas=np.array([10**i for i in range(-6, 10)])
 ):
 
     n_lambdas = lambdas.shape[0]
@@ -425,7 +425,7 @@ def GCV_ridge(
         print("CVLoop: Testing regularization param: {}".format(regularizationParam))
 
         # Now we can obtain Kinv for any lambda doing Kinv = V * (D + lambda*I)^-1 U'
-        dlambda = D ** 2 + np.eye(n_p) * regularizationParam
+        dlambda = D**2 + np.eye(n_p) * regularizationParam
         dlambdaInv = np.diag(D / np.diag(dlambda))
         KlambdaInv = V.dot(dlambdaInv).dot(U.T)
 
@@ -455,7 +455,7 @@ def GCV_ridge(
                 )
             )
             # got good param, now obtain weights
-            dlambda = D ** 2 + np.eye(n_p) * regularizationParam
+            dlambda = D**2 + np.eye(n_p) * regularizationParam
             dlambdaInv = np.diag(D / np.diag(dlambda))
             KlambdaInv = V.dot(dlambdaInv).dot(U.T)
 

@@ -160,7 +160,9 @@ if __name__ == "__main__":
         "--subj", type=int, default=1, help="Subject number (from 1 to 8)"
     )
     parser.add_argument(
-        "--all_subj", type=bool, help="extract cortical voxel for all subjects"
+        "--all_subj",
+        action="store_true",
+        help="extract cortical voxel for all subjects",
     )
     parser.add_argument(
         "--roi",
@@ -188,7 +190,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.all_subj:
-        subj = ["0" + str(i) for i in np.arange(1, 9)]
+        subj = np.arange(1, 9)
     else:
         subj = [args.subj]
 

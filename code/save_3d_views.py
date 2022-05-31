@@ -5,17 +5,28 @@ import cortex
 
 import warnings
 
-warnings.warn('''
+warnings.warn(
+    """
 `glabtools.save_3d_views.save_3d_views()` has moved to
-`glabtools.viz.pycortex_extras.save_3d_views`''',
-UserWarning)
+`glabtools.viz.pycortex_extras.save_3d_views`""",
+    UserWarning,
+)
 
 file_pattern = "{base}_{view}_{surface}.png"
-_combine = lambda a,b: ( lambda c: [c, c.update(b)][0] )(dict(a))
-_tolists = lambda p: {k:[v] for k,v in p.items()}
+_combine = lambda a, b: (lambda c: [c, c.update(b)][0])(dict(a))
+_tolists = lambda p: {k: [v] for k, v in p.items()}
 
-def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces = ['inflated'], with_labels = False,
-                  size=(1024*4, 768*4), trim=True):
+
+def save_3d_views(
+    data,
+    root,
+    base_name,
+    list_views=["lateral"],
+    list_surfaces=["inflated"],
+    with_labels=False,
+    size=(1024 * 4, 768 * 4),
+    trim=True,
+):
     """Saves 3D views of `data` in and around `root` under multiple specifications. Needs to be run
        on a system with a display (will launch webgl viewer)
     data: a pycortex volume
@@ -30,10 +41,12 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
     returns filenames: a dict of the produced image paths
     """
 
-    warnings.warn('''
+    warnings.warn(
+        """
     `glabtools.save_3d_views.save_3d_views()` has moved to
-    `glabtools.viz.pycortex_extras.save_3d_views`''',
-                  UserWarning)
+    `glabtools.viz.pycortex_extras.save_3d_views`""",
+        UserWarning,
+    )
 
     # Create root dir?
     if not os.path.exists(root):
@@ -41,48 +54,53 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
 
     # Create viewer
     if with_labels:
-        labels_visible=('rois',)
+        labels_visible = ("rois",)
     else:
-        labels_visible=()
-    handle = cortex.webgl.show(data,labels_visible=labels_visible)
+        labels_visible = ()
+    handle = cortex.webgl.show(data, labels_visible=labels_visible)
 
     time.sleep(5.0)
-    set_opacity=1
+    set_opacity = 1
 
-    basic = dict()#radius=400)#projection=['orthographic'], #radius=260, visL=True, visR=True)
+    basic = (
+        dict()
+    )  # radius=400)#projection=['orthographic'], #radius=260, visL=True, visR=True)
 
-    views = dict(lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, opacity=set_opacity),
-                 lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, opacity=set_opacity),
-                 lateral_right=dict(altitude=90.5, azimuth=270.5, pivot=0.5, opacity=set_opacity),
-                 medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, opacity=set_opacity),
-                 front=dict(altitude=90.5, azimuth=0, pivot=0, opacity=set_opacity),
-                 back=dict(altitude=90.5, azimuth=181, pivot=0, opacity=set_opacity),
-                 top=dict(altitude=0, azimuth=180, pivot=0, opacity=set_opacity),
-                 bottom=dict(altitude=180, azimuth=0, pivot=0, opacity=set_opacity)
-                )
+    views = dict(
+        lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, opacity=set_opacity),
+        lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, opacity=set_opacity),
+        lateral_right=dict(
+            altitude=90.5, azimuth=270.5, pivot=0.5, opacity=set_opacity
+        ),
+        medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, opacity=set_opacity),
+        front=dict(altitude=90.5, azimuth=0, pivot=0, opacity=set_opacity),
+        back=dict(altitude=90.5, azimuth=181, pivot=0, opacity=set_opacity),
+        top=dict(altitude=0, azimuth=180, pivot=0, opacity=set_opacity),
+        bottom=dict(altitude=180, azimuth=0, pivot=0, opacity=set_opacity),
+    )
 
-    surfaces = dict(inflated=dict(unfold= 0.5) ,
-                    flatmap=dict(unfold= 1) ,
-                    fiducial=dict(unfold= 0)
-                   )
+    surfaces = dict(
+        inflated=dict(unfold=0.5), flatmap=dict(unfold=1), fiducial=dict(unfold=0)
+    )
 
-    param_dict = dict(unfold = 'surface.{subject}.unfold',
-                      altitude = 'camera.altitude',
-                      azimuth = 'camera.azimuth',
-                      pivot = 'surface.{subject}.pivot',
-                      opacity = 'surface.{subject}.opacity')
-                      # radius = 'surface.{subject}.radius') # unknown parameter
-
+    param_dict = dict(
+        unfold="surface.{subject}.unfold",
+        altitude="camera.altitude",
+        azimuth="camera.azimuth",
+        pivot="surface.{subject}.pivot",
+        opacity="surface.{subject}.opacity",
+    )
+    # radius = 'surface.{subject}.radius') # unknown parameter
 
     # Save views!
     filenames = dict([(key, dict()) for key in surfaces.keys()])
 
     for view in list_views:
         # copy proper parameters with new names
-        vparams = dict([(param_dict[k], v) for k,v in views[view].items()])
+        vparams = dict([(param_dict[k], v) for k, v in views[view].items()])
         for surf in list_surfaces:
             # copy proper parameters with new names
-            sparams = dict([(param_dict[k], v) for k,v in surfaces[surf].items()])
+            sparams = dict([(param_dict[k], v) for k, v in surfaces[surf].items()])
             # Combine basic, view, and surface parameters
             params = _combine(_combine(basic, vparams), sparams)
 
@@ -108,6 +126,7 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
 
                 try:
                     import subprocess
+
                     subprocess.call(["convert", "-trim", output_path, output_path])
                 except:
                     pass
@@ -116,6 +135,6 @@ def save_3d_views(data, root, base_name, list_views =['lateral'],list_surfaces =
     try:
         handle.close()
     except:
-        print('Could not close viewer')
+        print("Could not close viewer")
 
     return filenames

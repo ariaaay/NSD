@@ -28,7 +28,6 @@ def fill_in_nan_voxels(vals, subj, output_root, fill_in=0):
         return vals
 
 
-
 def load_model_performance(model, output_root=".", subj=1, measure="corr"):
     if measure == "pvalue":
         measure = "corr"
@@ -53,7 +52,7 @@ def load_model_performance(model, output_root=".", subj=1, measure="corr"):
             % (output_root, subj, measure, model),
             allow_pickle=True,
         )
-    
+
     if measure == "corr":
         if pvalue:
             out = np.array(out)[:, 1]

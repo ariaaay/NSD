@@ -23,7 +23,6 @@ from util.data_util import (
     fill_in_nan_voxels,
 )
 from util.model_config import *
-from util.util import zscore
 
 
 def make_word_cloud(text, saving_fname):
@@ -449,8 +448,6 @@ if __name__ == "__main__":
         )
 
     if args.proj_feature_pc_to_subj:
-        from util.util import zscore
-
         # Calculate weight projection onto PC space
         PC_feat, name_modifier = get_PCs(
             model=args.model,
@@ -742,14 +739,6 @@ if __name__ == "__main__":
     #     print(max_text)
 
     if args.clustering_on_weight:
-        name_modifier = "best_20000"
-        with open(
-            "/user_data/yuanw3/project_outputs/NSD/output/pca/clip/clip_pca_group_%s.pkl"
-            % name_modifier,
-            "rb",
-        ) as f:
-            pca = pca = pickle.load(f)
-            save_group_pc_per_subject(pca, name_modifier=name_modifier)
         # subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
         # from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
         # Z = linkage(subj_w.T, method="centroid", metric='euclidean')

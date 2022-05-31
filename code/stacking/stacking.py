@@ -83,7 +83,7 @@ def feat_ridge_CV(
                         train_features_nested,
                         train_data_nested,
                         n_splits=10,
-                        lambdas=np.array([10 ** i for i in range(-6, 10)]),
+                        lambdas=np.array([10**i for i in range(-6, 10)]),
                         do_plot=False,
                         method="plain",
                     )
@@ -92,7 +92,7 @@ def feat_ridge_CV(
                         train_features_nested,
                         train_data_nested,
                         n_splits=10,
-                        lambdas=np.array([10 ** i for i in range(-6, 10)]),
+                        lambdas=np.array([10**i for i in range(-6, 10)]),
                         do_plot=False,
                         method="plain",
                     )

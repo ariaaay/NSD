@@ -28,19 +28,26 @@ from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
-annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+annFile_train = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+)
+annFile_val = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+)
 coco_train = COCO(annFile_train)
 coco_val = COCO(annFile_val)
 
-annFile_train_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-annFile_val_caps = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+annFile_train_caps = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+)
+annFile_val_caps = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+)
 coco_train_caps = COCO(annFile_train_caps)
 coco_val_caps = COCO(annFile_val_caps)
 
-def compute_sample_performance(
-    model, subj, output_dir, masking="sig", measure="corrs"
-):
+
+def compute_sample_performance(model, subj, output_dir, masking="sig", measure="corrs"):
     if measure == "corrs":
         from scipy.stats import pearsonr
 
@@ -159,10 +166,18 @@ def extract_emb_keywords(embedding, activations, common_words, n=15):
 
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
     sample_corr1 = compute_sample_performance(
-        model=model1, subj=1, output_dir=args.output_root, masking=masking, measure=measure
+        model=model1,
+        subj=1,
+        output_dir=args.output_root,
+        masking=masking,
+        measure=measure,
     )
     sample_corr2 = compute_sample_performance(
-        model=model2, subj=1, output_dir=args.output_root, masking=masking, measure=measure
+        model=model2,
+        subj=1,
+        output_dir=args.output_root,
+        masking=masking,
+        measure=measure,
     )
     plt.figure()
     plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
@@ -191,9 +206,10 @@ def get_coco_anns(id):
     except KeyError:
         annIds = coco_val.getAnnIds([id])
         anns = coco_val.loadAnns(annIds)
-    
+
     cats = [ann["category_id"] for ann in anns]
     return cats
+
 
 def get_coco_caps(id):
     try:
@@ -206,14 +222,23 @@ def get_coco_caps(id):
     caps = [ann["caption"] for ann in anns]
     return caps
 
+
 def find_corner_images(
     model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
 ):
     sp1 = compute_sample_performance(
-        model=model1, subj=1, output_dir=args.output_root, masking=masking, measure=measure
+        model=model1,
+        subj=1,
+        output_dir=args.output_root,
+        masking=masking,
+        measure=measure,
     )
     sp2 = compute_sample_performance(
-        model=model2, subj=1, output_dir=args.output_root, masking=masking, measure=measure
+        model=model2,
+        subj=1,
+        output_dir=args.output_root,
+        masking=masking,
+        measure=measure,
     )
     diff = sp1 - sp2
     indexes = np.argsort(
@@ -271,8 +296,8 @@ def compare_model_and_brain_performance_on_COCO():
 
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
-    corrs_v, corrs_t = [], [] 
-    for subj in np.arange(1,9):
+    corrs_v, corrs_t = [], []
+    for subj in np.arange(1, 9):
         test_image_id, _ = extract_test_image_ids(subj)
         all_images_paths = list()
         all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in test_image_id]
@@ -295,16 +320,18 @@ def compare_model_and_brain_performance_on_COCO():
                 probs = logits_per_image.squeeze().softmax(dim=-1).cpu().numpy()
                 # print(probs.shape)
                 preds.append(probs[i])
-    
+
         sample_corr_clip = compute_sample_performance("clip", i, args.output_root)
-        sample_corr_clip_text = compute_sample_performance("clip_text", i, args.output_root)
+        sample_corr_clip_text = compute_sample_performance(
+            "clip_text", i, args.output_root
+        )
 
         corrs_v.append(pearsonr(sample_corr_clip, preds)[0])
         corrs_t.append(pearsonr(sample_corr_clip_text, preds)[0])
 
     fig = plt.figure()
-    plt.plot(corrs_v, color='red', label='clip visual')
-    plt.plot(corrs_t, color="blue", label='clip text')
+    plt.plot(corrs_v, color="red", label="clip visual")
+    plt.plot(corrs_t, color="blue", label="clip text")
     plt.legend()
 
     plt.savefig("figures/CLIP/model_brain_comparison.png")
@@ -351,7 +378,9 @@ def coarse_level_semantic_analysis(subj=1):
     plt.savefig("figures/CLIP/coarse_category_RDM_comparison.png")
 
 
-def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottleneck", print_distance=False):
+def sample_level_semantic_analysis(
+    subj=1, model1="clip", model2="resnet50_bottleneck", print_distance=False
+):
     cocoId_subj = np.load(
         "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
     )
@@ -364,8 +393,8 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
     ind_2 = np.unravel_index(np.argsort(diff2, axis=None), diff2.shape)
 
     # b/c symmetry of RDM, every two pairs are the same
-    
-    trial_id_pair_1 = [(ind_1[0][::-1][i], ind_1[1][::-1][i]) for i in range(0, 20, 2)] 
+
+    trial_id_pair_1 = [(ind_1[0][::-1][i], ind_1[1][::-1][i]) for i in range(0, 20, 2)]
     trial_id_pair_2 = [(ind_2[0][::-1][i], ind_2[1][::-1][i]) for i in range(0, 20, 2)]
 
     plt.figure(figsize=(10, 30))
@@ -375,7 +404,14 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
         I = get_coco_image(id)
         plt.imshow(I)
         if print_distance:
-            plt.title("Diff:%.2f; Sim1:%.2f; Sim2:%.2f" % (diff1[trial_id_pair_1[i]], rdm1[trial_id_pair_1[i]], rdm2[trial_id_pair_1[i]]))
+            plt.title(
+                "Diff:%.2f; Sim1:%.2f; Sim2:%.2f"
+                % (
+                    diff1[trial_id_pair_1[i]],
+                    rdm1[trial_id_pair_1[i]],
+                    rdm2[trial_id_pair_1[i]],
+                )
+            )
         plt.axis("off")
 
         plt.subplot(10, 2, i * 2 + 2)
@@ -396,7 +432,14 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
         I = get_coco_image(id)
         plt.imshow(I)
         if print_distance:
-            plt.title("Diff:%.2f; Sim1:%.2f; Sim2:%.2f" % (diff2[trial_id_pair_2[i]], rdm1[trial_id_pair_2[i]], rdm2[trial_id_pair_2[i]]))
+            plt.title(
+                "Diff:%.2f; Sim1:%.2f; Sim2:%.2f"
+                % (
+                    diff2[trial_id_pair_2[i]],
+                    rdm1[trial_id_pair_2[i]],
+                    rdm2[trial_id_pair_2[i]],
+                )
+            )
         plt.axis("off")
 
         plt.subplot(10, 2, i * 2 + 2)
@@ -411,6 +454,7 @@ def sample_level_semantic_analysis(subj=1, model1="clip", model2="resnet50_bottl
         % (model2, model1)
     )
 
+
 def image_level_scatter_plot(subj=1, model1="clip", model2="resnet50_bottleneck"):
     # cocoId_subj = np.load(
     #     "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
@@ -423,20 +467,22 @@ def image_level_scatter_plot(subj=1, model1="clip", model2="resnet50_bottleneck"
     plt.box(False)
     # subsample 1000 point for plotting
     sampling_idx = np.random.choice(len(rdm1[triu_flag]), size=10000, replace=False)
-    plt.scatter(rdm1[triu_flag][sampling_idx], rdm2[triu_flag][sampling_idx], alpha=0.4, s=1)
+    plt.scatter(
+        rdm1[triu_flag][sampling_idx], rdm2[triu_flag][sampling_idx], alpha=0.4, s=1
+    )
     plt.xlim(0, 1)
     plt.ylim(-0.25, 1)
     # ax = plt.gca()
     # ax.spines['left'].set_position('center')
     # ax.spines['bottom'].set_position('center')
     # plt.axis("off")
-    plt.savefig("figures/CLIP/manifold_distance/%s_vs_%s.png" % (model1, model2), dpi=400)
-    
+    plt.savefig(
+        "figures/CLIP/manifold_distance/%s_vs_%s.png" % (model1, model2), dpi=400
+    )
 
     # rdm1[~triu_flag] = 0
     # rdm2[~triu_flag] = 0
     # ind = np.unravel_index(np.argsort(rdm1, axis=None), x.shape)
-
 
 
 def make_roi_df(roi_names, subjs, update=False):
@@ -470,13 +516,19 @@ def make_roi_df(roi_names, subjs, update=False):
             )
 
             joint_var = load_model_performance(
-                model=["resnet50_bottleneck_clip_visual_resnet", "clip_visual_resnet_resnet50_bottleneck"],
+                model=[
+                    "resnet50_bottleneck_clip_visual_resnet",
+                    "clip_visual_resnet_resnet50_bottleneck",
+                ],
                 output_root=args.output_root,
                 subj=subj,
                 measure="rsq",
             )
             clip_var = load_model_performance(
-                model="clip_visual_resnet", output_root=args.output_root, subj=subj, measure="rsq"
+                model="clip_visual_resnet",
+                output_root=args.output_root,
+                subj=subj,
+                measure="rsq",
             )
             resnet_var = load_model_performance(
                 model="resnet50_bottleneck",
@@ -590,7 +642,8 @@ if __name__ == "__main__":
         "--performance_analysis_by_roi", default=False, action="store_true"
     )
     parser.add_argument(
-        "--image_level_scatter_plot", default=False, action="store_true")
+        "--image_level_scatter_plot", default=False, action="store_true"
+    )
     parser.add_argument("--rerun_df", default=False, action="store_true")
     parser.add_argument("--weight_analysis", default=False, action="store_true")
     parser.add_argument(
@@ -636,7 +689,6 @@ if __name__ == "__main__":
             % (model1, model2, args.roi)
         )
 
-
     if args.plot_image_wise_performance:
         # scatter plot by images
         from pycocotools.coco import COCO
@@ -673,12 +725,14 @@ if __name__ == "__main__":
 
     if args.coarse_level_semantic_analysis:
         coarse_level_semantic_analysis(subj=1)
-    
+
     if args.image_level_scatter_plot:
         image_level_scatter_plot(subj=1)
 
     if args.extract_keywords_for_roi:
-        with open("%s/output/clip/word_interpretation/1000eng.txt" % args.output_root) as f:
+        with open(
+            "%s/output/clip/word_interpretation/1000eng.txt" % args.output_root
+        ) as f:
             out = f.readlines()
         common_words = ["photo of " + w[:-1] for w in out]
         try:
@@ -723,7 +777,10 @@ if __name__ == "__main__":
         coco_val = COCO(annFile_val)
 
         sample_level_semantic_analysis(
-            subj=args.subj, model1="clip", model2="resnet50_bottleneck", print_distance=True
+            subj=args.subj,
+            model1="clip",
+            model2="resnet50_bottleneck",
+            print_distance=True,
         )
         # sample_level_semantic_analysis(
         #     subj=args.subj, model1="clip", model2="bert_layer_13"
@@ -861,7 +918,7 @@ if __name__ == "__main__":
                 % args.output_root
             )
         else:
-            df = make_roi_df(roi_names, subjs=np.arange(1,9))
+            df = make_roi_df(roi_names, subjs=np.arange(1, 9))
 
         for roi_name in roi_names:
             plt.figure(figsize=(50, 20))
@@ -951,7 +1008,6 @@ if __name__ == "__main__":
             print(k, v)
         # print(roa_list)
 
-
     if args.summary_statistics:
         roi_names = list(roi_name_dict.keys())
         df = pd.read_csv(
@@ -961,24 +1017,24 @@ if __name__ == "__main__":
             sns.set(style="whitegrid", font_scale=4.5)
             plt.figure(figsize=(50, 20))
             ax = sns.violinplot(
-                    x=roi_name,
-                    y="var_resnet",
-                    data=df,
-                    dodge=True,
-                    order=list(roi_name_dict[roi_name].values()),
-                )
+                x=roi_name,
+                y="var_resnet",
+                data=df,
+                dodge=True,
+                order=list(roi_name_dict[roi_name].values()),
+            )
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/var_resnet_%s.png" % roi_name)
 
             plt.figure(figsize=(50, 20))
             ax = sns.violinplot(
-                    x=roi_name,
-                    y="var_clip",
-                    data=df,
-                    dodge=True,
-                    order=list(roi_name_dict[roi_name].values()),
-                )
-            
+                x=roi_name,
+                y="var_clip",
+                data=df,
+                dodge=True,
+                order=list(roi_name_dict[roi_name].values()),
+            )
+
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
             plt.savefig("figures/CLIP/performances_by_roi/var_clip_%s.png" % roi_name)
 
@@ -986,14 +1042,11 @@ if __name__ == "__main__":
         means = []
         for subj in range(8):
             subj_var = clip_var = load_model_performance(
-                model="clip", output_root=args.output_root, subj=subj+1, measure="rsq"
+                model="clip", output_root=args.output_root, subj=subj + 1, measure="rsq"
             )
             nc = np.load(
                 "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
-                % (args.output_root, subj+1, subj+1)
+                % (args.output_root, subj + 1, subj + 1)
             )
-            means.append(np.mean(subj_var/nc, where=np.isfinite(subj_var/nc)))
+            means.append(np.mean(subj_var / nc, where=np.isfinite(subj_var / nc)))
         print(means)
-
-
-    

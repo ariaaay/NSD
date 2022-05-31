@@ -450,8 +450,6 @@ if __name__ == "__main__":
         # extract_visual_transformer_feature()
         # extract_vibert_feature()
         visual_res_feat = extract_last_layer_feature(
-                    model_name="RN50", modality="vision"
-                )
-        np.save(
-            "%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat
+            model_name="RN50", modality="vision"
         )
+        np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)

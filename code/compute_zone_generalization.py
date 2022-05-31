@@ -25,7 +25,7 @@ from scipy.stats import zscore
 #     rep2 = np.float32(np.repeat(Y,nvars_x,axis=1))
 #     rep2 = np.reshape(rep2, [-1, nvars_y, nvars_x])
 #     rep2 = np.swapaxes(rep2, 1, 2)
-    
+
 #     return corr(rep, rep2)
 
 if __name__ == "__main__":
@@ -47,7 +47,10 @@ if __name__ == "__main__":
     print(roi_list)
 
     if args.data_to_data:
-        brain_path = "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy" % (args.output_dir, args.subj)
+        brain_path = (
+            "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
+            % (args.output_dir, args.subj)
+        )
         br_data = np.load(brain_path)
 
         try:
@@ -59,7 +62,7 @@ if __name__ == "__main__":
             br_data = br_data[:, non_zero_mask]
         except FileNotFoundError:
             pass
-        
+
         roi_masks_list, roi_label_list = [], []
 
         for roi in roi_list:
@@ -69,7 +72,10 @@ if __name__ == "__main__":
         print(len(roi_masks_list))
         print(roi_label_list)
         try:
-            corrs_array = np.load("%s/roi_gen/corrs_mean_subj%02d_%s.npy" % (args.output_dir, args.subj, args.roi))
+            corrs_array = np.load(
+                "%s/roi_gen/corrs_mean_subj%02d_%s.npy"
+                % (args.output_dir, args.subj, args.roi)
+            )
         except FileNotFoundError:
             corrs_array = np.zeros((len(roi_masks_list), len(roi_masks_list)))
             for i, m1 in enumerate(tqdm(roi_masks_list)):
@@ -91,7 +97,11 @@ if __name__ == "__main__":
                     )
 
                     corrs_array[i, j] = np.mean(corrs[:, 0])
-                    np.save("%s/roi_gen/corrs_mean_subj%02d_%s.npy" % (args.output_dir, args.subj, args.roi), corrs_array)
+                    np.save(
+                        "%s/roi_gen/corrs_mean_subj%02d_%s.npy"
+                        % (args.output_dir, args.subj, args.roi),
+                        corrs_array,
+                    )
 
         plt.imshow(corrs_array)
         plt.colorbar()
@@ -104,7 +114,11 @@ if __name__ == "__main__":
             "%s/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
             % (args.output_dir, args.subj, args.subj)
         )
-        pred_path = "%s/encoding_results/subj%01d/pred_%s_whole_brain.p" % (args.output_dir, args.subj, args.pred_to_data)
+        pred_path = "%s/encoding_results/subj%01d/pred_%s_whole_brain.p" % (
+            args.output_dir,
+            args.subj,
+            args.pred_to_data,
+        )
         pred, test_data = np.load(pred_path, allow_pickle=True)
 
         nc_thre = 0.2
@@ -119,24 +133,28 @@ if __name__ == "__main__":
                 zone_mask = list(np.where(m > 0)[0])
 
                 zone_indices += zone_mask
-                roi_label_list.append(roi_labels[i]) 
+                roi_label_list.append(roi_labels[i])
                 tick_pos.append(len(zone_mask))
-            
 
-        predictions = pred[:,zone_indices]
-        test_data = test_data[:,zone_indices]
+        predictions = pred[:, zone_indices]
+        test_data = test_data[:, zone_indices]
         print("data shape: ")
         print(test_data.shape)
         print(np.cumsum(tick_pos))
 
         # compute the encoding model performance
         # from scipy.stats import pearsonr
-        corr = np.corrcoef(predictions.T, test_data.T)[:len(zone_indices), len(zone_indices):]
+        corr = np.corrcoef(predictions.T, test_data.T)[
+            : len(zone_indices), len(zone_indices) :
+        ]
         # np.save("%s/roi_gen/corrs_%s_subj%02d.npy" % (args.output_dir, args.pred_to_data, args.subj), {'generalizations':corr, 'zone indices':zone_indices, 'roi_labels': roi_label_list})
-        
+
         plt.imshow(corr, cmap="RdBu_r")
         plt.colorbar()
-        plt.xticks(np.cumsum(tick_pos), roi_label_list, rotation='vertical')
+        plt.xticks(np.cumsum(tick_pos), roi_label_list, rotation="vertical")
         plt.yticks(np.cumsum(tick_pos), roi_label_list)
 
-        plt.savefig("figures/roi_generalization/roi_gen_%s_subj%02d_%s_nc%.01f.png" % (args.pred_to_data, args.subj, args.roi, nc_thre))
+        plt.savefig(
+            "figures/roi_generalization/roi_gen_%s_subj%02d_%s_nc%.01f.png"
+            % (args.pred_to_data, args.subj, args.roi, nc_thre)
+        )

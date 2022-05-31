@@ -54,7 +54,7 @@ def make_scree_plot(A, figname):
 
     A = A - np.mean(A, axis=0)
     U, S, V = np.linalg.svd(A)
-    eigvals = S ** 2 / np.sum(S ** 2)
+    eigvals = S**2 / np.sum(S**2)
     num_vars = len(eigvals)
 
     fig = plt.figure(figsize=(8, 5))
