@@ -368,10 +368,36 @@ if __name__ == "__main__":
         PCs, name_modifier = get_PCs(args, by_feature=True)
         print("Projecting PC to subject: %s" % name_modifier)
 
-        group_w = load_weight_matrix_from_subjs_for_pca(args) #(512 x 80,000)
-        group_w -= np.mean(group_w, axis=0)
-        w_transformed = np.dot(group_w.T, PCs.T)  # (80,000x512 x 512x20)
-        print(w_transformed.shape)
+        group_w = load_weight_matrix_from_subjs_for_pca(args).T #(80,000 x 512)
+        #method 0
+        pca00 = PCA(n_components=20, svd_solver="full")
+        w_transformed4 = pca00.fit_transform(group_w)
+
+        group_w -= np.mean(group_w, axis=0) # each feature should have mean 0
+        
+        #method 1
+        w_transformed = np.dot(group_w, PCs.T)  # (80,000x512 x 512x20)
+
+        #method 2
+        pca = PCA(n_components=20, svd_solver="full")
+        w_transformed2 = pca.fit_transform(group_w)
+        
+        #method 3
+        with open(
+            "%s/output/pca/%s/%s_pca_group_components_%s.pkl"
+            % (args.output_root, args.model, args.model, name_modifier),
+            "rb",
+        ) as f:
+            pca0 = pickle.load(f)
+        w_transformed3 = pca0.transform(group_w)
+
+        print(((w_transformed - w_transformed2)**2).mean())
+        print(((w_transformed - w_transformed3)**2).mean())
+        print(((w_transformed - w_transformed4)**2).mean())
+        print(((PCs - pca0.components_)**2).mean())
+
+        ######################
+
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
 
         name_modifier = name_modifier.replace("by_feature_", "")
