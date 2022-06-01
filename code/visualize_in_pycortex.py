@@ -879,6 +879,8 @@ if __name__ == "__main__":
                 subj_proj[i, :],
             )
 
+        
+
         # volumes["3PC"] = make_3pc_volume(
         #     args.subj,
         #     PCs_zscore,
@@ -936,6 +938,24 @@ if __name__ == "__main__":
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
         # print(volumes["PC1"])
+
+    if args.show_clustering:
+        model = "clip"
+
+        # name_modifier = "acc_0.3_minus_prf-visualrois"
+        name_modifier = "best_20000"
+        labels_vals = np.load(
+            "%s/output/clustering/spectral_subj%01d.npy"
+            % (OUTPUT_ROOT, args.subj)
+        )
+        subj_mask = np.load(
+            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
+            % (OUTPUT_ROOT, model, args.subj, name_modifier)
+        )
+
+        labels = np.zeros(subj_mask.shape)
+        labels[~subj_mask] = np.nan
+        labels[subj_mask] = labels_vals
 
     if args.vis_method == "webgl":
         subj_port = "4111" + str(args.subj)
