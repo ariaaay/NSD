@@ -234,7 +234,7 @@ def make_3pc_volume(subj, PCs):
 
     pc_3d = []
     for i in range(3):
-        tmp = PCs[i, :] / np.max(PCs_zscore[i, :]) * 255
+        tmp = PCs[i, :] / np.max(PCs[i, :]) * 255
         # projecting value back to 3D space
         pc_3d.append(project_vals_to_3d(tmp, cortical_mask))
 
@@ -389,11 +389,11 @@ if __name__ == "__main__":
         # "food_mask": food_mask_volume
     }
 
-    # volumes["clip-ViT-last r"] = make_volume(
-    #     subj=args.subj,
-    #     model="clip",
-    #     mask_with_significance=args.mask_sig,
-    # )
+    volumes["clip-ViT-last r"] = make_volume(
+        subj=args.subj,
+        model="clip",
+        mask_with_significance=args.mask_sig,
+    )
 
     # volumes["clip-RN50-last r"] = make_volume(
     #     subj=args.subj,
@@ -421,21 +421,21 @@ if __name__ == "__main__":
     # )
 
     # rsquare
-    # volumes["clip-ViT-last R^2 NC"] = make_volume(
-    #     subj=args.subj,
-    #     model="clip",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    #     noise_corrected=True,
-    # )
+    volumes["clip-ViT-last R^2 NC"] = make_volume(
+        subj=args.subj,
+        model="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=True,
+    )
 
-    # volumes["clip-ViT-last R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model="clip",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    #     noise_corrected=False,
-    # )
+    volumes["clip-ViT-last R^2"] = make_volume(
+        subj=args.subj,
+        model="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
 
     # volumes["clip-text-last R^2"] = make_volume(
     #     subj=args.subj,
@@ -844,31 +844,32 @@ if __name__ == "__main__":
     if args.show_pcs:
         model = "clip"
 
-        name_modifier = "acc_0.3_minus_prf-visualrois"
+        # name_modifier = "acc_0.3_minus_prf-visualrois"
+        name_modifier = "best_20000"
         pc_vols = []
-        PCs_zscore = np.load(
-            "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-            % (OUTPUT_ROOT, model, args.subj, model)
+        PCs = np.load(
+            "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
+            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
         )
         subj_mask = np.load(
             "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
             % (OUTPUT_ROOT, model, args.subj, name_modifier)
         )
-        PCs_zscore[:, ~subj_mask] = np.nan
-        PC_val_only = PCs_zscore[:, subj_mask]
+        PCs[:, ~subj_mask] = np.nan
+        PC_val_only = PCs[:, subj_mask]
 
         # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
-        for i in range(PCs_zscore.shape[0]):
+        for i in range(PCs.shape[0]):
             key = "PC" + str(i)
             volumes[key] = make_pc_volume(
                 args.subj,
-                PCs_zscore[i, :],
+                PCs[i, :],
             )
 
         # visualize PC projections
         subj_proj = np.load(
-            "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-            % (OUTPUT_ROOT, model, args.subj, model)
+            "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
+            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
         )
 
         for i in range(subj_proj.shape[0]):
@@ -892,7 +893,7 @@ if __name__ == "__main__":
                 kmeans = KMeans(n_clusters=k, random_state=0).fit(
                     PC_val_only[:n_pc, :].T
                 )
-                labels = PCs_zscore[0, :].copy()
+                labels = PCs[0, :].copy()
                 labels[subj_mask] = kmeans.labels_ + 1
                 volumes["basis %d-%d" % (n_pc, k)] = make_pc_volume(
                     args.subj, labels, vmin=1, vmax=k, cmap="J4s"
