@@ -9,7 +9,6 @@ import seaborn as sns
 import nibabel as nib
 import numpy as np
 import matplotlib.pyplot as plt
-from torch import threshold
 
 from tqdm import tqdm
 from sklearn.decomposition import PCA
@@ -38,24 +37,22 @@ def make_word_cloud(text, saving_fname):
     wordcloud.to_file(saving_fname)
 
 
-def make_name_modifier(
-    threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature=False
-):
-    if (threshold == 0) and (best_voxel_n==0) and (roi_only is None):
+def make_name_modifier(args, by_feature=False):
+    if (args.threshold == 0) and (args.best_voxel_n==0) and (args.roi_only is None):
         raise NameError("One of the selection criteria has to be used.")
 
-    if roi_only:
-        name_modifier = "%s_only" % roi_only
+    if args.roi_only:
+        name_modifier = "%s_only" % args.roi_only
 
-    if threshold != 0:
-        name_modifier = "acc_%.1f" % threshold
-    elif best_voxel_n != 0:
-        name_modifier = "best_%d" % best_voxel_n
+    if args.threshold != 0:
+        name_modifier = "acc_%.1f" % args.threshold
+    elif args.best_voxel_n != 0:
+        name_modifier = "best_%d" % args.best_voxel_n
 
-    if mask_out_roi is not None:
-        name_modifier += "_minus_%s" % mask_out_roi
+    if args.mask_out_roi is not None:
+        name_modifier += "_minus_%s" % args.mask_out_roi
 
-    if not nc_corrected:
+    if not args.nc_corrected:
         name_modifier += "_rawr2"
 
     if by_feature:
@@ -63,33 +60,23 @@ def make_name_modifier(
     return name_modifier
 
 
-def extract_single_subject_weight(
-    subj,
-    model,
-    threshold=0,
-    best_voxel_n=0,
-    roi_only=None,
-    mask_out_roi=None,
-    nc_corrected=False,
-):
-    name_modifier = make_name_modifier(
-        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected
-    )
+def extract_single_subject_weight(subj, args):
+    name_modifier = make_name_modifier(args)
     w = np.load(
         "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
-        % (args.output_root, subj, model)
+        % (args.output_root, subj, args.model)
     )
     w = fill_in_nan_voxels(w, subj, args.output_root)
-    if roi_only is not None:
+    if args.roi_only is not None:
         roi_mask = np.load(
             "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-            % (args.output_root, subj, subj, roi_only)
+            % (args.output_root, subj, subj, args.roi_only)
         )
         weight_mask = roi_mask > 0
-    elif mask_out_roi is not None:
+    elif args.mask_out_roi is not None:
         roi_mask = np.load(
             "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-            % (args.output_root, subj, subj, mask_out_roi)
+            % (args.output_root, subj, subj, args.mask_out_roi)
         )
         roi_mask = roi_mask > 0
         weight_mask = ~roi_mask
@@ -97,52 +84,43 @@ def extract_single_subject_weight(
     else:
         weight_mask = np.ones(w.shape[1])
     rsq = load_model_performance(
-        model, output_root=args.output_root, subj=subj, measure="rsq"
+        args.model, output_root=args.output_root, subj=subj, measure="rsq"
     )
-    if nc_corrected:
+    if args.nc_corrected:
         nc = np.load(
             "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
             % (args.output_root, subj, subj)
         )
         rsq = rsq / nc
-    if threshold == 0:  # then selecting voxels based on number of accuracy
-        if best_voxel_n != 0:
-            threshold = rsq[
-                np.argsort(rsq)[-best_voxel_n]
+    if args.threshold == 0:  # then selecting voxels based on number of accuracy
+        if args.best_voxel_n != 0:
+            args.threshold = rsq[
+                np.argsort(rsq)[-args.best_voxel_n]
             ]  # get the threshold for the best n voxels
         else:
-            threshold = 0  # select all voxels
-    acc_mask = rsq >= threshold
+            args.threshold = 0  # select all voxels
+    acc_mask = rsq >= args.threshold
     weight_mask = (weight_mask * acc_mask).astype(bool)
     print("Total voxels left: %d" % sum(weight_mask))
     np.save(
         "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-        % (args.output_root, model, subj, name_modifier),
+        % (args.output_root, args.model, subj, name_modifier),
         weight_mask,
     )
     return w[:, weight_mask]
 
 
-def load_weight_matrix_from_subjs_for_pca(
-    model,
-    threshold=0,
-    best_voxel_n=0,
-    roi_only=None,
-    mask_out_roi=None,
-    nc_corrected=False,
-):
+def load_weight_matrix_from_subjs_for_pca(args):
     subjs = np.arange(1, 9)
-    name_modifier = make_name_modifier(
-        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected
-    )
+    name_modifier = make_name_modifier(args)
     group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (
         args.output_root,
-        model,
+        args.model,
         name_modifier,
     )
 
-    if not os.path.exists("%s/output/pca/%s" % (args.output_root, model)):
-        os.makedirs("%s/output/pca/%s" % (args.output_root, model))
+    if not os.path.exists("%s/output/pca/%s" % (args.output_root, args.model)):
+        os.makedirs("%s/output/pca/%s" % (args.output_root, args.model))
 
     try:
         group_w = np.load(group_w_path)
@@ -153,12 +131,7 @@ def load_weight_matrix_from_subjs_for_pca(
         for subj in subjs:
             subj_w = extract_single_subject_weight(
                 subj,
-                model,
-                threshold,
-                best_voxel_n,
-                roi_only,
-                mask_out_roi,
-                nc_corrected,
+                args
             )
             group_w.append(subj_w)
         group_w = np.hstack(group_w)
@@ -166,65 +139,47 @@ def load_weight_matrix_from_subjs_for_pca(
     return group_w
 
 
-def get_PCs(
-    model="clip",
-    data=None,
-    num_pc=20,
-    by_feature=False,
-    threshold=0,
-    best_voxel_n=0,
-    roi_only=None,
-    mask_out_roi=None,
-    nc_corrected=False,
-):
-    name_modifier = make_name_modifier(
-        threshold, best_voxel_n, roi_only, mask_out_roi, nc_corrected, by_feature
-    )
+def get_PCs(args, data=None, by_feature=False):
+    name_modifier = make_name_modifier(args, by_feature)
     try:
-        PCs = np.load(
-            "%s/output/pca/%s/%s_pca_group_components_%s.npy"
-            % (args.output_root, model, model, name_modifier)
-        )
+        fpath = "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, args.model, args.model, name_modifier)
+        print("Loading PCA from: " + fpath)
+        PCs = np.load(fpath)
+        
     except FileNotFoundError:
         print("Running PCA of: " + name_modifier)
         if data is None:
-            data = load_weight_matrix_from_subjs_for_pca(
-                model=model,
-                threshold=threshold,
-                best_voxel_n=best_voxel_n,
-                roi_only=roi_only,
-                mask_out_roi=mask_out_roi,
-                nc_corrected=nc_corrected,
-            )
-        pca = PCA(n_components=num_pc, svd_solver="full")
+            data = load_weight_matrix_from_subjs_for_pca(args)
+        pca = PCA(n_components=args.num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
         np.save(
             "%s/output/pca/%s/%s_pca_group_components_%s.npy"
-            % (args.output_root, model, model, name_modifier),
+            % (args.output_root, args.model, args.model, name_modifier),
             PCs,
         )
 
         import pickle
 
         with open(
-            "%s/output/pca/%s/%s_pca_group_%s.pkl"
-            % (args.output_root, model, model, name_modifier),
+            "%s/output/pca/%s/%s_pca_group_components_%s.pkl"
+            % (args.output_root, args.model, args.model, name_modifier),
             "wb",
         ) as f:
             pickle.dump(pca, f)
 
         plt.plot(pca.explained_variance_ratio_)
-        plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (model, name_modifier))
+        plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
         if not by_feature:
-            save_group_pc_per_subject(pca, name_modifier)
+            save_group_pc_per_subject(PCs, name_modifier)
 
     return PCs, name_modifier
 
 
-def save_group_pc_per_subject(pca, name_modifier):
+def save_group_pc_per_subject(PCs):
     # save pca component on brain too
+    name_modifier = make_name_modifier(args, by_feature=False)
     idx = 0
     for subj in np.arange(1, 9):
         subj_mask = np.load(
@@ -233,7 +188,7 @@ def save_group_pc_per_subject(pca, name_modifier):
         )
         print(len(subj_mask))
         subj_pca = np.zeros((args.num_pc, len(subj_mask)))
-        subj_pca[:, subj_mask] = pca.components_[:, idx : idx + np.sum(subj_mask)]
+        subj_pca[:, subj_mask] = PCs[:, idx : idx + np.sum(subj_mask)]
         save_dir = "%s/output/pca/%s/subj%02d" % (args.output_root, args.model, subj)
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
@@ -249,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--subj",
         type=int,
-        default=1,
+        default=0,
         help="Specify which subject to build model on. Currently it supports subject 1, 2, 7",
     )
     parser.add_argument(
@@ -299,14 +254,7 @@ if __name__ == "__main__":
         )
         from featureprep.feature_prep import get_preloaded_features
 
-        PCs, name_modifier = get_PCs(
-            model=args.model,
-            num_pc=args.num_pc,
-            threshold=args.threshold,
-            mask_out_roi=args.mask_out_roi,
-            roi_only=args.roi_only,
-            nc_corrected=False,
-        )
+        PCs, name_modifier = get_PCs(args)
 
         ############## pc_image_visualization ##############
 
@@ -449,25 +397,10 @@ if __name__ == "__main__":
 
     if args.proj_feature_pc_to_subj:
         # Calculate weight projection onto PC space
-        PC_feat, name_modifier = get_PCs(
-            model=args.model,
-            num_pc=args.num_pc,
-            threshold=args.threshold,
-            best_voxel_n=args.best_voxel_n,
-            mask_out_roi=args.mask_out_roi,
-            nc_corrected=args.nc_corrected,
-            by_feature=True,
-        )
+        PC_feat, name_modifier = get_PCs(args, by_feature=True)
         print("Projecting PC to subject: %s" % name_modifier)
 
-        group_w = load_weight_matrix_from_subjs_for_pca(
-            model=args.model,
-            best_voxel_n=args.best_voxel_n,
-            threshold=args.threshold,
-            roi_only=args.roi_only,
-            mask_out_roi=args.mask_out_roi,
-            nc_corrected=args.nc_corrected,
-        )
+        group_w = load_weight_matrix_from_subjs_for_pca(args)
         w_transformed = np.dot(group_w.T, PC_feat.T)  # (80,000x512 x 512x20)
         print(w_transformed.shape)
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
@@ -738,7 +671,7 @@ if __name__ == "__main__":
     #     )
     #     print(max_text)
 
-    if args.clustering_on_weight:
+    # if args.clustering_on_weight:
         # subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
         # from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
         # Z = linkage(subj_w.T, method="centroid", metric='euclidean')
@@ -752,3 +685,5 @@ if __name__ == "__main__":
         # # MI = maxinconsts(Z, R)
         # label = fcluster(Z, t=max_c, criterion='maxclust')
         # np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
+    
+    
