@@ -37,7 +37,7 @@ def make_word_cloud(text, saving_fname):
     wordcloud.to_file(saving_fname)
 
 
-def make_name_modifier(args, by_feature=False):
+def make_name_modifier(args, by_feature=True):
     if (args.threshold == 0) and (args.best_voxel_n==0) and (args.roi_only is None):
         raise NameError("One of the selection criteria has to be used.")
 
@@ -431,21 +431,21 @@ if __name__ == "__main__":
             )
             idx += np.sum(subj_mask)
 
-    # if args.analyze_PCproj_consistency:
-    #     from analyze_in_mni import analyze_data_correlation_in_mni
+    if args.analyze_PCproj_consistency:
+        from analyze_in_mni import analyze_data_correlation_in_mni
 
-    #     subjs = np.arange(1,9)
-    #     model = "clip"
-    #     # load all PC projection from all 8 subjs
-    #     all_PC_projs = []
-    #     for subj in subjs:
-    #         all_PC_projs.append(np.load(
-    #                 "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-    #                 % (args.output_root, model, subj, model)
-    #             ))
+        subjs = np.arange(1,9)
+        name_modifier = make_name_modifier(args)
+        # load all PC projection from all 8 subjs
+        all_PC_projs = []
+        for subj in subjs:
+            all_PC_projs.append(np.load(
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                    % (args.output_root, model, subj, model, name_modifier)
+                ))
 
-    #     # remember to `run module load fsl-6.0.3` on cluster
-    #     analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
+        # remember to `run module load fsl-6.0.3` on cluster
+        analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
 
     # if args.image2pc:
     #     from featureprep.feature_prep import get_preloaded_features
