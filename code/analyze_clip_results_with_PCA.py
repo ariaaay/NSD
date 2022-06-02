@@ -139,7 +139,7 @@ def load_weight_matrix_from_subjs_for_pca(args):
     return group_w
 
 
-def get_PCs(args, data=None, by_feature=False):
+def get_PCs(args, data=None, by_feature=True):
     name_modifier = make_name_modifier(args, by_feature)
     try:
         fpath = "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, args.model, args.model, name_modifier)
@@ -159,8 +159,6 @@ def get_PCs(args, data=None, by_feature=False):
             PCs,
         )
 
-        import pickle
-
         with open(
             "%s/output/pca/%s/%s_pca_group_components_%s.pkl"
             % (args.output_root, args.model, args.model, name_modifier),
@@ -171,33 +169,7 @@ def get_PCs(args, data=None, by_feature=False):
         plt.plot(pca.explained_variance_ratio_)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
-        if not by_feature:
-            save_group_pc_per_subject(PCs, name_modifier)
-
     return PCs, name_modifier
-
-
-def save_group_pc_per_subject(PCs):
-    # save pca component on brain too
-    name_modifier = make_name_modifier(args, by_feature=False)
-    idx = 0
-    for subj in np.arange(1, 9):
-        subj_mask = np.load(
-            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-            % (args.output_root, args.model, subj, name_modifier)
-        )
-        print(len(subj_mask))
-        subj_pca = np.zeros((args.num_pc, len(subj_mask)))
-        subj_pca[:, subj_mask] = PCs[:, idx : idx + np.sum(subj_mask)]
-        save_dir = "%s/output/pca/%s/subj%02d" % (args.output_root, args.model, subj)
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
-        np.save(
-            "%s/%s_pca_group_components_%s.npy" % (save_dir, args.model, name_modifier),
-            subj_pca,
-        )
-        idx += np.sum(subj_mask)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -221,11 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--mask_out_roi", default=None)
     parser.add_argument("--nc_corrected", default=False, action="store_true")
     parser.add_argument("--plotting", default=True)
-    parser.add_argument(
-        "--extract_keywords_for_roi", default=False, action="store_true"
-    )
-    parser.add_argument("--group_analysis_by_roi", default=False, action="store_true")
-    parser.add_argument("--group_weight_analysis", default=False, action="store_true")
+    parser.add_argument("--group_pca_analysis", default=False, action="store_true")
     parser.add_argument("--pc_text_visualization", default=False, action="store_true")
     parser.add_argument("--pc_image_visualization", default=False, action="store_true")
     parser.add_argument("--proj_feature_pc_to_subj", default=False, action="store_true")
@@ -244,7 +212,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.group_weight_analysis:
+    if args.group_pca_analysis:
         from analyze_clip_results import (
             extract_text_activations,
             extract_emb_keywords,
@@ -397,12 +365,16 @@ if __name__ == "__main__":
 
     if args.proj_feature_pc_to_subj:
         # Calculate weight projection onto PC space
-        PC_feat, name_modifier = get_PCs(args, by_feature=True)
+        PCs, name_modifier = get_PCs(args, by_feature=True)
         print("Projecting PC to subject: %s" % name_modifier)
 
-        group_w = load_weight_matrix_from_subjs_for_pca(args)
-        w_transformed = np.dot(group_w.T, PC_feat.T)  # (80,000x512 x 512x20)
-        print(w_transformed.shape)
+        group_w = load_weight_matrix_from_subjs_for_pca(args).T #(80,000 x 512)
+        group_w -= np.mean(group_w, axis=0) # each feature should have mean 0
+        
+        #method 1
+        w_transformed = np.dot(group_w, PCs.T)  # (80,000x512 x 512x20)
+
+
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
 
         name_modifier = name_modifier.replace("by_feature_", "")

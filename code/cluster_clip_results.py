@@ -24,6 +24,10 @@ if __name__ == "__main__":
         type=str,
         default="clip"
     )
+    parser.add_argument(
+        "--spectral_clustering",
+        action="store_true"
+    )
     args = parser.parse_args()
 
 if args.spectral_clustering:
@@ -34,20 +38,29 @@ if args.spectral_clustering:
                 % (args.output_root, args.subj, args.model)
             )
     subj_w = fill_in_nan_voxels(subj_w, args.subj, args.output_root)
+    subj_mask = np.load(
+            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_best_20000.npy"
+            % (args.output_root, args.model, args.subj)
+        )
+    subj_w = subj_w[:, subj_mask]
     print(subj_w.shape)
-    w_sim = cosine_similarity(subj_w)
+    # w_sim = cosine_similarity(subj_w.T)
+    # print(np.sum(np.isnan(subj_w)))
+    # print(np.sum(np.isinf(subj_w)))
+    
     clustering = SpectralClustering(
-        assign_labels='cluster_qr',
-        affinity="precomputed",
-        random_state=0).fit(w_sim)
+        n_clusters=4,
+        assign_labels='kmeans',
+        affinity="rbf",
+        random_state=0).fit(subj_w.T)
 
-    print(clustering.labels_)
-    if not os.path.exists("%s/output/clustering" % args.output_dir):
-        os.makedir("%s/output/clustering" % args.output_dir)
+    # print(clustering.labels_)
+    if not os.path.exists("%s/output/clustering" % args.output_root):
+        os.makedirs("%s/output/clustering" % args.output_root)
     
     if not os.path.exists("figures/clustering"):
-        os.makedir("figures/clustering")
+        os.makedirs("figures/clustering")
     
-    np.save("%s/output/clustering/spectral_cluster_qr_subj%01d.npy" % (args.output_dir, args.subj) , clustering.labels_)
+    np.save("%s/output/clustering/spectral_subj%01d.npy" % (args.output_root, args.subj) , clustering.labels_)
     plt.hist(clustering.labels_)
-    plt.savefig("figures/clustering/spectral_cluster_qr_subj%01d.png" % args.subj)
+    plt.savefig("figures/clustering/spectral_subj%01d.png" % args.subj)
