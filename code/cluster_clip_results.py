@@ -47,6 +47,7 @@ if args.spectral_clustering:
     # w_sim = cosine_similarity(subj_w.T)
     # print(np.sum(np.isnan(subj_w)))
     # print(np.sum(np.isinf(subj_w)))
+    
     clustering = SpectralClustering(
         n_clusters=4,
         assign_labels='kmeans',
