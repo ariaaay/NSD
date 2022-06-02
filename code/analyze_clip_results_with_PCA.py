@@ -37,7 +37,7 @@ def make_word_cloud(text, saving_fname):
     wordcloud.to_file(saving_fname)
 
 
-def make_name_modifier(args, by_feature=True):
+def make_name_modifier(args, by_feature=False):
     if (args.threshold == 0) and (args.best_voxel_n==0) and (args.roi_only is None):
         raise NameError("One of the selection criteria has to be used.")
 
@@ -412,11 +412,11 @@ if __name__ == "__main__":
         all_PC_projs = []
         for subj in subjs:
             all_PC_projs.append(np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
+                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
                     % (args.output_root, args.model, subj, args.model, name_modifier)
                 ))
 
-        # remember to `run module load fsl-6.0.3` on cluster
+        # remember to run `module load fsl-6.0.3` on cluster
         analyze_data_correlation_in_mni(all_PC_projs, args.model, dim=20, save_name = "PC_proj", subjs=subjs)
 
     # if args.image2pc:
@@ -529,26 +529,26 @@ if __name__ == "__main__":
     #     plt.tight_layout()
     #     plt.savefig("./figures/PCA/image_vis/word_clouds/all_word_clouds.png")
 
-    # if args.clustering_on_brain_pc:
-    #     from sklearn.cluster import KMeans
-    #     model = "clip"
-    #     subj = np.arange(1,9)
-    #     for s in subj:
-    #         PCs = np.load(
-    #             "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-    #             % (args.output_root, model, s, model)
-    #         )
-    #         print(PCs.shape)
+    if args.clustering_on_brain_pc:
+        from sklearn.cluster import KMeans
+        subj = np.arange(1,9)
+        name_modifier = make_name_modifier(args)
+        for s in subj:
+            projs = np.load(
+                "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
+                % (args.output_root, args.model, s, args.model, name_modifier)
+            )
+            print(projs.shape)
 
-    #         inertia = []
-    #         for k in range(1,21):
-    #             kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
-    #             inertia.append(kmeans.inertia_)
-    #         plt.plot(inertia, label="subj %d" % s)
-    #     plt.legend()
-    #     plt.ylabel("Sum of squared distances")
-    #     plt.xlabel("# of clusters")
-    #     plt.savefig("figures/PCA/clustering/inertia.png")
+            inertia = []
+            for k in range(1,10):
+                kmeans = KMeans(n_clusters=k, random_state=0).fit(projs.T)
+                inertia.append(kmeans.inertia_)
+            plt.plot(inertia, label="subj %d" % s)
+        plt.legend()
+        plt.ylabel("Sum of squared distances")
+        plt.xlabel("# of clusters")
+        plt.savefig("figures/PCA/clustering/inertia.png")
 
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
