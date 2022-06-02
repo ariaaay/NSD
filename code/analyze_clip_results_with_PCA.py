@@ -413,11 +413,11 @@ if __name__ == "__main__":
         for subj in subjs:
             all_PC_projs.append(np.load(
                     "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (args.output_root, model, subj, model, name_modifier)
+                    % (args.output_root, args.model, subj, args.model, name_modifier)
                 ))
 
         # remember to `run module load fsl-6.0.3` on cluster
-        analyze_data_correlation_in_mni(all_PC_projs, model, dim=20, save_name = "PC_proj", subjs=subjs)
+        analyze_data_correlation_in_mni(all_PC_projs, args.model, dim=20, save_name = "PC_proj", subjs=subjs)
 
     # if args.image2pc:
     #     from featureprep.feature_prep import get_preloaded_features
