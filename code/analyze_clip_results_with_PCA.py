@@ -377,6 +377,7 @@ if __name__ == "__main__":
 
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
 
+
         name_modifier = name_modifier.replace("by_feature_", "")
         print(name_modifier)
 
@@ -658,4 +659,6 @@ if __name__ == "__main__":
         # label = fcluster(Z, t=max_c, criterion='maxclust')
         # np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
     
+
     
+
