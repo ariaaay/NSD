@@ -196,7 +196,7 @@ def make_volume(
     return vol_data
 
 
-def make_pc_volume(subj, vals, vmin=-2, vmax=2, cmap="BrBG_r"):
+def make_pc_volume(subj, vals, vmin=-0.5, vmax=0.5, cmap="BrBG_r"):
     import cortex
 
     mask = cortex.utils.get_cortical_mask(
@@ -300,6 +300,8 @@ if __name__ == "__main__":
     parser.add_argument("--sig_method", default="negtail_fdr")
     parser.add_argument("--alpha", default=0.05)
     parser.add_argument("--show_pcs", default=False, action="store_true")
+    parser.add_argument("--show_clustering", default=False, action="store_true")
+
     parser.add_argument("--on_cluster", action="store_true")
     # parser.add_argument("--with_noise_ceiling", default=False, action="store_true")
     parser.add_argument("--show_more", action="store_true")
@@ -843,41 +845,43 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         model = "clip"
-
         # name_modifier = "acc_0.3_minus_prf-visualrois"
         name_modifier = "best_20000"
-        pc_vols = []
-        PCs = np.load(
-            "%s/output/pca/%s/subj%02d/%s_pca_group_components_%s.npy"
-            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
-        )
-        subj_mask = np.load(
-            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-            % (OUTPUT_ROOT, model, args.subj, name_modifier)
-        )
-        PCs[:, ~subj_mask] = np.nan
-        PC_val_only = PCs[:, subj_mask]
-
-        # norm_PCs = PCs / np.sum(PCs, axis=1, keepdims=True)
-        for i in range(PCs.shape[0]):
-            key = "PC" + str(i)
-            volumes[key] = make_pc_volume(
-                args.subj,
-                PCs[i, :],
-            )
 
         # visualize PC projections
         subj_proj = np.load(
-            "%s/output/pca/%s/subj%02d/%s_feature_pca_projections_%s.npy"
-            % (OUTPUT_ROOT, model, args.subj, model, name_modifier)
+            "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+            % (OUTPUT_ROOT, model, name_modifier, args.subj)
         )
+        subj_mask = np.load(
+            "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+            % (OUTPUT_ROOT, model, name_modifier, args.subj)
+        )
+        # proj_val_only = subj_proj[]
+
+        # proj_vals = np.zeros(subj_proj.shape)
+        # proj_vals[:, ~subj_mask] = np.nan
+        # proj_vals[:, subj_mask] = subj_proj
+        subj_proj_nan_out = subj_proj.copy()
+        subj_proj_nan_out[:, ~subj_mask] = np.nan
 
         for i in range(subj_proj.shape[0]):
             key = "PC Proj " + str(i)
             volumes[key] = make_pc_volume(
                 args.subj,
-                subj_proj[i, :],
+                subj_proj_nan_out[i, :],
             )
+
+        import matplotlib.pyplot as plt 
+        plt.figure()
+        plt.plot(np.sum(subj_proj**2, axis=1))
+        plt.savefig("figures/PCA/proj_norm.png")
+
+        plt.figure()
+        plt.hist(subj_proj[0,:], label="0", alpha=0.3)
+        plt.hist(subj_proj[1,:], label="1", alpha=0.3)
+        plt.legend()
+        plt.savefig("figures/PCA/proj_hist.png")
 
         
 
@@ -891,14 +895,12 @@ if __name__ == "__main__":
             from sklearn.cluster import KMeans
 
             inertia = []
-            for k in range(3, 11):
+            for k in range(3, 10):
                 kmeans = KMeans(n_clusters=k, random_state=0).fit(
-                    PC_val_only[:n_pc, :].T
+                    subj_proj[:n_pc, :].T
                 )
-                labels = PCs[0, :].copy()
-                labels[subj_mask] = kmeans.labels_ + 1
                 volumes["basis %d-%d" % (n_pc, k)] = make_pc_volume(
-                    args.subj, labels, vmin=1, vmax=k, cmap="J4s"
+                    args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s"
                 )
                 inertia.append(kmeans.inertia_)
             return inertia
@@ -906,7 +908,7 @@ if __name__ == "__main__":
         import matplotlib.pyplot as plt
 
         plt.figure()
-        n_pcs = [3, 4, 5]
+        n_pcs = [3, 5, 10]
         for n in n_pcs:
             inertia = kmean_sweep_on_PC(n)
             plt.plot(inertia, label="%d PCS" % n)
@@ -943,19 +945,23 @@ if __name__ == "__main__":
         model = "clip"
 
         # name_modifier = "acc_0.3_minus_prf-visualrois"
-        name_modifier = "best_20000"
+        name_modifier = "best_20000_nc"
         labels_vals = np.load(
             "%s/output/clustering/spectral_subj%01d.npy"
             % (OUTPUT_ROOT, args.subj)
         )
         subj_mask = np.load(
-            "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-            % (OUTPUT_ROOT, model, args.subj, name_modifier)
+            "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+            % (OUTPUT_ROOT, model, name_modifier, args.subj)
         )
 
         labels = np.zeros(subj_mask.shape)
         labels[~subj_mask] = np.nan
         labels[subj_mask] = labels_vals
+
+        # volumes["spectral clustering"] = make_pc_volume(
+        #             args.subj, labels, vmin=0, vmax=max(labels), cmap="J4s"
+        #         )
 
     if args.vis_method == "webgl":
         subj_port = "4111" + str(args.subj)
