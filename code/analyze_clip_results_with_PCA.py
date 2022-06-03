@@ -1,7 +1,6 @@
 import os
 import argparse
 
-# from msilib.schema import File
 import pickle
 from unicodedata import name
 
@@ -37,12 +36,15 @@ def make_word_cloud(text, saving_fname):
     wordcloud.to_file(saving_fname)
 
 
-def make_name_modifier(args, by_feature=True):
+def make_name_modifier(args):
     if (args.threshold == 0) and (args.best_voxel_n==0) and (args.roi_only is None):
         raise NameError("One of the selection criteria has to be used.")
 
-    if args.roi_only:
-        name_modifier = "%s_only" % args.roi_only
+    if args.roi_only is not None:
+        if args.sub_roi is not None:
+            name_modifier = "%s_only" % args.sub_roi
+        else:
+            name_modifier = "%s_only" % args.roi_only
 
     if args.threshold != 0:
         name_modifier = "acc_%.1f" % args.threshold
@@ -52,11 +54,9 @@ def make_name_modifier(args, by_feature=True):
     if args.mask_out_roi is not None:
         name_modifier += "_minus_%s" % args.mask_out_roi
 
-    if not args.nc_corrected:
-        name_modifier += "_rawr2"
+    if args.nc_corrected:
+        name_modifier += "_nc"
 
-    if by_feature:
-        name_modifier = "by_feature_" + name_modifier
     return name_modifier
 
 
@@ -78,7 +78,17 @@ def extract_single_subject_weight(subj, args):
             "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
             % (args.output_root, subj, subj, args.mask_out_roi)
         )
-        roi_mask = roi_mask > 0
+        if args.sub_roi is not None:
+            from util.model_config import roi_name_dict
+
+            roi_dict = roi_name_dict[args.roi_only]
+            roi_int = [k for k, v in roi_dict.items() if v == sub_roi][0]
+            print("roi int")
+            print(roi_int)
+            roi_mask = roi_mask == roi_int
+        else:
+            roi_mask = roi_mask > 0
+
         weight_mask = ~roi_mask
         print("masking out %d voxels..." % sum(roi_mask))
     else:
@@ -94,17 +104,24 @@ def extract_single_subject_weight(subj, args):
         rsq = rsq / nc
     if args.threshold == 0:  # then selecting voxels based on number of accuracy
         if args.best_voxel_n != 0:
-            args.threshold = rsq[
+            threshold = rsq[
                 np.argsort(rsq)[-args.best_voxel_n]
             ]  # get the threshold for the best n voxels
+            print("The threshold for best 20000 voxels is: " + str())
         else:
-            args.threshold = 0  # select all voxels
-    acc_mask = rsq >= args.threshold
+            threshold = 0  # select all voxels
+    else:
+        threshold = args.threshold
+        
+    acc_mask = rsq >= threshold
     weight_mask = (weight_mask * acc_mask).astype(bool)
     print("Total voxels left: %d" % sum(weight_mask))
+    if not os.path.exists("%s/output/pca/%s/%s/pca_voxels" % (args.output_root, args.model, name_modifier)):
+        os.makedirs("%s/output/pca/%s/%s/pca_voxels" % (args.output_root, args.model, name_modifier))
+
     np.save(
-        "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-        % (args.output_root, args.model, subj, name_modifier),
+        "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+        % (args.output_root, args.model, name_modifier, subj),
         weight_mask,
     )
     return w[:, weight_mask]
@@ -113,7 +130,7 @@ def extract_single_subject_weight(subj, args):
 def load_weight_matrix_from_subjs_for_pca(args):
     subjs = np.arange(1, 9)
     name_modifier = make_name_modifier(args)
-    group_w_path = "%s/output/pca/%s/weight_matrix_%s.npy" % (
+    group_w_path = "%s/output/pca/%s/%s/weight_matrix.npy" % (
         args.output_root,
         args.model,
         name_modifier,
@@ -139,29 +156,40 @@ def load_weight_matrix_from_subjs_for_pca(args):
     return group_w
 
 
-def get_PCs(args, data=None, by_feature=True):
-    name_modifier = make_name_modifier(args, by_feature)
+def get_PCs(args, data=None):
+    name_modifier = make_name_modifier(args)
     try:
-        fpath = "%s/output/pca/%s/%s_pca_group_components_%s.npy" % (args.output_root, args.model, args.model, name_modifier)
+        fpath = "%s/output/pca/%s/%s/pca_group_components.npy" % (args.output_root, args.model, name_modifier)
         print("Loading PCA from: " + fpath)
         PCs = np.load(fpath)
         
     except FileNotFoundError:
+        output_dir = "%s/output/pca/%s/%s/" % (args.output_root, args.model, name_modifier)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            os.makedirs(output_dir + "pca_voxels/")
+
         print("Running PCA of: " + name_modifier)
         if data is None:
-            data = load_weight_matrix_from_subjs_for_pca(args)
+            data = load_weight_matrix_from_subjs_for_pca(args).T
+
+        print("Shape of weight is:")
+        print(data.shape)
+        
+        # remove outlier voxels
+        print("Outlier:")
+        print(data[np.where(data>30)])
+
+        data[np.where(data>30)] = 0 # TODO: check why this weight is so high
+
         pca = PCA(n_components=args.num_pc, svd_solver="full")
         pca.fit(data)
         PCs = pca.components_
-        np.save(
-            "%s/output/pca/%s/%s_pca_group_components_%s.npy"
-            % (args.output_root, args.model, args.model, name_modifier),
-            PCs,
-        )
+        np.save(fpath, PCs)
 
         with open(
-            "%s/output/pca/%s/%s_pca_group_components_%s.pkl"
-            % (args.output_root, args.model, args.model, name_modifier),
+            "%s/output/pca/%s/%s/pca_group_components.pkl"
+            % (args.output_root, args.model, name_modifier),
             "wb",
         ) as f:
             pickle.dump(pca, f)
@@ -190,6 +218,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_pc", default=20)
     parser.add_argument("--best_voxel_n", type=int, default=0)
     parser.add_argument("--roi_only", default=None)
+    parser.add_argument("--sub_roi", default=None)
     parser.add_argument("--mask_out_roi", default=None)
     parser.add_argument("--nc_corrected", default=False, action="store_true")
     parser.add_argument("--plotting", default=True)
@@ -204,11 +233,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--load_and_show_all_word_clouds", default=False, action="store_true"
     )
-    parser.add_argument("--clustering_on_brain_pc", default=False, action="store_true")
+    parser.add_argument("--kmean_clustering_on_pc_proj", default=False, action="store_true")
+    parser.add_argument("--hclustering_on_pc_proj", default=False, action="store_true")
+
     parser.add_argument(
         "--maximize_input_for_cluster", default=False, action="store_true"
     )
-    parser.add_argument("--clustering_on_weight", default=False, action="store_true")
 
     args = parser.parse_args()
 
@@ -225,6 +255,8 @@ if __name__ == "__main__":
         PCs, name_modifier = get_PCs(args)
 
         ############## pc_image_visualization ##############
+        if not os.path.exists("figures/PCA/image_vis/%s/%s/" % (args.model, name_modifier)):
+            os.makedirs("figures/PCA/image_vis/%s/%s/" % (args.model, name_modifier))
 
         stimulus_list = np.load(
             "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
@@ -264,7 +296,6 @@ if __name__ == "__main__":
         for i in tqdm(range(PCs.shape[0])):
             n_samples = int(len(stimulus_list) / 20)
             sample_idx = np.arange(0, len(stimulus_list), n_samples)
-            print(len(sample_idx))
             scores = activations.squeeze() @ PCs[i, :]
             sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][sample_idx]]
 
@@ -275,8 +306,9 @@ if __name__ == "__main__":
                 plt.axis("off")
                 plt.imshow(I)
         plt.tight_layout()
+        
         plt.savefig(
-            "figures/PCA/image_vis/%s_%s_pc_sampled_images.png"
+            "figures/PCA/image_vis/%s/%s/pc_sampled_images.png"
             % (args.model, name_modifier)
         )
 
@@ -295,7 +327,7 @@ if __name__ == "__main__":
                     plt.imshow(I)
                 plt.tight_layout()
                 plt.savefig(
-                    "figures/PCA/image_vis/%s_%s_pc%d_best_images.png"
+                    "figures/PCA/image_vis/%s/%s/pc%d_best_images.png"
                     % (args.model, name_modifier, i)
                 )
                 plt.close()
@@ -308,7 +340,7 @@ if __name__ == "__main__":
                     plt.imshow(I)
                 plt.tight_layout()
                 plt.savefig(
-                    "figures/PCA/image_vis/%s_%s_pc%d_worst_images.png"
+                    "figures/PCA/image_vis/%s/%s/pc%d_worst_images.png"
                     % (args.model, name_modifier, i)
                 )
                 plt.close()
@@ -359,13 +391,13 @@ if __name__ == "__main__":
         plt.xlabel("PCs")
         plt.legend()
         plt.savefig(
-            "figures/PCA/image_vis/%s_%s_pc_label_corr.png"
-            % (name_modifier, args.model)
+            "figures/PCA/image_vis/%s/%s/pc_label_corr.png"
+            % (args.model, name_modifier)
         )
 
     if args.proj_feature_pc_to_subj:
         # Calculate weight projection onto PC space
-        PCs, name_modifier = get_PCs(args, by_feature=True)
+        PCs, name_modifier = get_PCs(args)
         print("Projecting PC to subject: %s" % name_modifier)
 
         group_w = load_weight_matrix_from_subjs_for_pca(args).T #(80,000 x 512)
@@ -377,29 +409,34 @@ if __name__ == "__main__":
 
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
 
+        print((proj[0, :]**2).mean())
+        print((proj[1, :]**2).mean())
 
-        name_modifier = name_modifier.replace("by_feature_", "")
         print(name_modifier)
 
         subjs = np.arange(1, 9)
         idx = 0
         for subj in subjs:
             subj_mask = np.load(
-                "%s/output/pca/%s/pca_voxels/pca_voxels_subj%02d_%s.npy"
-                % (args.output_root, args.model, subj, name_modifier)
+                "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+                % (args.output_root, args.model, name_modifier, subj)
             )
             subj_proj = np.zeros((args.num_pc, len(subj_mask)))
             subj_proj[:, subj_mask] = proj[:, idx : idx + np.sum(subj_mask)]
-            save_dir = "%s/output/pca/%s/subj%02d" % (
+            print(subj)
+            print((proj[0, idx : idx + np.sum(subj_mask)]**2).mean())
+            print((proj[1, idx : idx + np.sum(subj_mask)]**2).mean())
+            save_dir = "%s/output/pca/%s/%s/subj%02d" % (
                 args.output_root,
                 args.model,
+                name_modifier,
                 subj,
             )
             if not os.path.exists(save_dir):
                 os.mkdir(save_dir)
             np.save(
-                "%s/%s_feature_pca_projections_%s.npy"
-                % (save_dir, args.model, name_modifier),
+                "%s/pca_projections.npy"
+                % (save_dir),
                 subj_proj,
             )
             idx += np.sum(subj_mask)
@@ -413,12 +450,12 @@ if __name__ == "__main__":
         all_PC_projs = []
         for subj in subjs:
             all_PC_projs.append(np.load(
-                    "%s/output/pca/%s/subj%02d/%s_feature_pca_projections.npy"
-                    % (args.output_root, args.model, subj, args.model, name_modifier)
+                    "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+                    % (args.output_root, args.model, name_modifier, subj)
                 ))
 
-        # remember to `run module load fsl-6.0.3` on cluster
-        analyze_data_correlation_in_mni(all_PC_projs, args.model, dim=20, save_name = "PC_proj", subjs=subjs)
+        # remember to run `module load fsl-6.0.3` on cluster
+        analyze_data_correlation_in_mni(all_PC_projs, args.model, dim=20, save_name = "PC_proj_%s" % name_modifier, subjs=subjs)
 
     # if args.image2pc:
     #     from featureprep.feature_prep import get_preloaded_features
@@ -530,26 +567,53 @@ if __name__ == "__main__":
     #     plt.tight_layout()
     #     plt.savefig("./figures/PCA/image_vis/word_clouds/all_word_clouds.png")
 
-    # if args.clustering_on_brain_pc:
-    #     from sklearn.cluster import KMeans
-    #     model = "clip"
-    #     subj = np.arange(1,9)
-    #     for s in subj:
-    #         PCs = np.load(
-    #             "%s/output/pca/%s/subj%02d/%s_pca_group_components.npy"
-    #             % (args.output_root, model, s, model)
-    #         )
-    #         print(PCs.shape)
+    if args.kmean_clustering_on_pc_proj:
+        from sklearn.cluster import KMeans
+        name_modifier = make_name_modifier(args)
+        subj = np.arange(1,9)   
+        for s in subj:
+            projs = np.load(
+                "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+                % (args.output_root, args.model, name_modifier, s)
+            )
+            print(projs.shape)
 
-    #         inertia = []
-    #         for k in range(1,21):
-    #             kmeans = KMeans(n_clusters=k, random_state=0).fit(PCs.T)
-    #             inertia.append(kmeans.inertia_)
-    #         plt.plot(inertia, label="subj %d" % s)
-    #     plt.legend()
-    #     plt.ylabel("Sum of squared distances")
-    #     plt.xlabel("# of clusters")
-    #     plt.savefig("figures/PCA/clustering/inertia.png")
+            inertia = []
+            for k in range(1,10):
+                kmeans = KMeans(n_clusters=k, random_state=0).fit(projs.T)
+                inertia.append(kmeans.inertia_)
+            plt.plot(inertia, label="subj %d" % s)
+        plt.legend()
+        plt.ylabel("Sum of squared distances")
+        plt.xlabel("# of clusters")
+        
+        plt.savefig("figures/PCA/clustering/kmean_inertia_%s.png" % name_modifier)
+
+    if args.hclustering_on_pc_proj:
+        from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
+        name_modifier = make_name_modifier(args)
+        method = "centroid"
+        metric = "euclidean"
+        subj = np.arange(1,9)   
+        for s in subj: 
+            projs = np.load(
+                    "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+                    % (args.output_root, args.model,name_modifier, s)
+                )
+            Z = linkage(projs, method="ward", metric='euclidean')
+        # labelList=range(1, subj_w.shape[1]+1)
+            plt.figure()
+            dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=5)
+            plt.savefig("figures/PCA/clustering/hclustering_%s_%s_%s.png" % (method, metric, name_modifier))
+
+            max_c = 10
+            # R = inconsistent(Z)
+            # MI = maxinconsts(Z, R)
+            label = fcluster(Z, t=max_c, criterion='maxclust')
+            output_dir = "%s/output/clip/hclustering/%s" % (args.output_root, name_modifier)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            np.save("%s/subj%d_fcluster_%d.npy" % (output_dir, s, max_c), label)
 
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
@@ -644,20 +708,27 @@ if __name__ == "__main__":
     #     )
     #     print(max_text)
 
-    # if args.clustering_on_weight:
-        # subj_w = extract_single_subject_weight(args.subj, "clip", best_voxel_n=20000, mask_out_roi="prf-visualrois", nc_corrected=False)
-        # from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
-        # Z = linkage(subj_w.T, method="centroid", metric='euclidean')
-        # # labelList=range(1, subj_w.shape[1]+1)
-        # plt.figure()
-        # dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=30)
-        # plt.savefig("figures/CLIP/hclustering/euclidean_centroid.png")
+    # from numpy.linalg import svd
+    # w = load_weight_matrix_from_subjs_for_pca(args).T
+    # print(w.shape)
 
-        # max_c = 10
-        # # R = inconsistent(Z)
-        # # MI = maxinconsts(Z, R)
-        # label = fcluster(Z, t=max_c, criterion='maxclust')
-        # np.save("%s/output/clip/hclustering/subj%d_fcluster_%d.png" % (args.output_root, args.subj, max_c), label)
+    # w0 = w - w.mean(axis=0, keepdims=True)
+
+    # U, S, Vt = svd(w0, full_matrices=False)
+    # proj1 = w0.dot(Vt[:20, :].T)
+
+    # pca = PCA(n_components=20, svd_solver="full")
+    # proj2 = pca.fit_transform(w0)
+
+    # print(((pca.components_ - Vt[:20, :])**2).mean())
+    # print(((proj1 - proj2)**2).mean())
+
+    # print(np.sum(proj1[:, 0]**2))
+    # print(np.sum(proj1[:, 1]**2))
+    # print(np.sum(proj2[:, 0]**2))
+    # print(np.sum(proj2[:, 1]**2))
+    
+    # print(S[:20])
     
 
     
