@@ -482,18 +482,18 @@ if __name__ == "__main__":
     #     measure="rsq",
     # )
 
-    # volumes["clip&resnet50-clip RN50 R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model=[
-    #         # "convnet_res50_clip",
-    #         # "clip_convnet_res50",
-    #         "clip_visual_resnet_resnet50_bottleneck",
-    #         "resnet50_bottleneck_clip_visual_resnet",
-    #     ],
-    #     model2="clip_visual_resnet",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    # )
+    volumes["clip&resnet50-clip RN50 R^2"] = make_volume(
+        subj=args.subj,
+        model=[
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_visual_resnet_resnet50_bottleneck",
+            "resnet50_bottleneck_clip_visual_resnet",
+        ],
+        model2="clip_visual_resnet",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
 
     # volumes["clip ViT&resnet50-resnet50 R^2"] = make_volume(
     #     subj=args.subj,
@@ -508,18 +508,18 @@ if __name__ == "__main__":
     #     measure="rsq",
     # )
 
-    # volumes["clip RN50&resnet50-resnet50 R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model=[
-    #         # "convnet_res50_clip",
-    #         # "clip_convnet_res50",
-    #         "clip_visual_resnet_resnet50_bottleneck",
-    #         "resnet50_bottleneck_clip_visual_resnet",
-    #     ],
-    #     model2="resnet50_bottleneck",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    # )
+    volumes["clip RN50&resnet50-resnet50 R^2"] = make_volume(
+        subj=args.subj,
+        model=[
+            # "convnet_res50_clip",
+            # "clip_convnet_res50",
+            "clip_visual_resnet_resnet50_bottleneck",
+            "resnet50_bottleneck_clip_visual_resnet",
+        ],
+        model2="resnet50_bottleneck",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
 
     volumes["clip&bert13-bert13 R^2"] = make_volume(
         subj=args.subj,
@@ -551,9 +551,8 @@ if __name__ == "__main__":
     #     measure="rsq",
     # )
 
-    # clipRN50_resnet50_unique = cortex.Volume2D(vol1, vol2, cmap="PU_PinkBlue_covar", vmin=0, vmax=0.15, vmin2=0, vmax2=0.15)
     # volumes["clipViT_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip ViT R^2"], volumes["clip ViT&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar_alpha", vmin=0.02, vmax=0.1, vmin2=0.02, vmax2=0.1)
-    # volumes["clipRN50_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip RN50 R^2"], volumes["clip RN50&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar_alpha", vmin=0.02, vmax=0.1, vmin2=0.02, vmax2=0.1)
+    volumes["clipRN50_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip RN50 R^2"], volumes["clip RN50&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar_alpha", vmin=0.02, vmax=0.1, vmin2=0.02, vmax2=0.1)
     volumes["clip_v_bert_unique"] = cortex.Volume2D(
         volumes["clip&bert13-clip R^2"],
         volumes["clip&bert13-bert13 R^2"],
@@ -846,7 +845,7 @@ if __name__ == "__main__":
     if args.show_pcs:
         model = "clip"
         # name_modifier = "acc_0.3_minus_prf-visualrois"
-        name_modifier = "best_20000"
+        name_modifier = "floc-places_only"
 
         # visualize PC projections
         subj_proj = np.load(
@@ -969,7 +968,7 @@ if __name__ == "__main__":
         cortex.webgl.show(data=volumes, port=int(subj_port), recache=False)
 
     elif args.vis_method == "quickflat":
-        roi_list = ["RSC", "PPA", "OPA", "EarlyVis", "FFA-1", "FFA-2"]
+        roi_list = ["RSC", "PPA", "OPA", "EBA", "EarlyVis", "FFA-1", "FFA-2"]
         for k in volumes.keys():
             # vol_name = k.replace(" ", "_")
             filename = "./figures/flatmap/subj%d/%s.png" % (args.subj, k)
