@@ -156,12 +156,20 @@ def load_weight_matrix_from_subjs_for_pca(args):
     return group_w
 
 
-def get_PCs(args, data=None):
+def get_PCs(args, data=None, return_pca_object=False):
     name_modifier = make_name_modifier(args)
     try:
         fpath = "%s/output/pca/%s/%s/pca_group_components.npy" % (args.output_root, args.model, name_modifier)
         print("Loading PCA from: " + fpath)
-        PCs = np.load(fpath)
+        if return_pca_object:
+            with open(
+                "%s/output/pca/%s/%s/pca_group_components.pkl"
+                % (args.output_root, args.model, name_modifier),
+                "rb",
+            ) as f:
+                pca = pickle.load(f)
+        else:
+            PCs = np.load(fpath)
         
     except FileNotFoundError:
         output_dir = "%s/output/pca/%s/%s/" % (args.output_root, args.model, name_modifier)
@@ -196,8 +204,11 @@ def get_PCs(args, data=None):
 
         plt.plot(pca.explained_variance_ratio_)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
-
-    return PCs, name_modifier
+    
+    if return_pca_object:
+        return pca, name_modifier
+    else:
+        return PCs, name_modifier
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -397,20 +408,23 @@ if __name__ == "__main__":
 
     if args.proj_feature_pc_to_subj:
         # Calculate weight projection onto PC space
-        PCs, name_modifier = get_PCs(args)
+        pca, name_modifier = get_PCs(args, return_pca_object=True)
         print("Projecting PC to subject: %s" % name_modifier)
 
         group_w = load_weight_matrix_from_subjs_for_pca(args).T #(80,000 x 512)
         group_w -= np.mean(group_w, axis=0) # each feature should have mean 0
         
         #method 1
-        w_transformed = np.dot(group_w, PCs.T)  # (80,000x512 x 512x20)
+        w_transformed = pca.transform(group_w)
+        # w_transformed = np.dot(group_w, PCs.T)  # (80,000x512 x 512x20)
 
 
         proj = w_transformed.T  # should be (# of PCs) x (# of voxels)
-
+        from util.util import zscore
+        print("check norm and correlation")
         print((proj[0, :]**2).mean())
         print((proj[1, :]**2).mean())
+        print(np.corrcoef(zscore(proj, axis=1)))
 
         print(name_modifier)
 
