@@ -845,7 +845,8 @@ if __name__ == "__main__":
     if args.show_pcs:
         model = "clip"
         # name_modifier = "acc_0.3_minus_prf-visualrois"
-        name_modifier = "floc-places_only"
+        # name_modifier = "floc-places_only"
+        name_modifier = "best_20000_nc"
 
         # visualize PC projections
         subj_proj = np.load(

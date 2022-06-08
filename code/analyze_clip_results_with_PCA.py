@@ -455,7 +455,7 @@ if __name__ == "__main__":
                 ))
 
         # remember to run `module load fsl-6.0.3` on cluster
-        analyze_data_correlation_in_mni(all_PC_projs, args.model, dim=20, save_name = "PC_proj_%s" % name_modifier, subjs=subjs)
+        analyze_data_correlation_in_mni(all_PC_projs, args.model, save_name = "PC_proj_%s" % name_modifier, subjs=subjs, dim=20)
 
     # if args.image2pc:
     #     from featureprep.feature_prep import get_preloaded_features
