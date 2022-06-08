@@ -56,7 +56,7 @@ def split_here(idx_A, idx_B, ratio):
         return True
 
 
-def make_subj_tree(subj, visualize=False):
+def make_subj_tree(subj, split_ratio=999, visualize=False):
     subj_proj = np.load(
         "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
         % (OUTPUT_ROOT, args.model, args.name_modifier, subj)
@@ -75,7 +75,7 @@ def make_subj_tree(subj, visualize=False):
     proj_val_only /= proj_val_only.std(axis=0)
     pca_voxel_idxes = np.where(subj_mask==True)[0]
 
-    split(subj, subj_proj[subj_mask, :], pca_voxel_idxes, i_PC=0, cortical_n=np.sum(cortical_mask), split_threshold=5)
+    split(subj, subj_proj[subj_mask, :], pca_voxel_idxes, i_PC=0, cortical_n=np.sum(cortical_mask), split_threshold=5, split_ratio=split_ratio)
     if visualize:
         subj_port = "2111" + str(subj)
         cortex.webgl.show(data=VOLS, port=int(subj_port), recache=False)
@@ -133,12 +133,12 @@ if __name__ == "__main__":
 
     # compute consistency of trees
     from analyze_in_mni import analyze_data_correlation_in_mni
-    subjs = np.arange(9)
+    subjs = np.arange(8)
     all_volumes = []
     for s in subjs:
-        make_subj_tree(s)
-        subj_volumes = VOLS.values()
-        labels = VOLS.keys()
+        make_subj_tree(s+1, split_ratio=999)
+        subj_volumes = list(VOLS.values())
+        labels = list(VOLS.keys())
         all_volumes.append(subj_volumes)
         VOLS = {}
     # remember to run `module load fsl-6.0.3` on cluster
