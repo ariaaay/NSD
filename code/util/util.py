@@ -84,7 +84,8 @@ def check_nans(data, clean=False):
         return data
 
 
-def pytorch_pca(x, n_components):
+def pytorch_pca(x):
+    #TODO: check this again
     x_mu = x.mean(dim=0, keepdim=True)
     x = x - x_mu
 
@@ -96,10 +97,9 @@ def pytorch_pca(x, n_components):
     return xp
 
 
-def pca_test(x, n_components):
+def pca_test(x):
     from sklearn.decomposition import PCA
-
-    pca = PCA(n_components=n_components, whiten=True, svd_solver="full")
+    pca = PCA()
     pca.fit(x)
     xp = pca.transform(x)
     return xp
