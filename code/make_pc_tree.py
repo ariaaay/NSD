@@ -1,13 +1,13 @@
 
 import argparse
 import numpy as np
+from tqdm import tqdm
 
 import cortex
-from torch import true_divide
 from visualize_in_pycortex import project_vals_to_3d
 
 
-def split(subj, original, pca_voxel_idxes, i_PC, cortical_n, branch="", split_threshold=5, split_ratio=9):
+def split(subj, original, pca_voxel_idxes, i_PC, cortical_n, branch="", split_threshold=4, split_ratio=9):
     """
     Input:
         original: PC projection matrix to be split by the ith PC (20000 x 20)
@@ -29,23 +29,24 @@ def split(subj, original, pca_voxel_idxes, i_PC, cortical_n, branch="", split_th
         idx_B = pca_voxel_idxes[idx]
         if not split_here(idx_A, idx_B, ratio=split_ratio): # this split is ineffective and should skip to the next PC
             split(subj,original, pca_voxel_idxes, i_PC+1, cortical_n, branch + "X")
-        
 
         # positive
         mask_A= np.zeros(cortical_n).astype(bool) # 100k x 1
         mask_A[idx_A] = True
-        VOLS["PC %d %s (n=%d)" % (i_PC, branch + "A", len(idx_A))] = make_volume(subj, matrix_A[:,i_PC], mask_A)
+        VOLS["PC %d %s" % (i_PC, branch + "A")] = make_volume(subj, matrix_A[:,i_PC], mask_A)
         
         # negative
         mask_B = np.zeros(cortical_n).astype(bool)
         mask_B[idx_B] = True
-        VOLS["PC %d %s (n=%d)" % (i_PC, branch + "B", len(idx_B))] = make_volume(subj, matrix_B[:,i_PC], mask_B)
+        VOLS["PC %d %s" % (i_PC, branch + "B")] = make_volume(subj, matrix_B[:,i_PC], mask_B)
 
-        split(subj, matrix_A, idx_A, i_PC+1, cortical_n, branch + "A")
-        split(subj, matrix_B, idx_B, i_PC+1, cortical_n, branch + "B")
+        split(subj, matrix_A, idx_A, i_PC+1, cortical_n, branch + "A", split_ratio=split_ratio)
+        split(subj, matrix_B, idx_B, i_PC+1, cortical_n, branch + "B", split_ratio=split_ratio)
 
 
 def split_here(idx_A, idx_B, ratio):
+    if ratio == 999: #not limiting splits
+        return True
     if (len(idx_A) < 5) or (len(idx_B) < 5):
         return False
     elif len(idx_A) / len(idx_B) > ratio:
@@ -132,17 +133,54 @@ if __name__ == "__main__":
     # make_subj_tree(args.subj, visualize=True)
 
     # compute consistency of trees
-    from analyze_in_mni import analyze_data_correlation_in_mni
-    subjs = np.arange(8)
-    all_volumes = []
-    for s in subjs:
-        make_subj_tree(s+1, split_ratio=999)
-        subj_volumes = list(VOLS.values())
-        labels = list(VOLS.keys())
-        all_volumes.append(subj_volumes)
-        VOLS = {}
-    # remember to run `module load fsl-6.0.3` on cluster
-    analyze_data_correlation_in_mni(all_volumes, args.model, save_name = "PC_tree_%s" % args.name_modifier, subjs=np.arange(1,9), volumes=True, xtick_label=labels)
+    from visualize_in_pycortex import project_vols_to_mni
 
+    save_name = "PC_split_" + args.name_modifier
+    n_subj = 8
+    all_volumes = []
+    for s in np.arange(n_subj):
+        make_subj_tree(s+1, split_ratio=999)
+        vols = VOLS.copy()
+        all_volumes.append(vols)
+        VOLS = {}
+
+
+    # make them pycortex volume if they are not and project them to mni
+    corrs, corrs_mean, labels = [], [], []
+    vol_mask = cortex.db.get_mask("fsaverage", "atlas")
+
+    n_nodes = len(all_volumes[0].keys()) # some subject might not have this many nodes
+    for i in tqdm(range(n_nodes)):
+        vals = np.zeros((n_subj, np.sum(vol_mask)))
+        split_name = list(all_volumes[0].keys())[i] # get the split name from subj 1
+        for s in range(n_subj):
+            try: 
+                vol = all_volumes[s][split_name]
+                vol.data[np.isnan(vol.data)] = 0
+                mni_vol = project_vols_to_mni(s+1, vol)
+                # mask the values and compute correlations across subj
+                vals[s, :] = mni_vol[vol_mask]
+                skip_this_split = False
+            except KeyError:
+                skip_this_split = True
+                break
+
+        if not skip_this_split:
+            labels.append(split_name)
+            corr = np.corrcoef(vals)
+            corrs.append(corr)
+            corrs_mean.append(np.sum(np.triu(corr, k=1)) / (n_subj*(n_subj-1)/2))
+
+    np.save(
+        "%s/output/pca/%s/%s_corr_across_subjs.npy" % (OUTPUT_ROOT, args.model, save_name),
+        corrs,
+    )
+
+    import matplotlib.pyplot as plt
+    plt.plot(np.arange(len(labels)), corrs_mean)
+    plt.xlabel("Splits")
+    plt.xticks(np.arange(len(labels)), labels=labels, rotation=45)
+    plt.ylabel("correlation")
+    plt.savefig("figures/PCA/%s_%s_corr_across_subjs.png" % (args.model, save_name))
     
 
