@@ -163,7 +163,7 @@ def make_subj_tree(subj, split_ratio=999, visualize=False):
         pdb.set_trace()
 
 
-def make_volume(subj, vals, pca_mask, vmin=-0.1, vmax=0.1, cmap="BrBG_r"):
+def make_volume(subj, vals, pca_mask, vmin=-2, vmax=2, cmap="BrBG_r"):
     import cortex
 
     mask = cortex.utils.get_cortical_mask(
@@ -202,6 +202,8 @@ if __name__ == "__main__":
     parser.add_argument("--compute_consistency",  default=False, action="store_true")
     parser.add_argument("--split_single_subject",  default=False, action="store_true")
     parser.add_argument("--group_split",  default=False, action="store_true")
+    parser.add_argument("--show_group_split",  default=False, action="store_true")
+
 
     parser.add_argument
 
@@ -297,11 +299,25 @@ if __name__ == "__main__":
         
         import pickle
         pickle.dump(VOLS, open("%s/output/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "wb"))
-        # cortex.webgl.show(data=VOLS, recache=False)
-        # import pdb
-        # pdb.set_trace()
 
     if args.show_group_split:
-        VOLS = pickle.load(open("%s/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "rb"))
+        import pickle
+        cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (OUTPUT_ROOT, args.subj, args.subj)
+    )
+        subj_mask = np.load(
+            "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+            % (OUTPUT_ROOT, args.model, args.name_modifier, args.subj)
+        )
+        subj_mask_3d = project_vals_to_3d(subj_mask, cortical_mask).astype(bool)
 
 
+        VOLS = pickle.load(open("%s/output/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "rb"))
+        subj_vol = VOLS[args.subj-1]
+        for v in subj_vol.values():
+            v.data[~subj_mask_3d] = np.nan
+
+        cortex.webgl.show(data=subj_vol, recache=False)
+        import pdb
+        pdb.set_trace()
