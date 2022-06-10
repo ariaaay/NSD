@@ -148,7 +148,7 @@ def make_subj_tree(subj, split_ratio=999, visualize=False):
     proj_val_only /= proj_val_only.std(axis=0)
     pca_voxel_idxes = np.where(subj_mask==True)[0]
 
-    split(subj, subj_proj[subj_mask, :], pca_voxel_idxes, i_PC=0, cortical_n=np.sum(cortical_mask), split_threshold=5, split_ratio=split_ratio)
+    split(subj, proj_val_only, pca_voxel_idxes, i_PC=0, cortical_n=np.sum(cortical_mask), split_threshold=5, split_ratio=split_ratio)
     if visualize:
         subj_port = "2111" + str(subj)
         cortex.webgl.show(data=VOLS, port=int(subj_port), recache=False)
@@ -292,4 +292,8 @@ if __name__ == "__main__":
         # cortex.webgl.show(data=VOLS, recache=False)
         # import pdb
         # pdb.set_trace()
+
+    if args.show_group_split:
+        VOLS = pickle.load(open("%s/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "rb"))
+
 
