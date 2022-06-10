@@ -44,7 +44,7 @@ def split(subj, original, pca_voxel_idxes, i_PC, cortical_n, branch="", split_th
             split(subj,original, pca_voxel_idxes, i_PC+1, cortical_n, branch + "X")
 
 
-def group_split(original_list, pca_voxel_idxes_list, i_PC, cortical_n_list, branch="", split_threshold=4, split_ratio=9, consistency_threshold=0.1):
+def group_split(original_list, pca_voxel_idxes_list, i_PC, cortical_n_list, branch="", split_threshold=4, split_ratio=99, consistency_threshold=0.1):
     """
     Same function as split but everything is a list of 8 subjects. 
     Procedure: Do the split per subject, compute consistency, if not consistent, skip this split
@@ -86,33 +86,40 @@ def group_split(original_list, pca_voxel_idxes_list, i_PC, cortical_n_list, bran
             idx_A_list.append(idx_A)
             idx_B_list.append(idx_B)
             
-        if not consistent_among_group(VOLS, "PC %d %s" % (i_PC, branch), threshold=consistency_threshold):
-            skip = True
+        if not skip:
+            if not consistent_among_group("PC %d %s" % (i_PC, branch), threshold=consistency_threshold):
+                print("skipping %s(A/B)" % branch)
+                skip = True
                 
         if skip:
-            group_split(original_list, pca_voxel_idxes_list, i_PC+1, cortical_n_list, branch + "X")
+            group_split(original_list, pca_voxel_idxes_list, i_PC+1, cortical_n_list, branch + "X", split_ratio=split_ratio, consistency_threshold=consistency_threshold)
         else:
-            group_split(matrix_A_list, idx_A_list, i_PC+1, cortical_n_list, branch + "A", split_ratio=split_ratio)
-            group_split(matrix_B_list, idx_B_list, i_PC+1, cortical_n_list, branch + "B", split_ratio=split_ratio)
+            group_split(matrix_A_list, idx_A_list, i_PC+1, cortical_n_list, branch + "A", split_ratio=split_ratio, consistency_threshold=consistency_threshold)
+            group_split(matrix_B_list, idx_B_list, i_PC+1, cortical_n_list, branch + "B", split_ratio=split_ratio, consistency_threshold=consistency_threshold)
 
 
-def consistent_among_group(vols, branch_name, threshold, n_subj=8):
+def consistent_among_group(branch_name, threshold, n_subj=8):
     vol_mask = cortex.db.get_mask("fsaverage", "atlas")
     vals = np.zeros((n_subj, np.sum(vol_mask)))
     for split in ["A", "B"]:
         for s in range(n_subj):
-            vol = vols[s][branch_name + split]
+            try:
+                vol = VOLS[s][branch_name + split]
+            except KeyError:
+                print(branch_name + split)
+                print(VOLS[s].keys())
+                
             vol.data[np.isnan(vol.data)] = 0
             mni_vol = project_vols_to_mni(s+1, vol)
             # mask the values and compute correlations across subj
             vals[s, :] = mni_vol[vol_mask]
 
-            corr = np.corrcoef(vals)
-            score = (np.sum(np.triu(corr, k=1)) / (n_subj*(n_subj-1)/2))
-            if  score < threshold:
-                print(score)
-                print(branch_name)
-                return False
+        corr = np.corrcoef(vals)
+        score = np.sum(np.triu(corr, k=1)) / (n_subj*(n_subj-1)/2)
+        if  score < threshold:
+            print(score)
+            print(branch_name)
+            return False
     return True
 
 
@@ -282,13 +289,14 @@ if __name__ == "__main__":
             ) # 1 x 100k vectors
 
             proj_val_only = subj_proj[subj_mask, :]
-            proj_val_list.append(proj_val_only/proj_val_only.std(axis=0))
+            proj_val_only /= proj_val_only.std(axis=0)
+            proj_val_list.append(proj_val_only)
             pca_voxel_idxes_list.append(np.where(subj_mask==True)[0])
         
-        group_split(proj_val_list, pca_voxel_idxes_list, 0, cortical_n_list, branch="", split_threshold=4, split_ratio=9, consistency_threshold=0.1)
+        group_split(proj_val_list, pca_voxel_idxes_list, 0, cortical_n_list, branch="", split_threshold=4, split_ratio=99, consistency_threshold=0.05)
         
         import pickle
-        pickle.dump(VOLS, open("%s/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "rb"))
+        pickle.dump(VOLS, open("%s/output/pca/%s/%s/tree/tree.pkl" % (OUTPUT_ROOT, args.model, args.name_modifier), "wb"))
         # cortex.webgl.show(data=VOLS, recache=False)
         # import pdb
         # pdb.set_trace()

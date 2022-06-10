@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.decomposition import PCA
 
+
 # import torch
 import clip
 
@@ -34,7 +35,6 @@ def make_word_cloud(text, saving_fname):
     plt.imshow(wordcloud, interpolation="bilinear")
     plt.axis("off")
     wordcloud.to_file(saving_fname)
-
 
 def make_name_modifier(args):
     if (args.threshold == 0) and (args.best_voxel_n==0) and (args.roi_only is None):
@@ -606,28 +606,37 @@ if __name__ == "__main__":
     if args.hclustering_on_pc_proj:
         from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
         name_modifier = make_name_modifier(args)
-        method = "centroid"
+        method = "single"
         metric = "euclidean"
         subj = np.arange(1,9)   
         for s in subj: 
-            projs = np.load(
+            p = np.load(
                     "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
                     % (args.output_root, args.model,name_modifier, s)
-                )
-            Z = linkage(projs, method="ward", metric='euclidean')
-        # labelList=range(1, subj_w.shape[1]+1)
-            plt.figure()
-            dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=5)
-            plt.savefig("figures/PCA/clustering/hclustering_%s_%s_%s.png" % (method, metric, name_modifier))
+                ).T
+            subj_mask = np.load(
+                "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+                % (args.output_root, args.model, name_modifier, s)
+            )
+            print(sum(subj_mask))
+            projs = p[subj_mask, :]
 
-            max_c = 10
-            # R = inconsistent(Z)
-            # MI = maxinconsts(Z, R)
-            label = fcluster(Z, t=max_c, criterion='maxclust')
-            output_dir = "%s/output/clip/hclustering/%s" % (args.output_root, name_modifier)
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            np.save("%s/subj%d_fcluster_%d.npy" % (output_dir, s, max_c), label)
+            
+            print(projs.shape)
+            Z = linkage(projs, method=method, metric=metric, optimal_ordering=False)
+            # labelList=range(1, subj_w.shape[1]+1)
+            plt.figure()
+            dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=10)
+            plt.savefig("figures/PCA/clustering/hclustering_%s_%s_%s_subj%01d.png" % (method, metric, name_modifier, s))
+
+            # max_c = 10
+            # # R = inconsistent(Z)
+            # # MI = maxinconsts(Z, R)
+            # label = fcluster(Z, t=max_c, criterion='maxclust')
+            # output_dir = "%s/output/clip/hclustering/%s" % (args.output_root, name_modifier)
+            # if not os.path.exists(output_dir):
+            #     os.makedirs(output_dir)
+            # np.save("%s/subj%d_fcluster_%d.npy" % (output_dir, s, max_c), label)
 
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
