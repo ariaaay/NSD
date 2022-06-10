@@ -6,6 +6,28 @@ from tqdm import tqdm
 import cortex
 from visualize_in_pycortex import project_vals_to_3d
 
+def bicluster(data, idxes_for_data, subj, cortical_n, depth=0, branch=""):
+    from sklearn.cluster import KMeans
+    if data.shape[0] < 50:
+        return
+    kmeans = KMeans(n_clusters=2, random_state=0).fit(data)
+    idx = np.where(kmeans.labels == 0)[0]
+    idx_A = idxes_for_data[idx]
+    data_A = data[idx, :]
+    mask_A = np.zeros(cortical_n).astype(bool) # 100k x 1
+    mask_A[idx_A] = True
+
+    idx = np.where(kmeans.labels == 1)[0]
+    idx_B = idxes_for_data[idx]
+    data_B = data[idx, :]
+    mask_B = np.zeros(cortical_n).astype(bool) # 100k x 1
+    mask_B[idx_B] = True
+
+    VOLS["L%d A" % depth] = make_volume(subj, data_A, mask_A)
+    VOLS["L%d B" % depth] = make_volume(subj, data_A, mask_A)
+    
+    bicluster(data_A, subj, depth, branch+"A")
+    bicluster(data_B, subj, depth, branch+"B")
 
 def split(subj, original, pca_voxel_idxes, i_PC, cortical_n, branch="", split_threshold=4, split_ratio=9):
     """
@@ -303,9 +325,9 @@ if __name__ == "__main__":
     if args.show_group_split:
         import pickle
         cortical_mask = np.load(
-        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-        % (OUTPUT_ROOT, args.subj, args.subj)
-    )
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+            % (OUTPUT_ROOT, args.subj, args.subj)
+        )
         subj_mask = np.load(
             "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
             % (OUTPUT_ROOT, args.model, args.name_modifier, args.subj)
@@ -319,5 +341,29 @@ if __name__ == "__main__":
             v.data[~subj_mask_3d] = np.nan
 
         cortex.webgl.show(data=subj_vol, recache=False)
+        import pdb
+        pdb.set_trace()
+
+    if args.recursive_2mean_clustering_on_pc_proj:
+        VOLS = {}
+        subj = np.arange(1,9)   
+        for s in subj:
+            subj_proj = np.load(
+                "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+                % (OUTPUT_ROOT, args.model, args.name_modifier, subj)
+            ).T # 100k x 20 vectors
+            subj_mask = np.load(
+                "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+                % (OUTPUT_ROOT, args.model, args.name_modifier, subj)
+            ) # 1 x 100k vectors
+            cortical_mask = np.load(
+                "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+                % (OUTPUT_ROOT, subj, subj)
+            ) # 1 x 100k vectors
+            proj_val_only = subj_proj[subj_mask, :]
+            proj_val_only /= proj_val_only.std(axis=0)
+            pca_voxel_idxes = np.where(subj_mask==True)[0]
+            bicluster(proj_val_only, pca_voxel_idxes, args.subj, np.sum(cortical_mask))
+        cortex.webgl.show(data=VOLS, recache=False)
         import pdb
         pdb.set_trace()
