@@ -581,27 +581,6 @@ if __name__ == "__main__":
     #     plt.tight_layout()
     #     plt.savefig("./figures/PCA/image_vis/word_clouds/all_word_clouds.png")
 
-    if args.kmean_clustering_on_pc_proj:
-        from sklearn.cluster import KMeans
-        name_modifier = make_name_modifier(args)
-        subj = np.arange(1,9)   
-        for s in subj:
-            projs = np.load(
-                "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
-                % (args.output_root, args.model, name_modifier, s)
-            )
-            print(projs.shape)
-
-            inertia = []
-            for k in range(1,10):
-                kmeans = KMeans(n_clusters=k, random_state=0).fit(projs.T)
-                inertia.append(kmeans.inertia_)
-            plt.plot(inertia, label="subj %d" % s)
-        plt.legend()
-        plt.ylabel("Sum of squared distances")
-        plt.xlabel("# of clusters")
-        
-        plt.savefig("figures/PCA/clustering/kmean_inertia_%s.png" % name_modifier)
 
     if args.hclustering_on_pc_proj:
         from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, maxinconsts, inconsistent
@@ -628,15 +607,8 @@ if __name__ == "__main__":
             plt.figure()
             dendrogram(Z, orientation="top", distance_sort="descending", show_leaf_counts=True, truncate_mode="level", p=10)
             plt.savefig("figures/PCA/clustering/hclustering_%s_%s_%s_subj%01d.png" % (method, metric, name_modifier, s))
+        
 
-            # max_c = 10
-            # # R = inconsistent(Z)
-            # # MI = maxinconsts(Z, R)
-            # label = fcluster(Z, t=max_c, criterion='maxclust')
-            # output_dir = "%s/output/clip/hclustering/%s" % (args.output_root, name_modifier)
-            # if not os.path.exists(output_dir):
-            #     os.makedirs(output_dir)
-            # np.save("%s/subj%d_fcluster_%d.npy" % (output_dir, s, max_c), label)
 
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
