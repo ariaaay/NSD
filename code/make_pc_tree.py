@@ -10,6 +10,8 @@ def bicluster(data, idxes_for_data, subj, cortical_n, depth=0, branch=""):
     from sklearn.cluster import KMeans
     if data.shape[0] < 50:
         return
+    if depth > 4:
+        return
     kmeans = KMeans(n_clusters=2, random_state=0).fit(data)
     idx = np.where(kmeans.labels_ == 0)[0]
     idx_A = idxes_for_data[idx]
@@ -214,6 +216,37 @@ def make_volume(subj, vals, pca_mask, vmin=-2, vmax=2, cmap="BrBG_r"):
     )
     return vol_data
 
+def single_split(subj, original, pca_voxel_idxes, i_PC, cortical_n, vol_name=""):
+    """
+    Input:
+        original: PC projection matrix to be split by the ith PC (20000 x 20)
+        cortical_mask: cortical mask (3d mask)
+        pca_voxel_idxes: indexes to select the "best 20000 voxels" from cortical voxels (dim:20000 x 1)
+    Returns:
+        matrix_A: subset of projection matrix with the thresholded voxels by PCs
+        idx_A: coritical length mask to pick for matrix A
+        vol_A: the volume correspond to matrix_A
+        branch
+    """
+    vol_name += "PC" + str(i_PC)
+    idx = np.where(original[:,i_PC]>0)[0] # n x 1 integer (n = # of chosen voxels)
+    matrix_A = original[idx] # n x 20
+    idx_A = pca_voxel_idxes[idx] # n x 1 integers, used to index cortical length array to pick out voxels relevant in this pc split
+    idx = np.where(original[:,i_PC]<0)[0]
+    matrix_B = original[idx]
+    idx_B = pca_voxel_idxes[idx]
+    # positive
+    mask_A= np.zeros(cortical_n).astype(bool) # 100k x 1
+    mask_A[idx_A] = True
+    vol_name_A = vol_name + "A"
+    VOLS[vol_name_A] = make_volume(subj, matrix_A[:,i_PC], mask_A)
+    
+    # negative
+    mask_B = np.zeros(cortical_n).astype(bool)
+    vol_name_B = vol_name + "B"
+    mask_B[vol_name_B] = make_volume(subj, matrix_B[:,i_PC], mask_B)
+
+    return matrix_A, matrix_B, idx_A, idx_B, vol_name_A, vol_name_B
 
 if __name__ == "__main__":
 
@@ -227,6 +260,7 @@ if __name__ == "__main__":
     parser.add_argument("--group_split",  default=False, action="store_true")
     parser.add_argument("--show_group_split",  default=False, action="store_true")
     parser.add_argument("--recursive_biclustering", default=False, action="store_true")
+    parser.add_argument("--manual_split", default=False, action="store_true")
 
 
     parser.add_argument
@@ -366,5 +400,48 @@ if __name__ == "__main__":
         pca_voxel_idxes = np.where(subj_mask==True)[0]
         bicluster(proj_val_only, pca_voxel_idxes, args.subj, np.sum(cortical_mask))
         cortex.webgl.show(data=VOLS, recache=False)
+
         import pdb
         pdb.set_trace()
+
+    if args.manual_split:
+        # 0+4
+        VOLS = {}
+        # subj = np.arange(1,9)   
+        subj_proj = np.load(
+            "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+            % (OUTPUT_ROOT, args.model, args.name_modifier, args.subj)
+        ).T # 100k x 20 vectors
+        subj_mask = np.load(
+            "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+            % (OUTPUT_ROOT, args.model, args.name_modifier, args.subj)
+        ) # 1 x 100k vectors
+        cortical_mask = np.load(
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+            % (OUTPUT_ROOT, args.subj, args.subj)
+        ) # 1 x 100k vectors
+        proj_val_only = subj_proj[subj_mask, :]
+        proj_val_only /= proj_val_only.std(axis=0)
+        pca_voxel_idxes = np.where(subj_mask==True)[0]
+        matrix_A, matrix_B, idx_A, idx_B, vol_name_A, vol_name_B = single_split(args.subj, proj_val_only, pca_voxel_idxes, 0, np.sum(cortical_mask), vol_name="")
+
+        _ = single_split(args.subj, matrix_A, idx_A, 4, np.sum(cortical_mask), vol_name_A)
+        _ = single_split(args.subj, matrix_B, idx_B, 4, np.sum(cortical_mask), vol_name_B)
+
+
+        # 0+6
+        matrix_A, matrix_B, idx_A, idx_B, vol_name_A, vol_name_B = single_split(args.subj, proj_val_only, pca_voxel_idxes, 0, np.sum(cortical_mask), vol_name="")
+
+        _ = single_split(args.subj, matrix_A, idx_A, 6, np.sum(cortical_mask), vol_name_A)
+        _ = single_split(args.subj, matrix_B, idx_B, 6, np.sum(cortical_mask), vol_name_B)
+
+
+        cortex.webgl.show(data=VOLS, recache=False)
+
+        import pdb
+        pdb.set_trace()
+        
+
+        
+
+
