@@ -322,10 +322,10 @@ if __name__ == "__main__":
     # ecc_roi_volume = make_roi_volume("prf-eccrois")
     # place_roi_volume = make_roi_volume("floc-places")
     # face_roi_volume = make_roi_volume("floc-faces")
-    # body_roi_volume = make_roi_volume("floc-bodies")
+    body_roi_volume = make_roi_volume("floc-bodies")
     # word_roi_volume = make_roi_volume("floc-words")
-    # kastner_volume = make_roi_volume("Kastner2015")
-    # hcp_volume = make_roi_volume("HCP_MMP1")
+    kastner_volume = make_roi_volume("Kastner2015")
+    hcp_volume = make_roi_volume("HCP_MMP1")
     # sulc_volume = make_roi_volume("corticalsulc")
 
     # lang_ROI = np.load(
@@ -378,10 +378,10 @@ if __name__ == "__main__":
         # "Eccentricity ROIs": ecc_roi_volume,
         # "Places ROIs": place_roi_volume,
         # "Faces ROIs": face_roi_volume,
-        # "Bodies ROIs": body_roi_volume,
+        "Bodies ROIs": body_roi_volume,
         # "Words ROIs": word_roi_volume,
-        # "Kastner2015": kastner_volume,
-        # "HCP": hcp_volume,
+        "Kastner2015": kastner_volume,
+        "HCP": hcp_volume,
         # "sulcus": sulc_volume,
         # "Language ROIs": language_volume,
         # "Noise Ceiling": nc_volume,
@@ -846,42 +846,42 @@ if __name__ == "__main__":
         model = "clip"
         # name_modifier = "acc_0.3_minus_prf-visualrois"
         # name_modifier = "floc-places_only"
-        name_modifier = "best_20000_nc"
-
-        # visualize PC projections
-        subj_proj = np.load(
-            "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
-            % (OUTPUT_ROOT, model, name_modifier, args.subj)
-        )
-        subj_mask = np.load(
-            "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
-            % (OUTPUT_ROOT, model, name_modifier, args.subj)
-        )
-        # proj_val_only = subj_proj[]
-
-        # proj_vals = np.zeros(subj_proj.shape)
-        # proj_vals[:, ~subj_mask] = np.nan
-        # proj_vals[:, subj_mask] = subj_proj
-        subj_proj_nan_out = subj_proj.copy()
-        subj_proj_nan_out[:, ~subj_mask] = np.nan
-
-        for i in range(subj_proj.shape[0]):
-            key = "PC Proj " + str(i)
-            volumes[key] = make_pc_volume(
-                args.subj,
-                subj_proj_nan_out[i, :],
+        name_modifiers = ["best_20000_nc", "floc-bodies_floc-places_floc-faces_only", "floc-bodies_only", "floc-faces_only", "floc-places_only"]
+        for name_modifier in name_modifiers:
+            # visualize PC projections
+            subj_proj = np.load(
+                "%s/output/pca/%s/%s/subj%02d/pca_projections.npy"
+                % (OUTPUT_ROOT, model, name_modifier, args.subj)
             )
+            subj_mask = np.load(
+                "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"
+                % (OUTPUT_ROOT, model, name_modifier, args.subj)
+            )
+            # proj_val_only = subj_proj[]
 
-        import matplotlib.pyplot as plt 
-        plt.figure()
-        plt.plot(np.sum(subj_proj**2, axis=1))
-        plt.savefig("figures/PCA/proj_norm.png")
+            # proj_vals = np.zeros(subj_proj.shape)
+            # proj_vals[:, ~subj_mask] = np.nan
+            # proj_vals[:, subj_mask] = subj_proj
+            subj_proj_nan_out = subj_proj.copy()
+            subj_proj_nan_out[:, ~subj_mask] = np.nan
 
-        plt.figure()
-        plt.hist(subj_proj[0,:], label="0", alpha=0.3)
-        plt.hist(subj_proj[1,:], label="1", alpha=0.3)
-        plt.legend()
-        plt.savefig("figures/PCA/proj_hist.png")
+            for i in range(subj_proj.shape[0]):
+                key = "Proj " + str(i) + name_modifier
+                volumes[key] = make_pc_volume(
+                    args.subj,
+                    subj_proj_nan_out[i, :],
+                )
+
+            import matplotlib.pyplot as plt 
+            plt.figure()
+            plt.plot(np.sum(subj_proj**2, axis=1))
+            plt.savefig("figures/PCA/proj_norm_%s.png" % name_modifier)
+
+            plt.figure()
+            plt.hist(subj_proj[0,:], label="0", alpha=0.3)
+            plt.hist(subj_proj[1,:], label="1", alpha=0.3)
+            plt.legend()
+            plt.savefig("figures/PCA/proj_hist_%s.png" % name_modifier)
 
         
 
@@ -890,29 +890,29 @@ if __name__ == "__main__":
         #     PCs_zscore,
         # )
 
-        # basis?
-        def kmean_sweep_on_PC(n_pc):
-            from sklearn.cluster import KMeans
+        # # basis?
+        # def kmean_sweep_on_PC(n_pc):
+        #     from sklearn.cluster import KMeans
 
-            inertia = []
-            for k in range(3, 10):
-                kmeans = KMeans(n_clusters=k, random_state=0).fit(
-                    subj_proj[:n_pc, :].T
-                )
-                volumes["basis %d-%d" % (n_pc, k)] = make_pc_volume(
-                    args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s"
-                )
-                inertia.append(kmeans.inertia_)
-            return inertia
+        #     inertia = []
+        #     for k in range(3, 10):
+        #         kmeans = KMeans(n_clusters=k, random_state=0).fit(
+        #             subj_proj[:n_pc, :].T
+        #         )
+        #         volumes["basis %d-%d" % (n_pc, k)] = make_pc_volume(
+        #             args.subj, kmeans.labels_, vmin=0, vmax=k-1, cmap="J4s"
+        #         )
+        #         inertia.append(kmeans.inertia_)
+        #     return inertia
 
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
 
-        plt.figure()
-        n_pcs = [3, 5, 10]
-        for n in n_pcs:
-            inertia = kmean_sweep_on_PC(n)
-            plt.plot(inertia, label="%d PCS" % n)
-        plt.savefig("figures/pca/clustering/inertia_across_pc_num.png")
+        # plt.figure()
+        # n_pcs = [3, 5, 10]
+        # for n in n_pcs:
+        #     inertia = kmean_sweep_on_PC(n)
+        #     plt.plot(inertia, label="%d PCS" % n)
+        # plt.savefig("figures/pca/clustering/inertia_across_pc_num.png")
 
         # MNI
         # mni_data = project_vols_to_mni(args.subj, volume)
