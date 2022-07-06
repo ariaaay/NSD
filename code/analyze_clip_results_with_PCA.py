@@ -44,7 +44,8 @@ def make_name_modifier(args):
         if args.sub_roi is not None:
             name_modifier = "%s_only" % args.sub_roi
         else:
-            name_modifier = "%s_only" % args.roi_only
+            regions = "_".join(args.roi_only)
+            name_modifier = "%s_only" % regions
 
     if args.threshold != 0:
         name_modifier = "acc_%.1f" % args.threshold
@@ -70,29 +71,37 @@ def extract_single_subject_weight(subj, args):
     if args.roi_only is not None:
         roi_mask = np.load(
             "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
-            % (args.output_root, subj, subj, args.roi_only)
+            % (args.output_root, subj, subj, args.roi_only[0])
         )
+        if len(args.roi_only) > 1:
+            print("Loading multiple ROIs")
+            for region in args.roi_only[1:]:
+                more_mask = np.load(
+                    "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+                    % (args.output_root, subj, subj, region)
+                )
+                roi_mask = roi_mask + more_mask
+        elif args.sub_roi is not None:
+            from util.model_config import roi_name_dict
+            roi_dict = roi_name_dict[args.roi_only]
+            roi_int = [k for k, v in roi_dict.items() if v == args.sub_roi][0]
+            print("roi int")
+            print(roi_int)
+            roi_mask = roi_mask == roi_int
+
         weight_mask = roi_mask > 0
+
     elif args.mask_out_roi is not None:
         roi_mask = np.load(
             "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
             % (args.output_root, subj, subj, args.mask_out_roi)
         )
-        if args.sub_roi is not None:
-            from util.model_config import roi_name_dict
-
-            roi_dict = roi_name_dict[args.roi_only]
-            roi_int = [k for k, v in roi_dict.items() if v == sub_roi][0]
-            print("roi int")
-            print(roi_int)
-            roi_mask = roi_mask == roi_int
-        else:
-            roi_mask = roi_mask > 0
 
         weight_mask = ~roi_mask
         print("masking out %d voxels..." % sum(roi_mask))
     else:
         weight_mask = np.ones(w.shape[1])
+
     rsq = load_model_performance(
         args.model, output_root=args.output_root, subj=subj, measure="rsq"
     )
@@ -216,7 +225,7 @@ if __name__ == "__main__":
         "--subj",
         type=int,
         default=0,
-        help="Specify which subject to build model on. Currently it supports subject 1, 2, 7",
+        help="Specify which subject to build model on.",
     )
     parser.add_argument(
         "--output_root",
@@ -228,7 +237,7 @@ if __name__ == "__main__":
     parser.add_argument("--threshold", default=0)
     parser.add_argument("--num_pc", default=20)
     parser.add_argument("--best_voxel_n", type=int, default=0)
-    parser.add_argument("--roi_only", default=None)
+    parser.add_argument("--roi_only", default=None, nargs="+")
     parser.add_argument("--sub_roi", default=None)
     parser.add_argument("--mask_out_roi", default=None)
     parser.add_argument("--nc_corrected", default=False, action="store_true")
@@ -278,7 +287,7 @@ if __name__ == "__main__":
             stimulus_list,
             "%s" % args.model,
             features_dir="%s/features" % args.output_root,
-        )
+        ) # using images that subj 1 saw as a random "sample"
 
         # getting scores and plotting
         from pycocotools.coco import COCO
