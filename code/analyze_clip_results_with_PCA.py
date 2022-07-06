@@ -609,6 +609,51 @@ if __name__ == "__main__":
             plt.savefig("figures/PCA/clustering/hclustering_%s_%s_%s_subj%01d.png" % (method, metric, name_modifier, s))
         
 
+    if args.analyze_PC_images:
+        # PC 0 positive images distribution (compared to full 10000 samples): probably have people in it
+        from analyze_clip_results import (
+            extract_text_activations,
+            extract_emb_keywords,
+            get_coco_anns,
+            get_coco_image,
+            get_coco_caps,
+        )
+        from featureprep.feature_prep import get_preloaded_features
+        from pycocotools.coco import COCO
+
+        PCs, name_modifier = get_PCs(args)
+        stimulus_list = np.load(
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
+        )
+        activations = get_preloaded_features(
+            1,
+            stimulus_list,
+            "%s" % args.model,
+            features_dir="%s/features" % args.output_root,
+        )
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        coco_train = COCO(annFile_train)
+        cats = coco_train.loadCats(coco_train.getCatIds())
+        id2cat = {}
+        for cat in cats:
+            id2cat[cat["id"]] = cat["name"]
+
+        COCO_cat_feat = get_preloaded_features(
+            1,
+            stimulus_list,
+            "cat",
+            features_dir="%s/features" % args.output_root,
+        )
+        print(COCO_cat_feat.shape)
+
+        # get positive images
+        scores = activations.squeeze() @ PCs[i, :]
+        # positive_images = stimulus_list[scores>0]
+        positive_cat_dist = np.sum(COCO_cat_feat[scores>0, :], axis=0)
+        plt.dist(positive_cat_dist)
+        plt.savefig("figures/PCA/PC0_positive_imgs/cat_dist.png")
+        
+
 
     # if args.maximize_input_for_cluster:
     #     # verify they are in a patch?
@@ -726,5 +771,7 @@ if __name__ == "__main__":
     # print(S[:20])
     
 
+
     
+
 
