@@ -554,7 +554,15 @@ if __name__ == "__main__":
     # )
 
     # volumes["clipViT_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip ViT R^2"], volumes["clip ViT&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar_alpha", vmin=0.02, vmax=0.1, vmin2=0.02, vmax2=0.1)
-    volumes["clipRN50_v_resnet50_unique"] = cortex.Volume2D(volumes["clip&resnet50-clip RN50 R^2"], volumes["clip RN50&resnet50-resnet50 R^2"], cmap="PU_BuOr_covar_alpha", vmin=0.02, vmax=0.1, vmin2=0.02, vmax2=0.1)
+    volumes["clipRN50_v_resnet50_unique"] = cortex.Volume2D(
+        volumes["clip&resnet50-clip RN50 R^2"],
+        volumes["clip RN50&resnet50-resnet50 R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0.02,
+        vmax=0.1,
+        vmin2=0.02,
+        vmax2=0.1,
+    )
     volumes["clip_v_bert_unique"] = cortex.Volume2D(
         volumes["clip&bert13-clip R^2"],
         volumes["clip&bert13-bert13 R^2"],
@@ -873,18 +881,17 @@ if __name__ == "__main__":
                     subj_proj_nan_out[i, :],
                 )
 
-            import matplotlib.pyplot as plt 
+            import matplotlib.pyplot as plt
+
             plt.figure()
             plt.plot(np.sum(subj_proj**2, axis=1))
             plt.savefig("figures/PCA/proj_norm_%s.png" % name_modifier)
 
             plt.figure()
-            plt.hist(subj_proj[0,:], label="0", alpha=0.3)
-            plt.hist(subj_proj[1,:], label="1", alpha=0.3)
+            plt.hist(subj_proj[0, :], label="0", alpha=0.3)
+            plt.hist(subj_proj[1, :], label="1", alpha=0.3)
             plt.legend()
             plt.savefig("figures/PCA/proj_hist_%s.png" % name_modifier)
-
-        
 
         # volumes["3PC"] = make_3pc_volume(
         #     args.subj,
@@ -948,8 +955,7 @@ if __name__ == "__main__":
         # name_modifier = "acc_0.3_minus_prf-visualrois"
         name_modifier = "best_20000_nc"
         labels_vals = np.load(
-            "%s/output/clustering/spectral_subj%01d.npy"
-            % (OUTPUT_ROOT, args.subj)
+            "%s/output/clustering/spectral_subj%01d.npy" % (OUTPUT_ROOT, args.subj)
         )
         subj_mask = np.load(
             "%s/output/pca/%s/%s/pca_voxels/pca_voxels_subj%02d.npy"

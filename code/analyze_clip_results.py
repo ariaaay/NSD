@@ -642,6 +642,9 @@ if __name__ == "__main__":
         "--performance_analysis_by_roi", default=False, action="store_true"
     )
     parser.add_argument(
+        "--performance_analysis_by_roi_subset", default=False, action="store_true"
+    )
+    parser.add_argument(
         "--image_level_scatter_plot", default=False, action="store_true"
     )
     parser.add_argument("--rerun_df", default=False, action="store_true")
@@ -921,28 +924,124 @@ if __name__ == "__main__":
             df = make_roi_df(roi_names, subjs=np.arange(1, 9))
 
         for roi_name in roi_names:
-            plt.figure(figsize=(50, 20))
-            ax = sns.barplot(
+            plt.figure(figsize=(max(len(roi_name_dict[roi_name].values()) / 4, 50), 30))
+            ax = sns.boxplot(
                 x=roi_name,
                 y="uv_diff",
                 data=df,
                 dodge=True,
                 order=list(roi_name_dict[roi_name].values()),
             )
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+            plt.ylabel("Difference in Unique Var.")
             plt.savefig("figures/CLIP/performances_by_roi/uv_diff_%s.png" % roi_name)
 
         for roi_name in roi_names:
-            plt.figure(figsize=(70, 35))
-            ax = sns.barplot(
+            plt.figure(figsize=(max(len(roi_name_dict[roi_name].values()) / 4, 50), 30))
+            ax = sns.boxplot(
                 x=roi_name,
                 y="uv_diff_nc",
                 data=df,
                 dodge=True,
                 order=list(roi_name_dict[roi_name].values()),
             )
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+            plt.ylabel("Difference in Unique Var. (NC)")
             plt.savefig("figures/CLIP/performances_by_roi/uv_nc_diff_%s.png" % roi_name)
+
+    if args.performance_analysis_by_roi_subset:
+        roa_list = [
+            ("prf-visualrois", "V1v"),
+            ("prf-visualrois", "h4v"),
+            ("floc-places", "RSC"),
+            ("floc-places", "PPA"),
+            ("floc-places", "OPA"),
+            ("floc-bodies", "EBA"),
+            ("floc-faces", "FFA-1"),
+            ("floc-faces", "FFA-2"),
+            ("HCP_MMP1", "TPOJ1"),
+            ("HCP_MMP1", "TPOJ2"),
+            ("HCP_MMP1", "TPOJ3"),
+            ("language", "AG"),
+        ]
+        axis_labels = [v for _, v in roa_list]
+        df = pd.read_csv(
+            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+        )
+        new_df = pd.DataFrame()
+        for i, (roi_name, roi_lab) in enumerate(roa_list):
+            roi_df = df[df[roi_name] == roi_lab].copy()
+            roi_df["roi_labels"] = roi_lab
+            roi_df["roi_names"] = roi_name
+            new_df = pd.concat((new_df, roi_df))
+
+        # plt.figure(figsize=(12, 5))
+        # ax = sns.boxplot(
+        #     x="roi_labels",
+        #     y="uv_diff",
+        #     hue="roi_names",
+        #     data=new_df,
+        #     dodge=False,
+        #     order=axis_labels,
+        # )
+        # ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+        # plt.ylabel("Difference in Unique Var. (NC)")
+        # plt.xlabel("ROIs")
+        # plt.legend([],[], frameon=False)
+        # plt.savefig("figures/CLIP/performances_by_roi/uv_diff_roi_subset.png")
+
+        # plt.figure(figsize=(12, 5))
+        # ax = sns.boxplot(
+        #     x="roi_labels",
+        #     y="uv_diff_nc",
+        #     hue="roi_names",
+        #     data=new_df,
+        #     dodge=False,
+        #     order=axis_labels,
+        # )
+        # ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+        # plt.xlabel("ROIs")
+        # plt.ylabel("Difference in Unique Var. (NC)")
+        # plt.legend([],[], frameon=False)
+        # plt.savefig("figures/CLIP/performances_by_roi/uv_nc_diff_roi_subset.png")
+
+        # plt.figure()
+        # sns.relplot(x="uv_resnet", y="uv_clip", data=new_df, alpha=0.5)
+        # plt.plot([-0.08, 0.3], [-0.08, 0.3], linewidth=1, color="red")
+        # plt.ylabel("CLIP")
+        # plt.xlabel("ResNet")
+        # plt.savefig("figures/CLIP/performances_by_roi/unique_var_roi_subset.png")
+
+        # plt.figure()
+        # sns.relplot(x="var_resnet", y="var_clip", data=new_df, alpha=0.5)
+        # plt.plot([-0.05, 0.8], [-0.05, 0.8], linewidth=1, color="red")
+        # plt.ylabel("CLIP")
+        # plt.xlabel("ResNet")
+        # plt.savefig("figures/CLIP/performances_by_roi/var_roi_subset.png")
+
+        fig, axes = plt.subplots(2, 6, sharex=True, sharey=True, figsize=(15, 6))
+        for roi, ax in zip(axis_labels, axes.T.flatten()):
+            # plt.subplot(3, 4, i+1)
+            sns.scatterplot(
+                x="uv_resnet",
+                y="uv_clip",
+                data=new_df[new_df["roi_labels"] == roi],
+                alpha=0.5,
+                ax=ax,
+            )
+            sns.lineplot([-0.08, 0.25], [-0.08, 0.25], linewidth=1, color="red", ax=ax)
+            ax.set_title(roi)
+            ax.set(xlabel=None)
+            ax.set(ylabel=None)
+            ax.spines["right"].set_visible(False)
+            ax.spines["top"].set_visible(False)
+            # plt.gca().title.set_text(roi)
+        fig.supylabel("Unique Var. of CLIP")
+        fig.supxlabel("Unique Var. of " + r"$ResNet_I$")
+        plt.tight_layout()
+        plt.savefig(
+            "figures/CLIP/performances_by_roi/unique_var_scatterplot_by_roi.png"
+        )
 
     if args.group_analysis_by_roi:
         from scipy.stats import ttest_rel
@@ -956,11 +1055,14 @@ if __name__ == "__main__":
             ("HCP_MMP1", "MST"),
             ("HCP_MMP1", "MT"),
             ("HCP_MMP1", "PH"),
+            ("HCP_MMP1", "TPOJ1"),
             ("HCP_MMP1", "TPOJ2"),
             ("HCP_MMP1", "TPOJ3"),
             ("HCP_MMP1", "PGp"),
             ("HCP_MMP1", "V4t"),
             ("HCP_MMP1", "FST"),
+            ("Kastner2015", "TO1"),
+            ("Kastner2015", "TO2"),
             ("language", "AG"),
             ("language", "ATL"),
             ("prf-visualrois", "V1v"),
@@ -974,9 +1076,9 @@ if __name__ == "__main__":
         df = pd.read_csv(
             "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
         )
-        subjs = [1, 2, 5, 7]
-        roi_by_subj_mean_clip = np.zeros((4, len(roa_list)))
-        roi_by_subj_mean_resnet = np.zeros((4, len(roa_list)))
+        subjs = np.arange(1, 9)
+        roi_by_subj_mean_clip = np.zeros((8, len(roa_list)))
+        roi_by_subj_mean_resnet = np.zeros((8, len(roa_list)))
         for s, subj in enumerate(subjs):
             nc = np.load(
                 "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
@@ -1016,7 +1118,7 @@ if __name__ == "__main__":
         for roi_name in roi_names:
             sns.set(style="whitegrid", font_scale=4.5)
             plt.figure(figsize=(50, 20))
-            ax = sns.violinplot(
+            ax = sns.boxplot(
                 x=roi_name,
                 y="var_resnet",
                 data=df,
@@ -1027,7 +1129,7 @@ if __name__ == "__main__":
             plt.savefig("figures/CLIP/performances_by_roi/var_resnet_%s.png" % roi_name)
 
             plt.figure(figsize=(50, 20))
-            ax = sns.violinplot(
+            ax = sns.boxplot(
                 x=roi_name,
                 y="var_clip",
                 data=df,
