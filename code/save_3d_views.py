@@ -61,22 +61,23 @@ def save_3d_views(
 
     time.sleep(5.0)
     set_opacity = 1
+    set_radius = 700
 
     basic = (
         dict()
     )  # radius=400)#projection=['orthographic'], #radius=260, visL=True, visR=True)
 
     views = dict(
-        lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, opacity=set_opacity),
-        lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, opacity=set_opacity),
+        lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, radius=set_radius, opacity=set_opacity),
+        lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, radius=set_radius, opacity=set_opacity),
         lateral_right=dict(
-            altitude=90.5, azimuth=270.5, pivot=0.5, opacity=set_opacity
+            altitude=90.5, azimuth=270.5, pivot=0.5, radius=set_radius, opacity=set_opacity
         ),
-        medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, opacity=set_opacity),
-        front=dict(altitude=90.5, azimuth=0, pivot=0, opacity=set_opacity),
-        back=dict(altitude=90.5, azimuth=181, pivot=0, opacity=set_opacity),
-        top=dict(altitude=0, azimuth=180, pivot=0, opacity=set_opacity),
-        bottom=dict(altitude=180, azimuth=0, pivot=0, opacity=set_opacity),
+        medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, radius=set_radius, opacity=set_opacity),
+        front=dict(altitude=90.5, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity),
+        back=dict(altitude=90.5, azimuth=181, pivot=0, radius=set_radius, opacity=set_opacity),
+        top=dict(altitude=0, azimuth=180, pivot=0, radius=set_radius, opacity=set_opacity),
+        bottom=dict(altitude=180, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity),
     )
 
     surfaces = dict(
@@ -87,6 +88,7 @@ def save_3d_views(
         unfold="surface.{subject}.unfold",
         altitude="camera.altitude",
         azimuth="camera.azimuth",
+        radius="camera.radius",
         pivot="surface.{subject}.pivot",
         opacity="surface.{subject}.opacity",
     )
