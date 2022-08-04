@@ -104,6 +104,7 @@ def make_volume(
     mask_with_significance=False,
     measure="corr",
     noise_corrected=False,
+    cmap="hot",
 ):
     if measure == "rsq":
         vmax = 0.6
@@ -189,14 +190,14 @@ def make_volume(
         "subj%02d" % subj,
         "func1pt8_to_anat0pt8_autoFSbbr",
         mask=mask,
-        cmap="hot",
+        cmap=cmap,
         vmin=0,
         vmax=vmax,
     )
     return vol_data
 
 
-def make_pc_volume(subj, vals, vmin=-0.5, vmax=0.5, cmap="BrBG_r"):
+def make_pc_volume(subj, vals, vmin=-0.5, vmax=0.5, cmap="BrBG"):
     import cortex
 
     mask = cortex.utils.get_cortical_mask(
@@ -322,10 +323,10 @@ if __name__ == "__main__":
     # ecc_roi_volume = make_roi_volume("prf-eccrois")
     # place_roi_volume = make_roi_volume("floc-places")
     # face_roi_volume = make_roi_volume("floc-faces")
-    body_roi_volume = make_roi_volume("floc-bodies")
+    # body_roi_volume = make_roi_volume("floc-bodies")
     # word_roi_volume = make_roi_volume("floc-words")
-    kastner_volume = make_roi_volume("Kastner2015")
-    hcp_volume = make_roi_volume("HCP_MMP1")
+    # kastner_volume = make_roi_volume("Kastner2015")
+    # hcp_volume = make_roi_volume("HCP_MMP1")
     # sulc_volume = make_roi_volume("corticalsulc")
 
     # lang_ROI = np.load(
@@ -378,10 +379,10 @@ if __name__ == "__main__":
         # "Eccentricity ROIs": ecc_roi_volume,
         # "Places ROIs": place_roi_volume,
         # "Faces ROIs": face_roi_volume,
-        "Bodies ROIs": body_roi_volume,
+        # "Bodies ROIs": body_roi_volume,
         # "Words ROIs": word_roi_volume,
-        "Kastner2015": kastner_volume,
-        "HCP": hcp_volume,
+        # "Kastner2015": kastner_volume,
+        # "HCP": hcp_volume,
         # "sulcus": sulc_volume,
         # "Language ROIs": language_volume,
         # "Noise Ceiling": nc_volume,
@@ -439,13 +440,13 @@ if __name__ == "__main__":
         noise_corrected=False,
     )
 
-    # volumes["clip-text-last R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model="clip_text",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    #     noise_corrected=False,
-    # )
+    volumes["clip-text-last R^2"] = make_volume(
+        subj=args.subj,
+        model="clip_text",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
 
     # volumes["clip-RN50-last R^2"] = make_volume(
     #     subj=args.subj,
@@ -519,6 +520,7 @@ if __name__ == "__main__":
         model2="resnet50_bottleneck",
         mask_with_significance=args.mask_sig,
         measure="rsq",
+        cmap="inferno",
     )
 
     volumes["clip&bert13-bert13 R^2"] = make_volume(
@@ -844,9 +846,8 @@ if __name__ == "__main__":
 
     if args.show_pcs:
         model = "clip"
-        # name_modifier = "acc_0.3_minus_prf-visualrois"
-        # name_modifier = "floc-places_only"
-        name_modifiers = ["best_20000_nc", "floc-bodies_floc-places_floc-faces_only", "floc-bodies_only", "floc-faces_only", "floc-places_only"]
+        # name_modifiers = ["best_20000_nc", "floc-bodies_floc-places_floc-faces_only", "floc-bodies_only", "floc-faces_only", "floc-places_only", "EBA_only", "OPA_only"]
+        name_modifiers = ["best_20000_nc"]
         for name_modifier in name_modifiers:
             # visualize PC projections
             subj_proj = np.load(
@@ -977,6 +978,7 @@ if __name__ == "__main__":
                 filename,
                 volumes[k],
                 linewidth=3,
+                labelsize="20pt",
                 with_curvature=True,
                 recache=False,
                 roi_list=roi_list,
