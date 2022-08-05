@@ -24,13 +24,11 @@ print(device)
 def ridge_cv(
     X,
     y,
-    run_group=None,
-    pca=False,
     tol=8,
     nfold=7,
     cv=False,
     fix_testing=False,
-    permute_y=False,
+    # bootstrap=False,
 ):
     # fix_tsesting can be True (42), False, and a seed
     if fix_testing is True:
@@ -93,7 +91,7 @@ def ridge_cv(
 
     corrs = [pearsonr(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
 
-    if not permute_y:
+    if not bootstrap:
         return (
             corrs,
             rsqs,
@@ -103,22 +101,23 @@ def ridge_cv(
             [yhat, y_test],
             weights.cpu().numpy(),
             bias.cpu().numpy(),
+            clf
         )
 
-    else:  # permutation testings
-        print("running permutation test (permutating test labels 5000 times).")
-        repeat = 5000
-        corrs_dist = list()
-        label_idx = np.arange(y_test.shape[0])
-        for _ in tqdm(range(repeat)):
-            np.random.shuffle(label_idx)
-            y_test_perm = y_test[label_idx, :]
-            perm_corrs = pearson_corr(y_test_perm, yhat, rowvar=False)
-            corrs_dist.append(perm_corrs)
-        corr_only = [r[0] for r in corrs]
-        p = empirical_p(corr_only, np.array(corrs_dist))
-        assert len(p) == y_test.shape[1]
-        return corrs_dist, p, None
+    # else:  # bootstrap testings
+    #     repeat = 5000
+    #     np.random.seed(41)
+    #     print("running bootstrap test (permutating trials 5000 times).")
+    #     rsq_dist = list()
+    #     label_idx = np.arange(X_test.shape[0])
+    #     for _ in tqdm(repeat):
+    #         sampled_idx = np.random.choice(label_idx, replace=True, size=len(label_idx))
+    #         X_test_sampled = X_test[sampled_idx, :]
+    #         y_test_sampled = y_test[sampled_idx, :]
+    #         yhat = clf.predict(X_test_sampled).cpu().numpy()
+    #         rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test_sampled.shape[1])]
+    #         rsq_dist.append(rsqs)
+    #     return rsq_dist
 
 
 def fit_encoding_model(
@@ -152,6 +151,7 @@ def fit_encoding_model(
         l_score_array,
         best_l_array,
         predictions_array,
+        clf
     ) = (
         [],
         [],
@@ -173,22 +173,22 @@ def fit_encoding_model(
         permute_y=permute_y,
     )
 
-    if permute_y:  # if running permutation just return subsets of the output
-        # save correaltions
-        np.save(
-            "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s_whole_brain.npy"
-            % (subj, model_name),
-            np.array(corrs_array),
-        )
-        # save p-values
-        pickle.dump(
-            cv_outputs[0],
-            open(
-                "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p"
-                % (subj, model_name),
-                "wb",
-            ),
-        )
+    # if permute_y:  # if running permutation just return subsets of the output
+    #     # save correaltions
+    #     np.save(
+    #         "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s_whole_brain.npy"
+    #         % (subj, model_name),
+    #         np.array(corrs_array),
+    #     )
+    #     # save p-values
+    #     pickle.dump(
+    #         cv_outputs[0],
+    #         open(
+    #             "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p"
+    #             % (subj, model_name),
+    #             "wb",
+    #         ),
+    #     )
         # return np.array(corrs_array), cv_outputs[0]
 
     if saving:
@@ -217,8 +217,71 @@ def fit_encoding_model(
 
             np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])
             np.save("%sbias_%s.npy" % (outpath, model_name), cv_outputs[6])
+            pickle.dump(cv_outputs[7], open("%s_clf.pkl", "wb") % (outpath, model_name))
 
     return np.array(corrs_array), None
+
+def bootstrap_test(
+    X,
+    y,
+    model_name,
+    repeat=5000,
+    subj=1,
+    output_dir=None,
+):
+    """
+    Running permutation test (permute the label 5000 times).
+    """
+    model_name += "_whole_brain"
+    if outdir is None:
+        outdir = "output/permutation_results/subj%d/" % subj
+    else:
+        outdir = "%s/subj%d/" % (output_dir, subj)
+
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
+
+    print("Running permutation test of {} for {} times".format(model_name, repeat))
+    corr_dists, rsq_dists = list(), list()
+    if permute_y:  # permute inside ridge cv
+        print("Permutation testing by permuting test data.")
+        _ = fit_encoding_model(
+            X,
+            y,
+            model_name=model_name,
+            subj=subj,
+            cv=False,
+            saving=False,
+            permute_y=True,
+            fix_testing=False,
+            output_dir=output_dir,
+        )
+    else:
+        label_idx = np.arange(X.shape[0])
+        for _ in tqdm(range(repeat)):
+            np.random.shuffle(label_idx)
+            X_perm = X[label_idx, :]
+            corrs_array, *cv_outputs = fit_encoding_model(
+                X_perm,
+                y,
+                model_name=model_name,
+                subj=subj,
+                cv=False,
+                saving=False,
+                fix_testing=False,
+            )
+        corr_dists.append(corrs_array)
+        # rsq_dists.append(rsqs_array)
+
+        pickle.dump(
+            corr_dists,
+            open(
+                "output/permutation_results/subj%s/permutation_test_on_training_data_corr_%s.p"
+                % (subj, model_name),
+                "wb",
+            ),
+        )
+
 
 
 def permutation_test(
