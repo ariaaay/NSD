@@ -4,8 +4,7 @@ predict NSD brain data.
 """
 import argparse
 import numpy as np
-import pickle
-from encodingmodel.encoding_model import fit_encoding_model, permutation_test
+from encodingmodel.encoding_model import fit_encoding_model, bootstrap_test
 from featureprep.feature_prep import (
     get_preloaded_features,
     extract_feature_with_image_order,
@@ -23,13 +22,12 @@ def run(
     output_dir,
 ):
     if test:
-        print("Running Permutation Test")
-        permutation_test(
+        print("Running Bootstrap Test")
+        bootstrap_test(
             fm,
             br,
             model_name=model_name,
             subj=args.subj,
-            permute_y=args.permute_y,
             output_dir=output_dir,
         )
 
@@ -64,9 +62,7 @@ if __name__ == "__main__":
         default=None,
         help="input name of the layer. e.g. input_layer1",
     )
-    parser.add_argument(
-        "--test", action="store_true", help="Run permutation testing only"
-    )
+    parser.add_argument("--test", action="store_true", help="Run bootstrap testing.")
     parser.add_argument(
         "--subj",
         type=int,
@@ -80,12 +76,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--cv", action="store_true", default=False, help="run cross-validation."
-    )
-    parser.add_argument(
-        "--permute_y",
-        action="store_true",
-        default=False,
-        help="permute test label but not training label to speed up permutation test",
     )
     parser.add_argument(
         "--get_features_only",

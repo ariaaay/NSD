@@ -21,6 +21,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 
+def scoring(y, yhat):
+    return -torch.nn.functional.mse_loss(yhat, y)
+
+
 def ridge_cv(
     X,
     y,
@@ -28,17 +32,14 @@ def ridge_cv(
     nfold=7,
     cv=False,
     fix_testing=False,
-    # bootstrap=False,
 ):
     # fix_tsesting can be True (42), False, and a seed
     if fix_testing is True:
         fix_testing_state = 42
-    elif fix_testing is False:
-        fix_testing_state = None
     else:
-        fix_testing_state = fix_testing
+        fix_testing_state = None
 
-    scoring = lambda y, yhat: -torch.nn.functional.mse_loss(yhat, y)
+    # scoring = lambda y, yhat: -torch.nn.functional.mse_loss(yhat, y)
 
     alphas = torch.from_numpy(
         np.logspace(-tol, 1 / 2 * np.log10(X.shape[1]) + tol, 100)
@@ -91,33 +92,17 @@ def ridge_cv(
 
     corrs = [pearsonr(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
 
-    if not bootstrap:
-        return (
-            corrs,
-            rsqs,
-            clf.mean_cv_scores.cpu().numpy(),
-            clf.best_l_scores.cpu().numpy(),
-            clf.best_l_idxs.cpu().numpy(),
-            [yhat, y_test],
-            weights.cpu().numpy(),
-            bias.cpu().numpy(),
-            clf
-        )
-
-    # else:  # bootstrap testings
-    #     repeat = 5000
-    #     np.random.seed(41)
-    #     print("running bootstrap test (permutating trials 5000 times).")
-    #     rsq_dist = list()
-    #     label_idx = np.arange(X_test.shape[0])
-    #     for _ in tqdm(repeat):
-    #         sampled_idx = np.random.choice(label_idx, replace=True, size=len(label_idx))
-    #         X_test_sampled = X_test[sampled_idx, :]
-    #         y_test_sampled = y_test[sampled_idx, :]
-    #         yhat = clf.predict(X_test_sampled).cpu().numpy()
-    #         rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test_sampled.shape[1])]
-    #         rsq_dist.append(rsqs)
-    #     return rsq_dist
+    return (
+        corrs,
+        rsqs,
+        clf.mean_cv_scores.cpu().numpy(),
+        clf.best_l_scores.cpu().numpy(),
+        clf.best_l_idxs.cpu().numpy(),
+        [yhat, y_test],
+        weights.cpu().numpy(),
+        bias.cpu().numpy(),
+        clf,
+    )
 
 
 def fit_encoding_model(
@@ -128,7 +113,6 @@ def fit_encoding_model(
     fix_testing=False,
     cv=False,
     saving=True,
-    permute_y=False,
     output_dir=None,
 ):
 
@@ -138,211 +122,111 @@ def fit_encoding_model(
         print("Running cross validation")
 
     if output_dir is None:
-        outpath = "output/encoding_results/subj%d/" % subj
+        outpath = "output/encoding_results/subj%d" % subj
     else:
-        outpath = "%s/encoding_results/subj%d/" % (output_dir, subj)
+        outpath = "%s/encoding_results/subj%d" % (output_dir, subj)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
-
-    (
-        corrs_array,
-        rsqs_array,
-        cv_array,
-        l_score_array,
-        best_l_array,
-        predictions_array,
-        clf
-    ) = (
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-    )
 
     assert (
         y.shape[0] == X.shape[0]
     )  # test that shape of features spaces and the brain are the same
 
-    corrs_array, *cv_outputs = ridge_cv(
+    cv_outputs = ridge_cv(
         X,
         y,
         cv=False,
         fix_testing=fix_testing,
-        permute_y=permute_y,
     )
 
-    # if permute_y:  # if running permutation just return subsets of the output
-    #     # save correaltions
-    #     np.save(
-    #         "output/permutation_results/subj%s/permutation_test_on_test_data_corr_%s_whole_brain.npy"
-    #         % (subj, model_name),
-    #         np.array(corrs_array),
-    #     )
-    #     # save p-values
-    #     pickle.dump(
-    #         cv_outputs[0],
-    #         open(
-    #             "output/permutation_results/subj%s/permutation_test_on_test_data_pvalue_%s.p"
-    #             % (subj, model_name),
-    #             "wb",
-    #         ),
-    #     )
-        # return np.array(corrs_array), cv_outputs[0]
-
     if saving:
-        pickle.dump(corrs_array, open(outpath + "corr_%s.p" % model_name, "wb"))
+        pickle.dump(cv_outputs[0], open(outpath + "/corr_%s.p" % model_name, "wb"))
 
         if len(cv_outputs) > 0:
-            pickle.dump(cv_outputs[0], open(outpath + "rsq_%s.p" % model_name, "wb"))
-            pickle.dump(
-                cv_outputs[1],
-                open(outpath + "cv_score_%s.p" % model_name, "wb"),
-            )
+            pickle.dump(cv_outputs[1], open(outpath + "/rsq_%s.p" % model_name, "wb"))
             pickle.dump(
                 cv_outputs[2],
-                open(outpath + "l_score_%s.p" % model_name, "wb"),
+                open(outpath + "/cv_score_%s.p" % model_name, "wb"),
             )
             pickle.dump(
                 cv_outputs[3],
-                open(outpath + "best_l_%s.p" % model_name, "wb"),
+                open(outpath + "/l_score_%s.p" % model_name, "wb"),
+            )
+            pickle.dump(
+                cv_outputs[4],
+                open(outpath + "/best_l_%s.p" % model_name, "wb"),
             )
 
             if fix_testing:
                 pickle.dump(
-                    cv_outputs[4],
-                    open(outpath + "pred_%s.p" % model_name, "wb"),
+                    cv_outputs[5],
+                    open(outpath + "/pred_%s.p" % model_name, "wb"),
                 )
 
-            np.save("%sweights_%s.npy" % (outpath, model_name), cv_outputs[5])
-            np.save("%sbias_%s.npy" % (outpath, model_name), cv_outputs[6])
-            pickle.dump(cv_outputs[7], open("%s_clf.pkl", "wb") % (outpath, model_name))
+            np.save("%s/weights_%s.npy" % (outpath, model_name), cv_outputs[6])
+            np.save("%s/bias_%s.npy" % (outpath, model_name), cv_outputs[7])
+            pickle.dump(
+                cv_outputs[8], open("%s/clf_%s.pkl" % (outpath, model_name), "wb")
+            )
 
-    return np.array(corrs_array), None
+    return cv_outputs[8]
+
+
+def bootstrap_sampling(clf, X_test, y_test, repeat, seed):
+    np.random.seed(seed)
+    print("running bootstrap test (permutating trials %s times)." % repeat)
+    rsq_dist = list()
+    label_idx = np.arange(X_test.shape[0])
+    for _ in tqdm(repeat):
+        sampled_idx = np.random.choice(label_idx, replace=True, size=len(label_idx))
+        X_test_sampled = X_test[sampled_idx, :]
+        y_test_sampled = y_test[sampled_idx, :]
+        yhat = clf.predict(X_test_sampled).cpu().numpy()
+        rsqs = [
+            r2_score(y_test_sampled[:, i], yhat[:, i])
+            for i in range(y_test_sampled.shape[1])
+        ]
+        rsq_dist.append(rsqs)
+    return rsq_dist
+
 
 def bootstrap_test(
     X,
     y,
     model_name,
-    repeat=5000,
+    repeat=3000,
     subj=1,
     output_dir=None,
 ):
-    """
-    Running permutation test (permute the label 5000 times).
-    """
-    model_name += "_whole_brain"
-    if outdir is None:
-        outdir = "output/permutation_results/subj%d/" % subj
-    else:
-        outdir = "%s/subj%d/" % (output_dir, subj)
+    print("Running bootstrap test of {} for {} times".format(model_name, repeat))
 
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir)
+    # save rsq
+    outpath = "%s/bootstrap/subj%d/" % (output_dir, subj)
+    if not os.path.isdir(outpath):
+        os.makedirs(outpath)
 
-    print("Running permutation test of {} for {} times".format(model_name, repeat))
-    corr_dists, rsq_dists = list(), list()
-    if permute_y:  # permute inside ridge cv
-        print("Permutation testing by permuting test data.")
-        _ = fit_encoding_model(
+    try:
+        clf = pickle.load(
+            open(
+                "%s/encoding_models/subj%d/clf_%s_whole_brain.pkl"
+                % (output_dir, subj, model_name),
+                "rb",
+            )
+        )
+
+    except FileNotFoundError:
+        print("Running encoding models for bootstrap test")
+        clf = fit_encoding_model(
             X,
             y,
             model_name=model_name,
             subj=subj,
             cv=False,
-            saving=False,
-            permute_y=True,
-            fix_testing=False,
+            saving=True,
+            fix_testing=42,
             output_dir=output_dir,
         )
-    else:
-        label_idx = np.arange(X.shape[0])
-        for _ in tqdm(range(repeat)):
-            np.random.shuffle(label_idx)
-            X_perm = X[label_idx, :]
-            corrs_array, *cv_outputs = fit_encoding_model(
-                X_perm,
-                y,
-                model_name=model_name,
-                subj=subj,
-                cv=False,
-                saving=False,
-                fix_testing=False,
-            )
-        corr_dists.append(corrs_array)
-        # rsq_dists.append(rsqs_array)
 
-        pickle.dump(
-            corr_dists,
-            open(
-                "output/permutation_results/subj%s/permutation_test_on_training_data_corr_%s.p"
-                % (subj, model_name),
-                "wb",
-            ),
-        )
-
-
-
-def permutation_test(
-    X,
-    y,
-    model_name,
-    repeat=5000,
-    subj=1,
-    pca=False,
-    permute_y=True,  # rather than permute training
-    output_dir=None,
-):
-    """
-    Running permutation test (permute the label 5000 times).
-    """
-    model_name += "_whole_brain"
-    if outdir is None:
-        outdir = "output/permutation_results/subj%d/" % subj
-    else:
-        outdir = "%s/subj%d/" % (output_dir, subj)
-
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir)
-
-    print("Running permutation test of {} for {} times".format(model_name, repeat))
-    corr_dists, rsq_dists = list(), list()
-    if permute_y:  # permute inside ridge cv
-        print("Permutation testing by permuting test data.")
-        _ = fit_encoding_model(
-            X,
-            y,
-            model_name=model_name,
-            subj=subj,
-            cv=False,
-            saving=False,
-            permute_y=True,
-            fix_testing=False,
-            output_dir=output_dir,
-        )
-    else:
-        label_idx = np.arange(X.shape[0])
-        for _ in tqdm(range(repeat)):
-            np.random.shuffle(label_idx)
-            X_perm = X[label_idx, :]
-            corrs_array, *cv_outputs = fit_encoding_model(
-                X_perm,
-                y,
-                model_name=model_name,
-                subj=subj,
-                cv=False,
-                saving=False,
-                fix_testing=False,
-            )
-        corr_dists.append(corrs_array)
-        # rsq_dists.append(rsqs_array)
-
-        pickle.dump(
-            corr_dists,
-            open(
-                "output/permutation_results/subj%s/permutation_test_on_training_data_corr_%s.p"
-                % (subj, model_name),
-                "wb",
-            ),
-        )
+    _, X_test, _, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+    rsq_dists = bootstrap_sampling(clf, X_test, y_test, repeat=repeat, seed=41)
+    np.save("%s/rsq_dist_%s.npy" % (outpath, model_name), rsq_dists)

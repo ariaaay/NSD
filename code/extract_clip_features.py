@@ -13,8 +13,6 @@ import torch
 import torchvision
 import torch.nn as nn
 
-import torchextractor as tx
-
 import clip
 from util.util import pytorch_pca
 from util.data_util import load_top1_objects_in_COCO, load_objects_in_COCO
@@ -159,6 +157,8 @@ def extract_obj_cap_intersect_text_feature():
 
 
 def extract_visual_resnet_prePCA_feature():
+    import torchextractor as tx
+
     LOI_ResNet_vision = [
         "visual.bn1",
         "visual.avgpool",
@@ -225,6 +225,8 @@ def extract_visual_resnet_feature():
 
 
 def extract_visual_transformer_feature():
+    import torchextractor as tx
+
     model, preprocess = clip.load("ViT-B/32", device=device)
     LOI_transformer_vision = [
         "visual.transformer.resblocks.%01d.ln_2" % i for i in range(12)
@@ -260,6 +262,8 @@ def extract_visual_transformer_feature():
 
 
 def extract_text_layer_feature():
+    import torchextractor as tx
+
     model, preprocess = clip.load("ViT-B/32", device=device)
     LOI_text = ["transformer.resblocks.%01d.ln_2" % i for i in range(12)]
     text_features = [copy.copy(e) for _ in range(12) for e in [[]]]
@@ -416,12 +420,12 @@ if __name__ == "__main__":
     expand_dict["person"] = ["man", "men", "women", "woman", "people", "guys", "people"]
 
     if args.subj == 0:
-        for s in range(7):
-            print("Extracting subj%01d" % (s + 2))
-            feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s + 2))
+        for s in range(8):
+            print("Extracting subj%01d" % (s + 1))
+            feature_output_dir = "%s/subj%01d" % (args.feature_dir, (s + 1))
             all_coco_ids = np.load(
                 "%s/coco_ID_of_repeats_subj%02d.npy"
-                % (args.project_output_dir, (s + 2))
+                % (args.project_output_dir, (s + 1))
             )
             try:
                 np.load("%s/clip_text.npy" % feature_output_dir)

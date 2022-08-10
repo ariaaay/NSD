@@ -1,3 +1,4 @@
+import os
 import argparse
 
 # from msilib.schema import File
@@ -125,9 +126,6 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
 
     roi_w = w[:, roi_selected_vox]
 
-    roi_pca = PCA(n_components=5, svd_solver="full")
-    roi_pca.fit(roi_w)
-
     scores = np.mean(activations.squeeze() @ roi_w, axis=1)
     print(roi_name)
     best_list = list(np.array(common_words)[np.argsort(scores)[::-1][:30]])
@@ -137,7 +135,7 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
     pickle.dump(
         best_list,
         open(
-            "%s/output/clip/word_interpretation/best_in_%s.json"
+            "%s/output/clip/roi_maximization/best_in_%s.json"
             % (args.output_root, roi_name),
             "wb",
         ),
@@ -145,11 +143,110 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
     pickle.dump(
         worst_list,
         open(
-            "%s/output/clip/word_interpretation/worst_in_%s.json"
+            "%s/output/clip/roi_maximization/worst_in_%s.json"
             % (args.output_root, roi_name),
             "wb",
         ),
     )
+
+
+def extract_captions_for_voxel(roi, n=3):
+    """
+    voxel that are selected by the mask will be assigned integer values
+    """
+    save_path = "%s/output/clip/roi_maximization"
+
+    try:
+        activations = np.load(
+            "%s/output/clip/roi_maximization/subj1_caption_activation.npy"
+            % args.output_root
+        )
+        all_captions = pickle.load(
+            open(
+                "%s/output/clip/roi_maximization/all_captions_subj1.pkl"
+                % args.output_root,
+                "rb",
+            )
+        )
+    except FileNotFoundError:
+        import clip
+        import torch
+        from extract_clip_features import load_captions
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        all_captions = []
+        all_coco_ids = np.load(
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, args.subj)
+        )
+        model, _ = clip.load("ViT-B/32", device=device)
+        activations = []
+        for cid in tqdm(all_coco_ids):
+            with torch.no_grad():
+                captions = load_captions(cid)
+                all_captions += captions
+                for caption in captions:
+                    text = clip.tokenize(caption).to(device)
+                    activations.append(model.encode_text(text).cpu().data.numpy())
+
+        np.save(
+            "%s/output/clip/roi_maximization/subj1_caption_activation.npy"
+            % args.output_root,
+            activations,
+        )
+        pickle.dump(
+            all_captions,
+            open(
+                "%s/output/clip/roi_maximization/all_captions_subj1.pkl"
+                % args.output_root,
+                "wb",
+            ),
+        )
+
+    w = np.load(
+        "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
+        % (args.output_root, args.subj)
+    )
+
+    best_caption_dict = dict()
+
+    roi_mask = np.load(
+        "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+        % (args.output_root, args.subj, args.subj, roi)
+    )
+
+    try:  # take out zero voxels
+        non_zero_mask = np.load(
+            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (args.output_root, args.subj, args.subj)
+        )
+        print("Masking zero voxels...")
+        roi_mask = roi_mask[non_zero_mask]
+    except FileNotFoundError:
+        pass
+
+    if args.roi_value != 0:
+        mask = roi_mask == args.roi_value
+    else:
+        mask = roi_mask > 0
+    print(str(sum(mask)) + " voxels for optimization")
+    vox_w = w[:, mask]
+
+    vindx = np.arange(sum(mask))
+
+    scores = activations.squeeze() @ vox_w  # of captions x # voxels
+    print(scores.shape)
+    print(sum(mask))
+    for i in vindx:
+        best_caption_dict[i] = list(
+            np.array(all_captions)[np.argsort(scores[:, i])[::-1][:n]]
+        )
+
+    import json
+
+    with open("%s/max_caption_per_voxel_in_%s.json" % (save_path, roi), "w") as f:
+        json.dump(best_caption_dict, f)
+    return best_caption_dict
 
 
 def extract_emb_keywords(embedding, activations, common_words, n=15):
@@ -656,7 +753,9 @@ if __name__ == "__main__":
     parser.add_argument("--summary_statistics", default=False, action="store_true")
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--clip_rsq_across_subject", default=False, action="store_true")
+    parser.add_argument("--extract_captions_for_roi", default=None, type=str)
     parser.add_argument("--mask", default=False, action="store_true")
+    parser.add_argument("--roi_value", default=0, type=int)
     args = parser.parse_args()
 
     # scatter plot per voxels
@@ -734,13 +833,13 @@ if __name__ == "__main__":
 
     if args.extract_keywords_for_roi:
         with open(
-            "%s/output/clip/word_interpretation/1000eng.txt" % args.output_root
+            "%s/output/clip/roi_maximization/1000eng.txt" % args.output_root
         ) as f:
             out = f.readlines()
         common_words = ["photo of " + w[:-1] for w in out]
         try:
             activations = np.load(
-                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                "%s/output/clip/roi_maximization/1000eng_activation.npy"
                 % args.output_root
             )
         except FileNotFoundError:
@@ -752,7 +851,7 @@ if __name__ == "__main__":
             model, _ = clip.load("ViT-B/32", device=device)
             activations = extract_text_activations(model, common_words)
             np.save(
-                "%s/output/clip/word_interpretation/1000eng_activation.npy"
+                "%s/output/clip/roi_maximization/1000eng_activation.npy"
                 % args.output_root,
                 activations,
             )
@@ -767,6 +866,9 @@ if __name__ == "__main__":
         extract_keywords_for_roi(
             w, "floc-places", [1, 2, 3, 4], activations, common_words
         )
+
+    if args.extract_captions_for_roi is not None:
+        extract_captions_for_voxel(args.extract_captions_for_roi)
 
     if args.sample_level_semantic_analysis:
         from pycocotools.coco import COCO

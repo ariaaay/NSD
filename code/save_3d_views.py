@@ -68,16 +68,46 @@ def save_3d_views(
     )  # radius=400)#projection=['orthographic'], #radius=260, visL=True, visR=True)
 
     views = dict(
-        lateral=dict(altitude=90.5, azimuth=181, pivot=180.5, radius=set_radius, opacity=set_opacity),
-        lateral_left=dict(altitude=90.5, azimuth=90.5, pivot=0.5, radius=set_radius, opacity=set_opacity),
-        lateral_right=dict(
-            altitude=90.5, azimuth=270.5, pivot=0.5, radius=set_radius, opacity=set_opacity
+        lateral=dict(
+            altitude=90.5,
+            azimuth=181,
+            pivot=180.5,
+            radius=set_radius,
+            opacity=set_opacity,
         ),
-        medial=dict(altitude=90.5, azimuth=0.5, pivot=180.5, radius=set_radius, opacity=set_opacity),
-        front=dict(altitude=90.5, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity),
-        back=dict(altitude=90.5, azimuth=181, pivot=0, radius=set_radius, opacity=set_opacity),
-        top=dict(altitude=0, azimuth=180, pivot=0, radius=set_radius, opacity=set_opacity),
-        bottom=dict(altitude=180, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity),
+        lateral_left=dict(
+            altitude=90.5,
+            azimuth=90.5,
+            pivot=0.5,
+            radius=set_radius,
+            opacity=set_opacity,
+        ),
+        lateral_right=dict(
+            altitude=90.5,
+            azimuth=270.5,
+            pivot=0.5,
+            radius=set_radius,
+            opacity=set_opacity,
+        ),
+        medial=dict(
+            altitude=90.5,
+            azimuth=0.5,
+            pivot=180.5,
+            radius=set_radius,
+            opacity=set_opacity,
+        ),
+        front=dict(
+            altitude=90.5, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity
+        ),
+        back=dict(
+            altitude=90.5, azimuth=181, pivot=0, radius=set_radius, opacity=set_opacity
+        ),
+        top=dict(
+            altitude=0, azimuth=180, pivot=0, radius=set_radius, opacity=set_opacity
+        ),
+        bottom=dict(
+            altitude=180, azimuth=0, pivot=0, radius=set_radius, opacity=set_opacity
+        ),
     )
 
     surfaces = dict(
