@@ -165,6 +165,7 @@ class MultiRidge:
         X_te = X_te - self.Xm
         if self.scale_X:
             X_te = X_te / self.Xs
+
         M_te = X_te @ self.Q
 
         Yhat_te = []

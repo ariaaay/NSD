@@ -16,6 +16,12 @@ def zero_strip(s):
         return s
 
 
+def r2_score(Real, Pred):
+    SSres = np.mean((Real - Pred) ** 2, 0)
+    SStot = np.var(Real, 0)
+    return np.nan_to_num(1 - SSres / SStot)
+
+
 def zscore(mat, axis=None):
     if axis is None:
         return (mat - np.mean(mat)) / np.std(mat)

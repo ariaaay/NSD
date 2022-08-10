@@ -154,7 +154,7 @@ def extract_captions_for_voxel(roi, n=3):
     """
     voxel that are selected by the mask will be assigned integer values
     """
-    save_path = "%s/output/clip/roi_maximization"
+    save_path = "%s/output/clip/roi_maximization" % args.output_root
 
     try:
         activations = np.load(
@@ -203,6 +203,9 @@ def extract_captions_for_voxel(roi, n=3):
             ),
         )
 
+    activations = np.array(activations)
+    print(activations.shape)
+
     w = np.load(
         "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
         % (args.output_root, args.subj)
@@ -235,10 +238,9 @@ def extract_captions_for_voxel(roi, n=3):
     vindx = np.arange(sum(mask))
 
     scores = activations.squeeze() @ vox_w  # of captions x # voxels
-    print(scores.shape)
-    print(sum(mask))
+
     for i in vindx:
-        best_caption_dict[i] = list(
+        best_caption_dict[str(i)] = list(
             np.array(all_captions)[np.argsort(scores[:, i])[::-1][:n]]
         )
 

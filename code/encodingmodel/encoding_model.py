@@ -10,11 +10,11 @@ from sklearn.model_selection import (
     GroupShuffleSplit,
     ShuffleSplit,
 )
-from sklearn.metrics import r2_score
-from sklearn.decomposition import PCA
+
+# from sklearn.metrics import r2_score
 from scipy.stats import pearsonr
 
-from util.util import pearson_corr, empirical_p
+from util.util import r2_score
 from encodingmodel.ridge import RidgeCVEstimator
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -81,7 +81,7 @@ def ridge_cv(
     print("Making predictions using ridge models...")
     yhat = clf.predict(X_test).cpu().numpy()
     try:
-        rsqs = [r2_score(y_test[:, i], yhat[:, i]) for i in range(y_test.shape[1])]
+        rsqs = r2_score(y_test, yhat)
     except ValueError:  # debugging for NaNs in subj 5
         print("Ytest: NaNs? Finite?")
         print(np.any(np.isnan(y_test)))
@@ -169,24 +169,22 @@ def fit_encoding_model(
                 cv_outputs[8], open("%s/clf_%s.pkl" % (outpath, model_name), "wb")
             )
 
-    return cv_outputs[8]
+    return cv_outputs
 
 
-def bootstrap_sampling(clf, X_test, y_test, repeat, seed):
+def bootstrap_sampling(weights, bias, X_mean, X_test, y_test, repeat, seed):
     np.random.seed(seed)
-    print("running bootstrap test (permutating trials %s times)." % repeat)
     rsq_dist = list()
     label_idx = np.arange(X_test.shape[0])
-    for _ in tqdm(repeat):
+    for _ in tqdm(range(repeat)):
         sampled_idx = np.random.choice(label_idx, replace=True, size=len(label_idx))
         X_test_sampled = X_test[sampled_idx, :]
         y_test_sampled = y_test[sampled_idx, :]
-        yhat = clf.predict(X_test_sampled).cpu().numpy()
-        rsqs = [
-            r2_score(y_test_sampled[:, i], yhat[:, i])
-            for i in range(y_test_sampled.shape[1])
-        ]
+        yhat = (X_test_sampled - X_mean) @ weights + bias
+
+        rsqs = r2_score(y_test_sampled, yhat.cpu().numpy())
         rsq_dist.append(rsqs)
+
     return rsq_dist
 
 
@@ -194,10 +192,11 @@ def bootstrap_test(
     X,
     y,
     model_name,
-    repeat=3000,
+    repeat=2000,
     subj=1,
     output_dir=None,
 ):
+    model_name += "_whole_brain"
     print("Running bootstrap test of {} for {} times".format(model_name, repeat))
 
     # save rsq
@@ -206,17 +205,23 @@ def bootstrap_test(
         os.makedirs(outpath)
 
     try:
-        clf = pickle.load(
-            open(
-                "%s/encoding_models/subj%d/clf_%s_whole_brain.pkl"
-                % (output_dir, subj, model_name),
-                "rb",
-            )
+        # clf = pickle.load(
+        #     open(
+        #         "%s/encoding_results/subj%d/clf_%s_whole_brain.pkl"
+        #         % (output_dir, subj, model_name),
+        #         "rb",
+        #     )
+        # )
+        weights = np.load(
+            "%s/encoding_results/subj%d/weights_%s.npy" % (output_dir, subj, model_name)
+        )
+        bias = np.load(
+            "%s/encoding_results/subj%d/bias_%s.npy" % (output_dir, subj, model_name)
         )
 
     except FileNotFoundError:
         print("Running encoding models for bootstrap test")
-        clf = fit_encoding_model(
+        cv_outputs = fit_encoding_model(
             X,
             y,
             model_name=model_name,
@@ -226,7 +231,18 @@ def bootstrap_test(
             fix_testing=42,
             output_dir=output_dir,
         )
+        weights, bias = cv_outputs[7], cv_outputs[8]
+        print(weights.shape)
 
-    _, X_test, _, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
-    rsq_dists = bootstrap_sampling(clf, X_test, y_test, repeat=repeat, seed=41)
+    X_train, X_test, _, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+    X_train = torch.from_numpy(X_train).to(dtype=torch.float64).to(device)
+    X_test = torch.from_numpy(X_test).to(dtype=torch.float64).to(device)
+    weights = torch.from_numpy(weights).to(dtype=torch.float64).to(device)
+    bias = torch.from_numpy(bias).to(dtype=torch.float64).to(device)
+
+    X_mean = X_train.mean(dim=0, keepdim=True)
+
+    rsq_dists = bootstrap_sampling(
+        weights, bias, X_mean, X_test, y_test, repeat=repeat, seed=41
+    )
     np.save("%s/rsq_dist_%s.npy" % (outpath, model_name), rsq_dists)
