@@ -29,23 +29,23 @@ from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
-annFile_train = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-)
-annFile_val = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-)
-coco_train = COCO(annFile_train)
-coco_val = COCO(annFile_val)
+# annFile_train = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+# )
+# annFile_val = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+# )
+# coco_train = COCO(annFile_train)
+# coco_val = COCO(annFile_val)
 
-annFile_train_caps = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-)
-annFile_val_caps = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-)
-coco_train_caps = COCO(annFile_train_caps)
-coco_val_caps = COCO(annFile_val_caps)
+# annFile_train_caps = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
+# )
+# annFile_val_caps = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
+# )
+# coco_train_caps = COCO(annFile_train_caps)
+# coco_val_caps = COCO(annFile_val_caps)
 
 
 def compute_sample_performance(model, subj, output_dir, masking="sig", measure="corrs"):
@@ -287,7 +287,6 @@ def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
         "figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s.png"
         % (model1, model2, measure, masking)
     )
-
 
 def get_coco_image(id):
     try:
@@ -703,6 +702,11 @@ def make_roi_df(roi_names, subjs, update=False):
     )
     return df
 
+def compute_ci_cutoff(n, ci=0.95):
+    ci_ends = np.array([0.+(1-ci)/2., 1-(1-ci)/2.])
+    ci_ind =(ci_ends * n).astype(np.int32)
+    return ci_ind
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -756,11 +760,34 @@ if __name__ == "__main__":
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--clip_rsq_across_subject", default=False, action="store_true")
     parser.add_argument("--extract_captions_for_roi", default=None, type=str)
+    parser.add_argument("--process_bootstrap_results", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
     args = parser.parse_args()
 
     # scatter plot per voxels
+    if args.process_bootstrap_results:
+        joint_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
+        clipv_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_whole_brain.npy" % (args.output_root, args.subj))
+        resnet_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
+        clip_unique_var = joint_rsq - resnet_rsq
+        n = joint_rsq.shape[0]
+        ci_ind = compute_ci_cutoff(n)
+
+        sorted_ind = np.argsort(clip_unique_var, axis=0)
+        # ci_thre_low = clip_unique_var[sorted_ind[ci_ind[0], :], :]
+        # ci_thre_high = clip_unique_var[sorted_ind[ci_ind[1], :], :]
+        # print(ci_thre_low, ci_thre_high)
+        # np.save("output/ci_threshold/clip_unique_variance_threshold_subj%01d.npy" % args.subj, np.array([ci_thre_low, ci_thre_high]))
+
+        # clip_rsq = np.load("%s/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
+
+        # sorted_ind = np.argsort(clip_rsq, axis=0)
+        # ci_thre_low = clip_rsq[sorted_ind[ci_ind[0], :], :]
+        # ci_thre_high = clip_rsq[sorted_ind[ci_ind[1], :], :]
+        # print(ci_thre_low, ci_thre_high)
+        # np.save("output/ci_threshold/clip_variance_threshold_subj%01d.npy" % args.subj, np.array([ci_thre_low, ci_thre_high]))
+        
 
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
