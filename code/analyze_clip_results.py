@@ -25,7 +25,7 @@ from util.model_config import *
 
 # device = "cuda" if torch.cuda.is_available() else "cpu"
 
-from pycocotools.coco import COCO
+# from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
