@@ -767,27 +767,26 @@ if __name__ == "__main__":
 
     # scatter plot per voxels
     if args.process_bootstrap_results:
-        joint_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
+        from statsmodels.stats.multitest import fdrcorrection
+        joint_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
         clipv_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_whole_brain.npy" % (args.output_root, args.subj))
         resnet_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
         clip_unique_var = joint_rsq - resnet_rsq
-        n = joint_rsq.shape[0]
-        ci_ind = compute_ci_cutoff(n)
-
-        sorted_ind = np.argsort(clip_unique_var, axis=0)
-        # ci_thre_low = clip_unique_var[sorted_ind[ci_ind[0], :], :]
-        # ci_thre_high = clip_unique_var[sorted_ind[ci_ind[1], :], :]
-        # print(ci_thre_low, ci_thre_high)
-        # np.save("output/ci_threshold/clip_unique_variance_threshold_subj%01d.npy" % args.subj, np.array([ci_thre_low, ci_thre_high]))
-
-        # clip_rsq = np.load("%s/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
-
-        # sorted_ind = np.argsort(clip_rsq, axis=0)
-        # ci_thre_low = clip_rsq[sorted_ind[ci_ind[0], :], :]
-        # ci_thre_high = clip_rsq[sorted_ind[ci_ind[1], :], :]
-        # print(ci_thre_low, ci_thre_high)
-        # np.save("output/ci_threshold/clip_variance_threshold_subj%01d.npy" % args.subj, np.array([ci_thre_low, ci_thre_high]))
+        del joint_rsq
+        del resnet_rsq
         
+        n = clip_unique_var.shape[0]
+        p_vals = np.sum(clip_unique_var<0, axis=0)/n
+        fdr_p = fdrcorrection(p_vals)
+        print(np.sum(fdr_p[1]<0.05))
+        np.save("output/ci_threshold/clip_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+
+        clip_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
+        n = clip_rsq.shape[0]
+        p_vals = np.sum(clip_rsq<0, axis=0)/n
+        fdr_p = fdrcorrection(p_vals)
+        print(np.sum(fdr_p[1]<0.05))
+        np.save("output/ci_threshold/clip_fdr_p_subj%01d.npy" % args.subj, fdr_p)
 
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
