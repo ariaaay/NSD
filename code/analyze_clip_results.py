@@ -1,3 +1,6 @@
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 import os
 import argparse
 
@@ -15,11 +18,13 @@ import skimage.io as io
 
 from tqdm import tqdm
 from PIL import Image
+
 from sklearn.decomposition import PCA
 
 # import torch
 import clip
 
+from util.util import fdr_correct_p
 from util.data_util import load_model_performance, extract_test_image_ids
 from util.model_config import *
 
@@ -586,7 +591,7 @@ def image_level_scatter_plot(subj=1, model1="clip", model2="resnet50_bottleneck"
 def make_roi_df(roi_names, subjs, update=False):
     if update:
         df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
         )
     else:
         df = pd.DataFrame()
@@ -594,7 +599,7 @@ def make_roi_df(roi_names, subjs, update=False):
     for subj in subjs:
         try:
             subj_df = pd.read_csv(
-                "%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv"
+                "%s/output/clip/performance_by_roi_df_subj%02d.csv"
                 % (args.output_root, subj)
             )
         except FileNotFoundError:
@@ -606,9 +611,10 @@ def make_roi_df(roi_names, subjs, update=False):
                     "uv_clip",
                     "uv_resnet",
                     "uv_diff",
-                    "uv_diff_nc",
+                    # "uv_diff_nc",
                     "joint",
                     "subj",
+                    "nc"
                 ]
                 + roi_names
             )
@@ -635,7 +641,7 @@ def make_roi_df(roi_names, subjs, update=False):
                 measure="rsq",
             )
             nc = np.load(
-                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
                 % (args.output_root, subj, subj)
             )
 
@@ -643,20 +649,18 @@ def make_roi_df(roi_names, subjs, update=False):
             u_resnet = joint_var - clip_var
 
             for i in tqdm(range(len(joint_var))):
-                if nc[i] < 0.1:
-                    continue
-                else:
-                    vd = dict()
-                    vd["voxel_idx"] = i
-                    vd["var_clip"] = clip_var[i]
-                    vd["var_resnet"] = resnet_var[i]
-                    vd["uv_clip"] = u_clip[i]
-                    vd["uv_resnet"] = u_resnet[i]
-                    vd["uv_diff"] = u_clip[i] - u_resnet[i]
-                    vd["uv_diff_nc"] = u_clip[i] / nc[i] - u_resnet[i] / nc[i]
-                    vd["joint"] = joint_var[i]
-                    vd["subj"] = subj
-                    subj_df = subj_df.append(vd, ignore_index=True)
+                vd = dict()
+                vd["voxel_idx"] = i
+                vd["var_clip"] = clip_var[i]
+                vd["var_resnet"] = resnet_var[i]
+                vd["uv_clip"] = u_clip[i]
+                vd["uv_resnet"] = u_resnet[i]
+                vd["uv_diff"] = u_clip[i] - u_resnet[i]
+                # vd["uv_diff_nc"] = u_clip[i] / (nc[i]/100) - u_resnet[i] / (nc[i]/100)
+                vd["joint"] = joint_var[i]
+                vd["nc"] = nc[i]
+                vd["subj"] = subj
+                subj_df = subj_df.append(vd, ignore_index=True)
 
             cortical_mask = np.load(
                 "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
@@ -692,13 +696,13 @@ def make_roi_df(roi_names, subjs, update=False):
                 ]
 
             subj_df.to_csv(
-                "%s/output/clip/performance_by_roi_df_subj%02d_nc_corrected.csv"
+                "%s/output/clip/performance_by_roi_df_subj%02d.csv"
                 % (args.output_root, subj)
             )
         df = pd.concat([df, subj_df])
 
     df.to_csv(
-        "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+        "%s/output/clip/performance_by_roi_df.csv" % args.output_root
     )
     return df
 
@@ -761,32 +765,44 @@ if __name__ == "__main__":
     parser.add_argument("--clip_rsq_across_subject", default=False, action="store_true")
     parser.add_argument("--extract_captions_for_roi", default=None, type=str)
     parser.add_argument("--process_bootstrap_results", default=False, action="store_true")
+    parser.add_argument("--nc_scatter_plot", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
     args = parser.parse_args()
 
     # scatter plot per voxels
     if args.process_bootstrap_results:
-        from statsmodels.stats.multitest import fdrcorrection
+        
         joint_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
         clipv_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_whole_brain.npy" % (args.output_root, args.subj))
         resnet_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
+        
+        fdr_p = fdr_correct_p(resnet_rsq)
+        print(np.sum(fdr_p[1]<0.05))
+        np.save("output/ci_threshold/resnet50_bottleneck_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+
+        fdr_p = fdr_correct_p(clipv_rsq)
+        print(np.sum(fdr_p[1]<0.05))
+        np.save("output/ci_threshold/clip_visual_resnet_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+
         clip_unique_var = joint_rsq - resnet_rsq
+        resnet_unique_var = joint_rsq - clipv_rsq
         del joint_rsq
         del resnet_rsq
-        
-        n = clip_unique_var.shape[0]
-        p_vals = np.sum(clip_unique_var<0, axis=0)/n
-        fdr_p = fdrcorrection(p_vals)
+        fdr_p = fdr_correct_p(clip_unique_var)
         print(np.sum(fdr_p[1]<0.05))
         np.save("output/ci_threshold/clip_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
 
-        clip_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_whole_brain.npy" % (args.output_root, args.subj))
-        n = clip_rsq.shape[0]
-        p_vals = np.sum(clip_rsq<0, axis=0)/n
-        fdr_p = fdrcorrection(p_vals)
+        fdr_p = fdr_correct_p(resnet_unique_var)
         print(np.sum(fdr_p[1]<0.05))
-        np.save("output/ci_threshold/clip_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+        np.save("output/ci_threshold/resnet_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+
+
+        for model in ["clip", "clip_text"]:
+            rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_%s_whole_brain.npy" % (args.output_root, args.subj, model))
+            fdr_p = fdr_correct_p(rsq)
+            print(np.sum(fdr_p[1]<0.05))
+            np.save("output/ci_threshold/%s_fdr_p_subj%01d.npy" % (model, args.subj), fdr_p)
 
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
@@ -1047,7 +1063,7 @@ if __name__ == "__main__":
         roi_names = list(roi_name_dict.keys())
         if not args.rerun_df:
             df = pd.read_csv(
-                "%s/output/clip/performance_by_roi_df_nc_corrected.csv"
+                "%s/output/clip/performance_by_roi_df.csv"
                 % args.output_root
             )
         else:
@@ -1096,7 +1112,7 @@ if __name__ == "__main__":
         ]
         axis_labels = [v for _, v in roa_list]
         df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
         )
         new_df = pd.DataFrame()
         for i, (roi_name, roi_lab) in enumerate(roa_list):
@@ -1166,11 +1182,18 @@ if __name__ == "__main__":
             ax.spines["right"].set_visible(False)
             ax.spines["top"].set_visible(False)
             # plt.gca().title.set_text(roi)
-        fig.supylabel("Unique Var. of CLIP")
-        fig.supxlabel("Unique Var. of " + r"$ResNet_I$")
+        fig.supylabel("Unique Var. of CLIP", size=18)
+        fig.supxlabel("Unique Var. of " + r"$ResNet_I$", size=18)
+
         plt.tight_layout()
         plt.savefig(
             "figures/CLIP/performances_by_roi/unique_var_scatterplot_by_roi.png"
+        )
+
+        fig.supylabel("Unique Var. of CLIP", size=20)
+        fig.supxlabel("Unique Var. of " + r"$ResNet_I$", size=20)
+        plt.savefig(
+            "figures/CLIP/performances_by_roi/unique_var_scatterplot_by_roi_poster.png"
         )
 
     if args.group_analysis_by_roi:
@@ -1204,18 +1227,18 @@ if __name__ == "__main__":
         #     if df[roi]
 
         df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df_nc_corrected.csv" % args.output_root
+            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
         )
         subjs = np.arange(1, 9)
         roi_by_subj_mean_clip = np.zeros((8, len(roa_list)))
         roi_by_subj_mean_resnet = np.zeros((8, len(roa_list)))
         for s, subj in enumerate(subjs):
             nc = np.load(
-                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
                 % (args.output_root, subj, subj)
             )
-            varc = df[df["subj"] == subj]["var_clip"] / nc[nc >= 0.1]
-            varr = df[df["subj"] == subj]["var_resnet"] / nc[nc >= 0.1]
+            varc = df[df["subj"] == subj]["var_clip"] / (nc[nc >= 10]/100)
+            varr = df[df["subj"] == subj]["var_resnet"] / (nc[nc >= 10]/100)
             tmp_c = ztransform(varc)
             tmp_r = ztransform(varr)
 
@@ -1277,8 +1300,42 @@ if __name__ == "__main__":
                 model="clip", output_root=args.output_root, subj=subj + 1, measure="rsq"
             )
             nc = np.load(
-                "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+                "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
                 % (args.output_root, subj + 1, subj + 1)
             )
-            means.append(np.mean(subj_var / nc, where=np.isfinite(subj_var / nc)))
+            means.append(np.mean(subj_var / (nc/100), where=np.isfinite(subj_var / (nc/100))))
         print(means)
+
+    if args.nc_scatter_plot:
+        nc_array, var_array = [], []
+        plt.figure(figsize=(10, 10))
+        for subj in np.arange(8) + 1:
+            clip_var = load_model_performance(
+                model="clip",
+                output_root=args.output_root,
+                subj=subj,
+                measure="rsq",
+            ) * 100
+            nc = np.load(
+                    "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
+                    % (args.output_root, subj, subj)
+                )
+            nc_array += list(nc)
+            var_array += list(clip_var)
+
+            plt.subplot(4,2, subj)
+            sns.scatterplot(x=nc, y=clip_var, alpha=0.7)
+            sns.lineplot([-1, 105], [-1, 105], linewidth=1, color="red")
+            plt.title("subj %d" % subj)
+        plt.tight_layout()
+        plt.savefig("figures/CLIP/var_clip_vs_nc_per_subj.png")
+        
+        
+        plt.figure()
+        sns.scatterplot(x=nc_array, y=var_array, alpha=0.5)
+        sns.lineplot([-1, 105], [-1, 105], linewidth=1, color="red")
+        plt.savefig("figures/CLIP/var_clip_vs_nc.png")
+
+
+
+        
