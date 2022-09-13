@@ -310,8 +310,7 @@ def extract_text_layer_feature():
 
 
 def extract_last_layer_feature(model_name="ViT-B/32", modality="vision"):
-    all_images_paths = list()
-    all_images_paths += ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
+    all_images_paths = ["%s/%s.jpg" % (stimuli_dir, id) for id in all_coco_ids]
     print("Number of Images: {}".format(len(all_images_paths)))
     model, preprocess = clip.load(model_name, device=device)
 

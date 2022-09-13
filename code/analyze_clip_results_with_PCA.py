@@ -1,3 +1,4 @@
+from cProfile import label
 import os
 import argparse
 
@@ -107,10 +108,10 @@ def extract_single_subject_weight(subj, args):
     )
     if args.nc_corrected:
         nc = np.load(
-            "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+            "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
             % (args.output_root, subj, subj)
         )
-        rsq = rsq / nc
+        rsq = rsq / (nc/100)
     if args.threshold == 0:  # then selecting voxels based on number of accuracy
         if args.best_voxel_n != 0:
             threshold = rsq[
@@ -222,6 +223,9 @@ def get_PCs(args, data=None, return_pca_object=False):
             pickle.dump(pca, f)
 
         plt.plot(pca.explained_variance_ratio_)
+        plt.xlabel("Principal Components")
+        plt.ylabel("Explained Variance")
+        plt.xtick(ticks=np.arange(20))
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if return_pca_object:
@@ -276,6 +280,13 @@ if __name__ == "__main__":
     parser.add_argument("--uv_vs_pc", default=False, action="store_true")
 
     args = parser.parse_args()
+
+    pca, name_modifier = get_PCs(args, return_pca_object=True)
+    plt.plot(pca.explained_variance_ratio_)
+    plt.xlabel("Principal Components")
+    plt.ylabel("Explained Variance")
+    plt.xticks(ticks=np.arange(20))
+    plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if args.group_pca_analysis:
         from analyze_clip_results import (

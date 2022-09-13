@@ -30,7 +30,13 @@ def zscore(mat, axis=None):
             mat, axis=axis, keepdims=True
         )
 
-
+def fdr_correct_p(var):
+    from statsmodels.stats.multitest import fdrcorrection
+    n = var.shape[0]
+    p_vals = np.sum(var<0, axis=0)/n #proportions of permutation below 0
+    fdr_p = fdrcorrection(p_vals) # corrected p
+    return fdr_p
+    
 def ztransform(val):
     val = np.clip(val, a_min=1e-4, a_max=0.999)
     val = np.log((1 + val) / (1 - val)) / 2.0

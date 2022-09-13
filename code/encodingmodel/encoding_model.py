@@ -1,4 +1,5 @@
 import os
+from random import weibullvariate
 import torch
 import pickle
 import numpy as np
@@ -196,7 +197,6 @@ def bootstrap_test(
     subj=1,
     output_dir=None,
 ):
-    model_name += "_whole_brain"
     print("Running bootstrap test of {} for {} times".format(model_name, repeat))
 
     # save rsq
@@ -213,10 +213,10 @@ def bootstrap_test(
         #     )
         # )
         weights = np.load(
-            "%s/encoding_results/subj%d/weights_%s.npy" % (output_dir, subj, model_name)
+            "%s/encoding_results/subj%d/weights_%s_whole_brain.npy" % (output_dir, subj, model_name)
         )
         bias = np.load(
-            "%s/encoding_results/subj%d/bias_%s.npy" % (output_dir, subj, model_name)
+            "%s/encoding_results/subj%d/bias_%s_whole_brain.npy" % (output_dir, subj, model_name)
         )
 
     except FileNotFoundError:
@@ -231,7 +231,7 @@ def bootstrap_test(
             fix_testing=42,
             output_dir=output_dir,
         )
-        weights, bias = cv_outputs[7], cv_outputs[8]
+        weights, bias = cv_outputs[6], cv_outputs[7]
         print(weights.shape)
 
     X_train, X_test, _, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
@@ -245,4 +245,4 @@ def bootstrap_test(
     rsq_dists = bootstrap_sampling(
         weights, bias, X_mean, X_test, y_test, repeat=repeat, seed=41
     )
-    np.save("%s/rsq_dist_%s.npy" % (outpath, model_name), rsq_dists)
+    np.save("%s/rsq_dist_%s_whole_brain.npy" % (outpath, model_name), rsq_dists)

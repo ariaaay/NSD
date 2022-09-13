@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     if args.pred_to_data is not None:
         nc = np.load(
-            "%s/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+            "%s/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
             % (args.output_dir, args.subj, args.subj)
         )
         pred_path = "%s/encoding_results/subj%01d/pred_%s_whole_brain.p" % (
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         )
         pred, test_data = np.load(pred_path, allow_pickle=True)
 
-        nc_thre = 0.2
+        nc_thre = 20
         zone_indices, roi_label_list, tick_pos = [], [], []
 
         for roi in roi_list:
@@ -155,6 +155,6 @@ if __name__ == "__main__":
         plt.yticks(np.cumsum(tick_pos), roi_label_list)
 
         plt.savefig(
-            "figures/roi_generalization/roi_gen_%s_subj%02d_%s_nc%.01f.png"
+            "figures/roi_generalization/roi_gen_%s_subj%02d_%s_nc%d.png"
             % (args.pred_to_data, args.subj, args.roi, nc_thre)
         )
