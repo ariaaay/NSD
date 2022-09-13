@@ -86,11 +86,11 @@ def visualize_layerwise_max_corr_results(
     )
 
     nc = np.load(
-        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+        "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
         % (OUTPUT_ROOT, subj, subj)
     )
 
-    sig_mask = nc >= 0.1
+    sig_mask = nc >= 10
     layeridx[~sig_mask] = np.nan
 
     # # projecting value back to 3D space
@@ -141,7 +141,7 @@ def make_volume(
         % (OUTPUT_ROOT, subj, subj)
     )
     nc = np.load(
-        "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+        "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
         % (OUTPUT_ROOT, subj, subj)
     )
 
@@ -178,7 +178,7 @@ def make_volume(
             sig_mask = load_fdr_mask(OUTPUT_ROOT, model, fdr_mask_name, subj)
             if sig_mask is None:
                 print("Masking vals with nc only")
-                sig_mask = nc >= 0.1
+                sig_mask = nc >= 10
             
         elif args.sig_method == "pvalue":
             pvalues = load_model_performance(
@@ -200,7 +200,7 @@ def make_volume(
             vals[~sig_mask] = np.nan
 
     if (measure == "rsq") and (noise_corrected):
-        vals = vals / nc
+        vals = vals / (nc/100)
         vals[np.isnan(vals)] = np.nan
     print("max:" + str(max(vals[~np.isnan(vals)])))
 
@@ -403,7 +403,7 @@ if __name__ == "__main__":
     # old_ev_vals = np.load("%s/output/evs_old_subj%02d_zscored.npy" % (OUTPUT_ROOT, args.subj))
     # old_ev_volume = make_volume(subj=args.subj, vals=old_ev_vals, measure="rsq")
     # nc = np.load(
-    #     "%s/output/noise_ceiling/subj%01d/ncsnr_1d_subj%02d.npy"
+    #     "%s/output/noise_ceiling/subj%01d/noise_ceiling_subj%02d.npy"
     #     % (OUTPUT_ROOT, args.subj, args.subj)
     # )
     # nc_volume = make_volume(subj=args.subj, vals=nc, measure="rsq")
