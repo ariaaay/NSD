@@ -1082,18 +1082,18 @@ if __name__ == "__main__":
             plt.ylabel("Difference in Unique Var.")
             plt.savefig("figures/CLIP/performances_by_roi/uv_diff_%s.png" % roi_name)
 
-        for roi_name in roi_names:
-            plt.figure(figsize=(max(len(roi_name_dict[roi_name].values()) / 4, 50), 30))
-            ax = sns.boxplot(
-                x=roi_name,
-                y="uv_diff_nc",
-                data=df,
-                dodge=True,
-                order=list(roi_name_dict[roi_name].values()),
-            )
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
-            plt.ylabel("Difference in Unique Var. (NC)")
-            plt.savefig("figures/CLIP/performances_by_roi/uv_nc_diff_%s.png" % roi_name)
+        # for roi_name in roi_names:
+        #     plt.figure(figsize=(max(len(roi_name_dict[roi_name].values()) / 4, 50), 30))
+        #     ax = sns.boxplot(
+        #         x=roi_name,
+        #         y="uv_diff",
+        #         data=df,
+        #         dodge=True,
+        #         order=list(roi_name_dict[roi_name].values()),
+        #     )
+        #     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+        #     plt.ylabel("Difference in Unique Var. (NC)")
+        #     plt.savefig("figures/CLIP/performances_by_roi/uv_nc_diff_%s.png" % roi_name)
 
     if args.performance_analysis_by_roi_subset:
         roa_list = [
@@ -1307,35 +1307,163 @@ if __name__ == "__main__":
         print(means)
 
     if args.nc_scatter_plot:
-        nc_array, var_array = [], []
-        plt.figure(figsize=(10, 10))
-        for subj in np.arange(8) + 1:
-            clip_var = load_model_performance(
-                model="clip",
-                output_root=args.output_root,
-                subj=subj,
-                measure="rsq",
-            ) * 100
-            nc = np.load(
-                    "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
-                    % (args.output_root, subj, subj)
-                )
-            nc_array += list(nc)
-            var_array += list(clip_var)
+        # nc_array, var_array = [], []
+        # plt.figure(figsize=(10, 10))
+        # for subj in np.arange(8) + 1:
+        #     clip_var = load_model_performance(
+        #         model="clip",
+        #         output_root=args.output_root,
+        #         subj=subj,
+        #         measure="rsq",
+        #     )
+        #     nc = np.load(
+        #             "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
+        #             % (args.output_root, subj, subj)
+        #         ) / 100
+        #     nc_array += list(nc)
+        #     var_array += list(clip_var)
 
-            plt.subplot(4,2, subj)
-            sns.scatterplot(x=nc, y=clip_var, alpha=0.7)
-            sns.lineplot([-1, 105], [-1, 105], linewidth=1, color="red")
-            plt.title("subj %d" % subj)
-        plt.tight_layout()
-        plt.savefig("figures/CLIP/var_clip_vs_nc_per_subj.png")
+        #     plt.subplot(4,2, subj)
+        #     sns.scatterplot(x=nc, y=clip_var, alpha=0.5, size=0.5)
+        #     sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=1, color="red")
+        #     plt.title("subj %d" % subj)
+        #     plt.ylabel("Model performance")
+        #     plt.xlabel("Noise ceiling")
+        # plt.tight_layout()
+        # plt.savefig("figures/CLIP/var_clip_vs_nc_per_subj.png")
         
         
+        # plt.figure()
+        # sns.scatterplot(x=nc_array, y=var_array, alpha=0.5)
+        # sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=1, color="red")
+        # plt.savefig("figures/CLIP/var_clip_vs_nc.png")
+
+        df = pd.read_csv(
+            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
+        )
+        df["nc"] = df["nc"]/100
+        # percentiles = [75, 90, 95, 99]
+        # markers = ["*", "+", "x", "o"]
+
+        # sns.set_theme(style="whitegrid")
+        # plt.figure(figsize=(5,10))
+        # labels = ["(0, 0.1]", "(0.1, 0.2]", "(0.2, 0.3]", "(0.3, 0.4]", "(0.4, 0.5]", "(0.5, 0.6]", "(0.6, 0.7]", "(0.7, 0.8]", "(0.8, 0.9]"]
+        # df5['nc_bins'] = pd.cut(df5['nc'], 9, precision=1, labels=labels)
+        # df5['perc_nc'] = df5["var_clip"] / df5["nc"]
+
+        # # df5 = df5[df5["nc"]>0.1]
+
+        # # sns.relplot(x="nc", y="perc_nc", data=df5, alpha=0.5)
+        # # sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=1, color="red", label="Noise Ceiling")
+
+        # sns.boxplot(data=df5, x="nc_bins", y="perc_nc")
+        # plt.ylim((-0.1, 1.1))
+        # plt.xticks(rotation = 45)
+   
+        # # n = len(df5["nc"])
+        # # for i, p in enumerate(percentiles):
+        # #     px = np.percentile(df["nc"], p)
+        # #     py = np.percentile(df["var_clip"], p)
+        # #     # print(px, py)
+        # #     plt.scatter(x=px, y=py, marker=markers[i], s=100, color="red", label="%d%% (n=%d)" % (p, (100-p)*n/100))
+        # plt.xlabel("Noise Ceiling")
+        # plt.ylabel("Model Performance as % in noise ceiling")
+        # # plt.legend()
+        # plt.savefig("figures/CLIP/var_clip_vs_nc_subj5.png")
+        import matplotlib as mpl
+        import matplotlib.pylab as plt
+
+        # PLOTTING SUBJ5
         plt.figure()
-        sns.scatterplot(x=nc_array, y=var_array, alpha=0.5)
-        sns.lineplot([-1, 105], [-1, 105], linewidth=1, color="red")
-        plt.savefig("figures/CLIP/var_clip_vs_nc.png")
+        df5=df[df["subj"]==5]
+        sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling")
+        sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling")
 
+        plt.hist2d(df5["nc"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+        plt.colorbar()
+        plt.xlabel("Noise Ceiling")
+        plt.ylabel("Model Performance $(R^2)$")
+        plt.xlim(0,1)
+        plt.ylim(0,1)
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("figures/CLIP/var_clip_vs_nc_subj5_2dhist.png")
 
+        plt.figure()
+        sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling")
+        sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling")
 
+        plt.hist2d(df5["nc"], df5["var_resnet"], bins=100, norm=mpl.colors.LogNorm())
+
+        plt.colorbar()
+        plt.xlabel("Noise Ceiling")
+        plt.ylabel("Model Performance $(R^2)$")
+        plt.xlim(0,1)
+        plt.ylim(0,1)
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("figures/CLIP/var_rn_vs_nc_subj5_2dhist.png")
+
+        plt.figure(figsize=(5, 8))
+        plt.subplot(2, 1, 1)
+        sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=1, color="red")
+
+        plt.hist2d(df5["var_resnet"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm())
+
+        plt.colorbar()
+        plt.xlabel("$ResNet_I$", size=22)
+        plt.ylabel("CLIP", size=22)
+        plt.xlim(-0.05, 0.9)
+        plt.ylim(-0.05, 0.9)
+        plt.grid(True)
+        plt.title("Model Performance $(R^2)$", size=24)
+
+        plt.subplot(2, 1, 2)
+        sns.lineplot([-0.1, 1], [-0.1, 1], linewidth=1, color="red")
+        plt.hist2d(df5["uv_resnet"], df5["uv_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+
+        plt.colorbar()
+        plt.xlabel("$ResNet_I$", size=22)
+        plt.ylabel("CLIP", size=22)
+        plt.xlim(-0.15, 0.4)
+        plt.ylim(-0.15, 0.4)
+        plt.grid(True)
+        plt.title("Unique Variance", size=24)
+        plt.tight_layout()
+        plt.savefig("figures/CLIP/var_rn_vs_clip_subj5_2dhist.png", dpi=300)
         
+
+
+        # PLOTTING ALL SUBJECTS
+        fig, axes = plt.subplots(4, 2, sharex=True, sharey=True, figsize=(10, 15))
+        for s, ax in zip(np.arange(8) + 1, axes.T.flatten()):
+            dfs=df[df["subj"]==s]
+            h = ax.hist2d(dfs["nc"], dfs["var_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+
+            sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=2, color="red", label="Noise Ceiling", ax=ax)
+            sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling", ax=ax)
+            
+            ax.grid()
+            fig.colorbar(h[3], ax=ax)
+            ax.set_title("subj %d" % s)
+            ax.set(xlabel=None)
+            ax.set(ylabel=None)
+            ax.legend().set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["top"].set_visible(False)
+            ax.set_xlim(0,1)
+            ax.set_ylim(0,1)
+            
+            
+        handles, labels = ax.get_legend_handles_labels()
+        fig.legend(handles, labels, loc='upper left')
+        fig.supylabel("Model Performance $(R^2)$")
+        fig.supxlabel("Noise Ceiling")
+        plt.tight_layout()
+        
+        plt.savefig("figures/CLIP/var_clip_vs_nc_all_subj.png")
+
+
+
+
+

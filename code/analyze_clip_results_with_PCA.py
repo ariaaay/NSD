@@ -225,7 +225,7 @@ def get_PCs(args, data=None, return_pca_object=False):
         plt.plot(pca.explained_variance_ratio_)
         plt.xlabel("Principal Components")
         plt.ylabel("Explained Variance")
-        plt.xtick(ticks=np.arange(20))
+        plt.xtick(ticks=np.arange(20)+1)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if return_pca_object:
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     plt.plot(pca.explained_variance_ratio_)
     plt.xlabel("Principal Components")
     plt.ylabel("Explained Variance")
-    plt.xticks(ticks=np.arange(20))
+    plt.xticks(ticks=np.arange(20)+1)
     plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if args.group_pca_analysis:
