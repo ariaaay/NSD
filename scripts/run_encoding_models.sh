@@ -75,11 +75,18 @@
 # python code/run_modeling.py --model "resnet50_bottleneck" "clip" --subj $subj --fix_testing
 
 
-for subj in 5; do
+for subj in 1; do
     echo $subj
     # python code/run_modeling.py --model "clip_visual_resnet" --subj $subj --fix_testing --test
-    python code/run_modeling.py --model "clip" "clip_text" --subj $subj --fix_testing --test
+    # python code/run_modeling.py --model "clip" "clip_text" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "clip" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "clip_text" --subj $subj --fix_testing --test
+    python code/run_modeling.py --model "YFCC_clip" --subj $subj --fix_testing
+    python code/run_modeling.py --model "YFCC_simclr" --subj $subj --fix_testing
+    python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
+    python code/run_modeling.py --model "YFCC_blip" --subj $subj --fix_testing
+    python code/run_modeling.py --model "YFCC_simclr" "resnet50_bottleneck" --subj $subj --fix_testing
+
+
 done
