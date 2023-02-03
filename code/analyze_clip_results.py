@@ -1,5 +1,6 @@
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 import os
 import argparse
@@ -271,7 +272,7 @@ def extract_emb_keywords(embedding, activations, common_words, n=15):
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
     subjs = np.arange(1, 9)
     plt.figure()
-    
+
     for subj in subjs:
         sample_corr1 = compute_sample_performance(
             model=model1,
@@ -297,6 +298,7 @@ def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
         "figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s_all_subjs.png"
         % (model1, model2, measure, masking)
     )
+
 
 def get_coco_image(id):
     try:
@@ -595,9 +597,7 @@ def image_level_scatter_plot(subj=1, model1="clip", model2="resnet50_bottleneck"
 
 def make_roi_df(roi_names, subjs, update=False):
     if update:
-        df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
-        )
+        df = pd.read_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
     else:
         df = pd.DataFrame()
 
@@ -619,7 +619,7 @@ def make_roi_df(roi_names, subjs, update=False):
                     # "uv_diff_nc",
                     "joint",
                     "subj",
-                    "nc"
+                    "nc",
                 ]
                 + roi_names
             )
@@ -706,14 +706,13 @@ def make_roi_df(roi_names, subjs, update=False):
             )
         df = pd.concat([df, subj_df])
 
-    df.to_csv(
-        "%s/output/clip/performance_by_roi_df.csv" % args.output_root
-    )
+    df.to_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
     return df
 
+
 def compute_ci_cutoff(n, ci=0.95):
-    ci_ends = np.array([0.+(1-ci)/2., 1-(1-ci)/2.])
-    ci_ind =(ci_ends * n).astype(np.int32)
+    ci_ends = np.array([0.0 + (1 - ci) / 2.0, 1 - (1 - ci) / 2.0])
+    ci_ind = (ci_ends * n).astype(np.int32)
     return ci_ind
 
 
@@ -769,7 +768,9 @@ if __name__ == "__main__":
     parser.add_argument("--group_weight_analysis", default=False, action="store_true")
     parser.add_argument("--clip_rsq_across_subject", default=False, action="store_true")
     parser.add_argument("--extract_captions_for_roi", default=None, type=str)
-    parser.add_argument("--process_bootstrap_results", default=False, action="store_true")
+    parser.add_argument(
+        "--process_bootstrap_results", default=False, action="store_true"
+    )
     parser.add_argument("--nc_scatter_plot", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
@@ -777,37 +778,62 @@ if __name__ == "__main__":
 
     # scatter plot per voxels
     if args.process_bootstrap_results:
-        
-        joint_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
-        clipv_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_whole_brain.npy" % (args.output_root, args.subj))
-        resnet_rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_resnet50_bottleneck_whole_brain.npy" % (args.output_root, args.subj))
-        
+
+        joint_rsq = np.load(
+            "%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_resnet50_bottleneck_whole_brain.npy"
+            % (args.output_root, args.subj)
+        )
+        clipv_rsq = np.load(
+            "%s/output/bootstrap/subj%01d/rsq_dist_clip_visual_resnet_whole_brain.npy"
+            % (args.output_root, args.subj)
+        )
+        resnet_rsq = np.load(
+            "%s/output/bootstrap/subj%01d/rsq_dist_resnet50_bottleneck_whole_brain.npy"
+            % (args.output_root, args.subj)
+        )
+
         fdr_p = fdr_correct_p(resnet_rsq)
-        print(np.sum(fdr_p[1]<0.05))
-        np.save("output/ci_threshold/resnet50_bottleneck_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+        print(np.sum(fdr_p[1] < 0.05))
+        np.save(
+            "output/ci_threshold/resnet50_bottleneck_unique_var_fdr_p_subj%01d.npy"
+            % args.subj,
+            fdr_p,
+        )
 
         fdr_p = fdr_correct_p(clipv_rsq)
-        print(np.sum(fdr_p[1]<0.05))
-        np.save("output/ci_threshold/clip_visual_resnet_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+        print(np.sum(fdr_p[1] < 0.05))
+        np.save(
+            "output/ci_threshold/clip_visual_resnet_fdr_p_subj%01d.npy" % args.subj,
+            fdr_p,
+        )
 
         clip_unique_var = joint_rsq - resnet_rsq
         resnet_unique_var = joint_rsq - clipv_rsq
         del joint_rsq
         del resnet_rsq
         fdr_p = fdr_correct_p(clip_unique_var)
-        print(np.sum(fdr_p[1]<0.05))
-        np.save("output/ci_threshold/clip_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
+        print(np.sum(fdr_p[1] < 0.05))
+        np.save(
+            "output/ci_threshold/clip_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p
+        )
 
         fdr_p = fdr_correct_p(resnet_unique_var)
-        print(np.sum(fdr_p[1]<0.05))
-        np.save("output/ci_threshold/resnet_unique_var_fdr_p_subj%01d.npy" % args.subj, fdr_p)
-
+        print(np.sum(fdr_p[1] < 0.05))
+        np.save(
+            "output/ci_threshold/resnet_unique_var_fdr_p_subj%01d.npy" % args.subj,
+            fdr_p,
+        )
 
         for model in ["clip", "clip_text"]:
-            rsq = np.load("%s/output/bootstrap/subj%01d/rsq_dist_%s_whole_brain.npy" % (args.output_root, args.subj, model))
+            rsq = np.load(
+                "%s/output/bootstrap/subj%01d/rsq_dist_%s_whole_brain.npy"
+                % (args.output_root, args.subj, model)
+            )
             fdr_p = fdr_correct_p(rsq)
-            print(np.sum(fdr_p[1]<0.05))
-            np.save("output/ci_threshold/%s_fdr_p_subj%01d.npy" % (model, args.subj), fdr_p)
+            print(np.sum(fdr_p[1] < 0.05))
+            np.save(
+                "output/ci_threshold/%s_fdr_p_subj%01d.npy" % (model, args.subj), fdr_p
+            )
 
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
@@ -851,25 +877,23 @@ if __name__ == "__main__":
         )
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
-        
+
         m1 = "clip"
         m2 = "resnet50_bottleneck"
 
         plot_image_wise_performance(m1, m2, measure="rsq")
-        
+
         for subj in np.arange(1, 9):
             find_corner_images("clip", "convnet_res50", subj=subj, measure="rsq")
 
         roi_list = list(roi_name_dict.keys())
         roi_list = ["floc-faces", "floc-bodies", "prf-visualrois", "floc-places"]
-        
+
         for roi in roi_list:
             plot_image_wise_performance(m1, m2, masking=roi, measure="rsq")
 
             for subj in np.arange(1, 9):
                 find_corner_images(m1, m2, masking=roi, measure="rsq", subj=subj)
-
-            
 
     if args.compare_brain_and_clip_performance:
         compare_model_and_brain_performance_on_COCO()
@@ -1068,8 +1092,7 @@ if __name__ == "__main__":
         roi_names = list(roi_name_dict.keys())
         if not args.rerun_df:
             df = pd.read_csv(
-                "%s/output/clip/performance_by_roi_df.csv"
-                % args.output_root
+                "%s/output/clip/performance_by_roi_df.csv" % args.output_root
             )
         else:
             df = make_roi_df(roi_names, subjs=np.arange(1, 9))
@@ -1116,9 +1139,7 @@ if __name__ == "__main__":
             ("language", "AG"),
         ]
         axis_labels = [v for _, v in roa_list]
-        df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
-        )
+        df = pd.read_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
         new_df = pd.DataFrame()
         for i, (roi_name, roi_lab) in enumerate(roa_list):
             roi_df = df[df[roi_name] == roi_lab].copy()
@@ -1231,9 +1252,7 @@ if __name__ == "__main__":
         # for roi_name in roi_names:
         #     if df[roi]
 
-        df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
-        )
+        df = pd.read_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
         subjs = np.arange(1, 9)
         roi_by_subj_mean_clip = np.zeros((8, len(roa_list)))
         roi_by_subj_mean_resnet = np.zeros((8, len(roa_list)))
@@ -1242,8 +1261,8 @@ if __name__ == "__main__":
                 "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
                 % (args.output_root, subj, subj)
             )
-            varc = df[df["subj"] == subj]["var_clip"] / (nc[nc >= 10]/100)
-            varr = df[df["subj"] == subj]["var_resnet"] / (nc[nc >= 10]/100)
+            varc = df[df["subj"] == subj]["var_clip"] / (nc[nc >= 10] / 100)
+            varr = df[df["subj"] == subj]["var_resnet"] / (nc[nc >= 10] / 100)
             tmp_c = ztransform(varc)
             tmp_r = ztransform(varr)
 
@@ -1308,7 +1327,9 @@ if __name__ == "__main__":
                 "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
                 % (args.output_root, subj + 1, subj + 1)
             )
-            means.append(np.mean(subj_var / (nc/100), where=np.isfinite(subj_var / (nc/100))))
+            means.append(
+                np.mean(subj_var / (nc / 100), where=np.isfinite(subj_var / (nc / 100)))
+            )
         print(means)
 
     if args.nc_scatter_plot:
@@ -1336,17 +1357,14 @@ if __name__ == "__main__":
         #     plt.xlabel("Noise ceiling")
         # plt.tight_layout()
         # plt.savefig("figures/CLIP/var_clip_vs_nc_per_subj.png")
-        
-        
+
         # plt.figure()
         # sns.scatterplot(x=nc_array, y=var_array, alpha=0.5)
         # sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=1, color="red")
         # plt.savefig("figures/CLIP/var_clip_vs_nc.png")
 
-        df = pd.read_csv(
-            "%s/output/clip/performance_by_roi_df.csv" % args.output_root
-        )
-        df["nc"] = df["nc"]/100
+        df = pd.read_csv("%s/output/clip/performance_by_roi_df.csv" % args.output_root)
+        df["nc"] = df["nc"] / 100
         # percentiles = [75, 90, 95, 99]
         # markers = ["*", "+", "x", "o"]
 
@@ -1364,7 +1382,7 @@ if __name__ == "__main__":
         # sns.boxplot(data=df5, x="nc_bins", y="perc_nc")
         # plt.ylim((-0.1, 1.1))
         # plt.xticks(rotation = 45)
-   
+
         # # n = len(df5["nc"])
         # # for i, p in enumerate(percentiles):
         # #     px = np.percentile(df["nc"], p)
@@ -1380,31 +1398,55 @@ if __name__ == "__main__":
 
         # PLOTTING SUBJ5
         plt.figure()
-        df5=df[df["subj"]==5]
-        sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling")
-        sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling")
+        df5 = df[df["subj"] == 5]
+        sns.lineplot(
+            [-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling"
+        )
+        sns.lineplot(
+            [-0.05, 1],
+            [-0.05, 0.85],
+            linewidth=2,
+            color="orange",
+            linestyle="--",
+            label="85% noise ceiling",
+        )
 
-        plt.hist2d(df5["nc"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+        plt.hist2d(
+            df5["nc"],
+            df5["var_clip"],
+            bins=100,
+            norm=mpl.colors.LogNorm(),
+            cmap="magma",
+        )
         plt.colorbar()
         plt.xlabel("Noise Ceiling")
         plt.ylabel("Model Performance $(R^2)$")
-        plt.xlim(0,1)
-        plt.ylim(0,1)
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
         plt.legend()
         plt.grid(True)
         plt.savefig("figures/CLIP/var_clip_vs_nc_subj5_2dhist.png")
 
         plt.figure()
-        sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling")
-        sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling")
+        sns.lineplot(
+            [-0.05, 1], [-0.05, 1], linewidth=2, color="red", label="noise ceiling"
+        )
+        sns.lineplot(
+            [-0.05, 1],
+            [-0.05, 0.85],
+            linewidth=2,
+            color="orange",
+            linestyle="--",
+            label="85% noise ceiling",
+        )
 
         plt.hist2d(df5["nc"], df5["var_resnet"], bins=100, norm=mpl.colors.LogNorm())
 
         plt.colorbar()
         plt.xlabel("Noise Ceiling")
         plt.ylabel("Model Performance $(R^2)$")
-        plt.xlim(0,1)
-        plt.ylim(0,1)
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
         plt.legend()
         plt.grid(True)
         plt.savefig("figures/CLIP/var_rn_vs_nc_subj5_2dhist.png")
@@ -1413,7 +1455,9 @@ if __name__ == "__main__":
         plt.subplot(2, 1, 1)
         sns.lineplot([-0.05, 1], [-0.05, 1], linewidth=1, color="red")
 
-        plt.hist2d(df5["var_resnet"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm())
+        plt.hist2d(
+            df5["var_resnet"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm()
+        )
 
         plt.colorbar()
         plt.xlabel("$ResNet_{ImageNet}$", size=20)
@@ -1425,7 +1469,13 @@ if __name__ == "__main__":
 
         plt.subplot(2, 1, 2)
         sns.lineplot([-0.1, 1], [-0.1, 1], linewidth=1, color="red")
-        plt.hist2d(df5["uv_resnet"], df5["uv_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+        plt.hist2d(
+            df5["uv_resnet"],
+            df5["uv_clip"],
+            bins=100,
+            norm=mpl.colors.LogNorm(),
+            cmap="magma",
+        )
 
         plt.colorbar()
         plt.xlabel("$ResNet_{ImageNet}$", size=20)
@@ -1436,18 +1486,37 @@ if __name__ == "__main__":
         plt.title("Unique Variance", size=24)
         plt.tight_layout()
         plt.savefig("figures/CLIP/var_rn_vs_clip_subj5_2dhist.png", dpi=300)
-        
-
 
         # PLOTTING ALL SUBJECTS
         fig, axes = plt.subplots(4, 2, sharex=True, sharey=True, figsize=(10, 15))
         for s, ax in zip(np.arange(8) + 1, axes.T.flatten()):
-            dfs=df[df["subj"]==s]
-            h = ax.hist2d(dfs["nc"], dfs["var_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
+            dfs = df[df["subj"] == s]
+            h = ax.hist2d(
+                dfs["nc"],
+                dfs["var_clip"],
+                bins=100,
+                norm=mpl.colors.LogNorm(),
+                cmap="magma",
+            )
 
-            sns.lineplot([-0.05, 1.05], [-0.05, 1.05], linewidth=2, color="red", label="Noise Ceiling", ax=ax)
-            sns.lineplot([-0.05, 1], [-0.05, 0.85], linewidth=2, color="orange", linestyle='--', label="85% noise ceiling", ax=ax)
-            
+            sns.lineplot(
+                [-0.05, 1.05],
+                [-0.05, 1.05],
+                linewidth=2,
+                color="red",
+                label="Noise Ceiling",
+                ax=ax,
+            )
+            sns.lineplot(
+                [-0.05, 1],
+                [-0.05, 0.85],
+                linewidth=2,
+                color="orange",
+                linestyle="--",
+                label="85% noise ceiling",
+                ax=ax,
+            )
+
             ax.grid()
             fig.colorbar(h[3], ax=ax)
             ax.set_title("subj %d" % s)
@@ -1456,19 +1525,13 @@ if __name__ == "__main__":
             ax.legend().set_visible(False)
             ax.spines["right"].set_visible(False)
             ax.spines["top"].set_visible(False)
-            ax.set_xlim(0,1)
-            ax.set_ylim(0,1)
-            
-            
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+
         handles, labels = ax.get_legend_handles_labels()
-        fig.legend(handles, labels, loc='upper left')
+        fig.legend(handles, labels, loc="upper left")
         fig.supylabel("Model Performance $(R^2)$")
         fig.supxlabel("Noise Ceiling")
         plt.tight_layout()
-        
+
         plt.savefig("figures/CLIP/var_clip_vs_nc_all_subj.png")
-
-
-
-
-

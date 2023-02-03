@@ -19,30 +19,31 @@ from featureprep.feature_prep import get_preloaded_features
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
+
 def get_t2i_map():
-    
+
     file_name = "%s/output/clip/text_to_image_ridge_model.pkl" % args.output_root
     try:
         with open(file_name, "rb") as file:
             clf = pickle.load(file)
     except FileNotFoundError:
         all_coco_ids = np.load(
-        "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
+            "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
         )
         image_activations = get_preloaded_features(
-                1,
-                all_coco_ids,
-                "clip",
-                layer=None,
-                features_dir=args.features_dir,
-            ).squeeze()
+            1,
+            all_coco_ids,
+            "clip",
+            layer=None,
+            features_dir=args.features_dir,
+        ).squeeze()
         text_activations = get_preloaded_features(
-                1,
-                all_coco_ids,
-                "clip_text",
-                layer=None,
-                features_dir=args.features_dir,
-            )
+            1,
+            all_coco_ids,
+            "clip_text",
+            layer=None,
+            features_dir=args.features_dir,
+        )
         text_activations = np.array(text_activations).squeeze()
         train_idx, test_idx = train_test_split(
             np.arange(text_activations.shape[0]), test_size=0.15, random_state=42
@@ -50,12 +51,13 @@ def get_t2i_map():
         # print(text_activations.shape)
 
         from sklearn.linear_model import Ridge
+
         clf = Ridge(alpha=1.0)
         clf.fit(text_activations[train_idx], image_activations[train_idx])
         file_name = "%s/output/clip/text_to_image_ridge_model.pkl" % args.output_root
         with open(file_name, "wb") as file:
             pickle.dump(clf, file)
-            
+
         score = clf.score(text_activations[test_idx], image_activations[test_idx])
         print("text to image score on 500 test images is: " + str(score))
     return clf
@@ -66,13 +68,15 @@ def compute_acc(scores):
     top5_count, rank_count = 0, 0
     n = scores.shape[0]
     for gi in range(n):
-        sample_preds = np.argsort(scores[gi,:])[::-1]
+        sample_preds = np.argsort(scores[gi, :])[::-1]
         if gi in sample_preds[:5]:
             top5_count += 1
-        pred_rank = np.where(sample_preds==gi)[0]
-        rank_count += (n - pred_rank) / n # 1000 - rank in prediction; correct prediction would yield 1
+        pred_rank = np.where(sample_preds == gi)[0]
+        rank_count += (
+            n - pred_rank
+        ) / n  # 1000 - rank in prediction; correct prediction would yield 1
 
-    acc_top1 = np.sum(prediction_idx == np.arange(n))/ n
+    acc_top1 = np.sum(prediction_idx == np.arange(n)) / n
     acc_top5 = top5_count / n
     acc_rank = rank_count / n
 
@@ -80,8 +84,8 @@ def compute_acc(scores):
 
 
 def decode_captions_for_voxels_t2i(subj):
-    gt_subset_n = 1000 # take the first n samples from test set as candidate answers
-    
+    gt_subset_n = 1000  # take the first n samples from test set as candidate answers
+
     all_captions = []
     all_coco_ids = np.load(
         "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
@@ -126,20 +130,22 @@ def decode_captions_for_voxels_t2i(subj):
     # print(text_activations.shape)
 
     weights = np.load(
-        "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy" % (args.output_root, subj)
+        "%s/output/encoding_results/subj%d/weights_clip_whole_brain.npy"
+        % (args.output_root, subj)
     )
     bias = np.load(
-        "%s/output/encoding_results/subj%d/bias_clip_whole_brain.npy" % (args.output_root, subj)
+        "%s/output/encoding_results/subj%d/bias_clip_whole_brain.npy"
+        % (args.output_root, subj)
     )
 
     image_activations = get_preloaded_features(
-            subj,
-            all_coco_ids,
-            "clip",
-            layer=None,
-            features_dir=args.features_dir,
-        ).squeeze()
-    
+        subj,
+        all_coco_ids,
+        "clip",
+        layer=None,
+        features_dir=args.features_dir,
+    ).squeeze()
+
     img_mean = image_activations[train_idx, :].mean(axis=0, keepdims=True)
 
     clf = get_t2i_map()
@@ -152,12 +158,17 @@ def decode_captions_for_voxels_t2i(subj):
 
     print("prediction shape: ")
     print(pred_t2i.shape)
-    pred_t2i = pred_t2i.squeeze()[:,mask]
+    pred_t2i = pred_t2i.squeeze()[:, mask]
     pred_ceiling = pred_ceiling.squeeze()[:, mask]
-    
-    image_gt = np.load("%s/output/encoding_results/subj%s/pred_clip_whole_brain.p" % (args.output_root, subj), allow_pickle=True)[1][:gt_subset_n, mask]
-    
+
+    image_gt = np.load(
+        "%s/output/encoding_results/subj%s/pred_clip_whole_brain.p"
+        % (args.output_root, subj),
+        allow_pickle=True,
+    )[1][:gt_subset_n, mask]
+
     from sklearn.metrics import mean_squared_error
+
     score_func = mean_squared_error
     score_func = r2_score
 
@@ -165,13 +176,18 @@ def decode_captions_for_voxels_t2i(subj):
     scores_ceiling = np.zeros((len(image_gt), len(pred_t2i)))
 
     from numpy import matlib
+
     for i in tqdm(range(len(image_gt))):
-        scores_t2i[i, :] = score_func(matlib.repmat(image_gt[i], len(pred_t2i), 1).T, pred_t2i.T)
-        scores_ceiling[i, :] = score_func(matlib.repmat(image_gt[i], len(pred_ceiling), 1).T, pred_ceiling.T)
-    
+        scores_t2i[i, :] = score_func(
+            matlib.repmat(image_gt[i], len(pred_t2i), 1).T, pred_t2i.T
+        )
+        scores_ceiling[i, :] = score_func(
+            matlib.repmat(image_gt[i], len(pred_ceiling), 1).T, pred_ceiling.T
+        )
+
     accs_t2i, prediction_idx_t2i = compute_acc(scores_t2i)
     accs_ceiling, _ = compute_acc(scores_ceiling)
-    
+
     plt.figure()
     plt.imshow(scores_t2i, aspect="auto")
     plt.colorbar()
@@ -179,12 +195,16 @@ def decode_captions_for_voxels_t2i(subj):
         plt.savefig("figures/captions_decoding/scores_t2i_%s.png" % subj)
     except ValueError:
         pass
-    
-    prediction_output = [[all_captions[prediction_idx_t2i[i]], all_captions[i]] for i in range(gt_subset_n)]
 
-    with open("%s/output/caption_decoding/pred_subj%s.pkl" % (args.output_root, subj), "wb") as f:
+    prediction_output = [
+        [all_captions[prediction_idx_t2i[i]], all_captions[i]]
+        for i in range(gt_subset_n)
+    ]
+
+    with open(
+        "%s/output/caption_decoding/pred_subj%s.pkl" % (args.output_root, subj), "wb"
+    ) as f:
         pickle.dump(prediction_output, f)
-    
 
     return accs_t2i, accs_ceiling, prediction_output
 
@@ -199,12 +219,11 @@ def decode_captions_for_voxels_i2i(subj):
         np.arange(len(all_coco_ids)), test_size=0.15, random_state=42
     )
 
-
     test_coco_ids = all_coco_ids[test_idx]
     for cid in tqdm(test_coco_ids):
         captions = load_captions(cid)
         all_captions.append(captions[0])
-    
+
     test_n = 20
     test_sample_idx = test_idx[:test_n]
     candidate_idx = test_idx[test_n:]
@@ -212,7 +231,7 @@ def decode_captions_for_voxels_i2i(subj):
 
     candidate_caption = all_captions[test_n:]
     test_sample_caption = all_captions[:test_n]
-    
+
     text_activations = []
     model, _ = clip.load("ViT-B/32", device=device)
     for caption in all_captions:
@@ -224,18 +243,19 @@ def decode_captions_for_voxels_i2i(subj):
     # print(text_activations.shape)
 
     image_activations = get_preloaded_features(
-            subj,
-            all_coco_ids,
-            "clip",
-            layer=None,
-            features_dir=args.features_dir,
-        ).squeeze()
-    
+        subj,
+        all_coco_ids,
+        "clip",
+        layer=None,
+        features_dir=args.features_dir,
+    ).squeeze()
+
     image_test_samples = image_activations[test_sample_idx]
     image_candidates = image_activations[candidate_idx]
-    
+
     scores = np.zeros((len(image_test_samples), len(image_candidates)))
     from scipy.spatial.distance import cosine
+
     for t, sample in enumerate(image_test_samples):
         scores[t, :] = [cosine(sample, c) for c in image_candidates]
 
@@ -244,23 +264,25 @@ def decode_captions_for_voxels_i2i(subj):
     plt.colorbar()
     plt.savefig("figures/captions_decoding/scores_i2i_%s.png" % subj)
 
-    
-    prediction_output = [[candidate_caption[idx], test_sample_caption[i]] for i, idx in enumerate(prediction_idx)]
+    prediction_output = [
+        [candidate_caption[idx], test_sample_caption[i]]
+        for i, idx in enumerate(prediction_idx)
+    ]
 
-    with open("%s/output/caption_decoding/pred_subj_out_of_set_%s.pkl" % (args.output_root, subj), "wb") as f:
+    with open(
+        "%s/output/caption_decoding/pred_subj_out_of_set_%s.pkl"
+        % (args.output_root, subj),
+        "wb",
+    ) as f:
         pickle.dump(prediction_output, f)
 
     return prediction_output
-    
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--subj",
-        type=int,
-        default=1,
-        help="Specify which subject to build model on."
+        "--subj", type=int, default=1, help="Specify which subject to build model on."
     )
     parser.add_argument(
         "--output_root",
@@ -276,7 +298,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    
+
     accs = []
     subjs = np.arange(1, 9)
     # for subj in np.arange(1, 9):
@@ -284,7 +306,7 @@ if __name__ == "__main__":
         acc_t2i, acc_ceiling, prediction_output = decode_captions_for_voxels_t2i(subj)
         print(prediction_output[20:30])
         accs.append(np.vstack((acc_t2i, acc_ceiling)))
-    
+
     accs = np.array(accs)
     print(accs.shape)
 
@@ -302,7 +324,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig("figures/captions_decoding/acc_i2t_across_subj_testing.png")
 
-    normalized_accs = accs[0, : :] / accs[1, :, :]
+    normalized_accs = accs[0, ::] / accs[1, :, :]
     plt.figure()
     plt.plot(subjs, normalized_accs[0, :], label="top 1")
     plt.plot(subjs, normalized_accs[1, :], label="top 5")

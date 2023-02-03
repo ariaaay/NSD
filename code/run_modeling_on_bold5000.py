@@ -14,6 +14,7 @@ from featureprep.feature_prep import (
 )
 from util.data_util import load_subset_trials
 
+
 def zero_strip(s):
     if s[0] == "0":
         s = s[1:]
@@ -93,9 +94,7 @@ def get_features(subj, model, dataset="", br_subset_idx=None):
 
     # events also has a stim list, it is same as the "stim_lists.txt"; but repetition is not indicated in the file name.
 
-    if (
-            dataset is not ""
-    ):  # only an argument for features spaces that applies to all
+    if dataset is not "":  # only an argument for features spaces that applies to all
         if dataset == "ImageNet":
             br_subset_idx = imgnet_idx
             stim_list = np.array(stim_list)[imgnet_idx]
@@ -109,9 +108,10 @@ def get_features(subj, model, dataset="", br_subset_idx=None):
     if br_subset_idx is None:
         br_subset_idx = get_nonrep_index(stim_list)
 
-    featmat = [] #TODO
+    featmat = []  # TODO
 
     return featmat, br_subset_idx
+
 
 def run(
     fm,
@@ -228,7 +228,7 @@ if __name__ == "__main__":
         args.model,
         layer=args.layer,
         dim=args.dim,
-        )
+    )
 
     brain_path = (
         "%s/cortical_voxels/cortical_voxel_across_sessions_zscored_CSI%d.npy"
@@ -255,8 +255,6 @@ if __name__ == "__main__":
     print(np.any(np.isnan(br_data)))
     print(np.all(np.isfinite(br_data)))
     print("Brain response size is: " + str(br_data.shape))
-
-   
 
     # Load feature spaces
     if args.feature_matrix is not None:  # for general design matrix input

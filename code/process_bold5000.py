@@ -48,36 +48,39 @@ def extract_voxels(
         % (args.output_dir, subj)
     )
 
-    mask = np.load(
-        "%s/voxels_masks/CSI%d/cortical_mask.npy"
-        % (args.output_dir, subj)
-    )
+    mask = np.load("%s/voxels_masks/CSI%d/cortical_mask.npy" % (args.output_dir, subj))
     print("Subj:" + str(subj))
-    print("Mask Shape:" )
+    print("Mask Shape:")
     print(mask.shape)
 
     cortical_beta_mat = None
     for ses in tqdm(range(1, 16)):
         try:
-            beta_file = nib.load("%s/CSI%d_GLMbetas-TYPED-FITHRF-GLMDENOISE-RR_ses-%02d.nii.gz" % (beta_path, subj, ses))
+            beta_file = nib.load(
+                "%s/CSI%d_GLMbetas-TYPED-FITHRF-GLMDENOISE-RR_ses-%02d.nii.gz"
+                % (beta_path, subj, ses)
+            )
         except FileNotFoundError:
             break
         beta = beta_file.get_fdata()
-        cortical_beta = beta.T[:,mask]
+        cortical_beta = beta.T[:, mask]
         cortical_beta = zscore(cortical_beta)
 
         if cortical_beta_mat is None:
-            cortical_beta_mat = cortical_beta #TODO: check this divide by 300 step 
+            cortical_beta_mat = cortical_beta  # TODO: check this divide by 300 step
         else:
             cortical_beta_mat = np.vstack((cortical_beta_mat, cortical_beta))
-    
+
     print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
     print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
-    
+
     if np.any(np.isnan(cortical_beta_mat)):
         print("Generating nonzero mask...")
         non_zero_mask = np.sum(np.isnan(cortical_beta_mat), axis=0) < 1
-        np.save("%s/voxels_masks/CSI%d/nonzero_voxels.npy" % (args.output_dir, subj), non_zero_mask)
+        np.save(
+            "%s/voxels_masks/CSI%d/nonzero_voxels.npy" % (args.output_dir, subj),
+            non_zero_mask,
+        )
 
     print("NaN Values:" + str(np.any(np.isnan(cortical_beta_mat))))
     print("Is finite:" + str(np.all(np.isfinite(cortical_beta_mat))))
@@ -105,7 +108,9 @@ if __name__ == "__main__":
     #     "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj01/func1pt8mm/roi",
     # )
     parser.add_argument(
-        "--output_dir", type=str, default="/user_data/yuanw3/project_outputs/BOLD5000/outputs"
+        "--output_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/BOLD5000/outputs",
     )
 
     args = parser.parse_args()
@@ -118,6 +123,5 @@ if __name__ == "__main__":
     for subj in subjs:
         if not os.path.isdir("%s/voxels_masks/CSI%d" % (args.output_dir, subj)):
             os.makedirs("%s/voxels_masks/CSI%d" % (args.output_dir, subj))
-
 
     extract_voxels(subj)

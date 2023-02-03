@@ -5,6 +5,7 @@ valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.j
 train_caps = COCO(trainFile)
 val_caps = COCO(valFile)
 
+
 def load_captions(cid):
     annIds = train_caps.getAnnIds(imgIds=[cid])
     anns = train_caps.loadAnns(annIds)

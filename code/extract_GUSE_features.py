@@ -9,11 +9,14 @@ from tqdm import tqdm
 
 from util.coco_utils import load_captions
 
-module_url = "https://tfhub.dev/google/universal-sentence-encoder/4" #@param ["https://tfhub.dev/google/universal-sentence-encoder/4", "https://tfhub.dev/google/universal-sentence-encoder-large/5"]
+module_url = "https://tfhub.dev/google/universal-sentence-encoder/4"  # @param ["https://tfhub.dev/google/universal-sentence-encoder/4", "https://tfhub.dev/google/universal-sentence-encoder-large/5"]
 model = hub.load(module_url)
-print ("module %s loaded" % module_url)
+print("module %s loaded" % module_url)
+
+
 def embed(input):
-  return model(input)
+    return model(input)
+
 
 # Reduce logging output.
 logging.set_verbosity(logging.ERROR)
@@ -46,6 +49,5 @@ if __name__ == "__main__":
         embeddings = embed(captions).numpy()
         embedding_avg = np.mean(embeddings, axis=0)
         all_text_features.append(embedding_avg)
-    
-    
+
     np.save("%s/GUSE.npy" % feature_output_dir, np.array(all_text_features))

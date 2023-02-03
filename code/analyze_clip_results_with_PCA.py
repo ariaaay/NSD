@@ -111,7 +111,7 @@ def extract_single_subject_weight(subj, args):
             "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
             % (args.output_root, subj, subj)
         )
-        rsq = rsq / (nc/100)
+        rsq = rsq / (nc / 100)
     if args.threshold == 0:  # then selecting voxels based on number of accuracy
         if args.best_voxel_n != 0:
             threshold = rsq[
@@ -225,7 +225,7 @@ def get_PCs(args, data=None, return_pca_object=False):
         plt.plot(pca.explained_variance_ratio_)
         plt.xlabel("Principal Components")
         plt.ylabel("Explained Variance")
-        plt.xtick(ticks=np.arange(20)+1)
+        plt.xtick(ticks=np.arange(20) + 1)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if return_pca_object:
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     plt.plot(pca.explained_variance_ratio_)
     plt.xlabel("Principal Components")
     plt.ylabel("Explained Variance")
-    plt.xticks(ticks=np.arange(20)+1)
+    plt.xticks(ticks=np.arange(20) + 1)
     plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if args.group_pca_analysis:

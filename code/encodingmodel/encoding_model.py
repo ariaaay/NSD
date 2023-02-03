@@ -213,10 +213,12 @@ def bootstrap_test(
         #     )
         # )
         weights = np.load(
-            "%s/encoding_results/subj%d/weights_%s_whole_brain.npy" % (output_dir, subj, model_name)
+            "%s/encoding_results/subj%d/weights_%s_whole_brain.npy"
+            % (output_dir, subj, model_name)
         )
         bias = np.load(
-            "%s/encoding_results/subj%d/bias_%s_whole_brain.npy" % (output_dir, subj, model_name)
+            "%s/encoding_results/subj%d/bias_%s_whole_brain.npy"
+            % (output_dir, subj, model_name)
         )
 
     except FileNotFoundError:
