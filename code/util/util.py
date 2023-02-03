@@ -17,8 +17,12 @@ def zero_strip(s):
 
 
 def r2_score(Real, Pred):
+    # print(Real.shape)
+    # print(Pred.shape)
     SSres = np.mean((Real - Pred) ** 2, 0)
+    # print(SSres.shape)
     SStot = np.var(Real, 0)
+    # print(SStot.shape)
     return np.nan_to_num(1 - SSres / SStot)
 
 

@@ -176,7 +176,7 @@ def extract_captions_for_voxel(roi, n=3):
     except FileNotFoundError:
         import clip
         import torch
-        from extract_clip_features import load_captions
+        from util.coco_utils import load_captions
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -269,27 +269,32 @@ def extract_emb_keywords(embedding, activations, common_words, n=15):
 
 
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
-    sample_corr1 = compute_sample_performance(
-        model=model1,
-        subj=1,
-        output_dir=args.output_root,
-        masking=masking,
-        measure=measure,
-    )
-    sample_corr2 = compute_sample_performance(
-        model=model2,
-        subj=1,
-        output_dir=args.output_root,
-        masking=masking,
-        measure=measure,
-    )
+    subjs = np.arange(1, 9)
     plt.figure()
-    plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
-    plt.plot([-0.1, 1], [-0.1, 1], "r")
-    plt.xlabel(model1)
-    plt.ylabel(model2)
+    
+    for subj in subjs:
+        sample_corr1 = compute_sample_performance(
+            model=model1,
+            subj=subj,
+            output_dir=args.output_root,
+            masking=masking,
+            measure=measure,
+        )
+        sample_corr2 = compute_sample_performance(
+            model=model2,
+            subj=subj,
+            output_dir=args.output_root,
+            masking=masking,
+            measure=measure,
+        )
+        plt.subplot(2, 4, subj)
+        plt.scatter(sample_corr1, sample_corr2, alpha=0.3)
+        plt.plot([-0.1, 1], [-0.1, 1], "r")
+        plt.xlabel(model1)
+        plt.ylabel(model2)
+
     plt.savefig(
-        "figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s.png"
+        "figures/CLIP/image_wise_performance/%s_vs_%s_samplewise_%s_%s_all_subjs.png"
         % (model1, model2, measure, masking)
     )
 
@@ -327,18 +332,18 @@ def get_coco_caps(id):
 
 
 def find_corner_images(
-    model1, model2, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
+    model1, model2, subj, upper_thr=0.5, lower_thr=0.03, masking="sig", measure="corrs"
 ):
     sp1 = compute_sample_performance(
         model=model1,
-        subj=1,
+        subj=subj,
         output_dir=args.output_root,
         masking=masking,
         measure=measure,
     )
     sp2 = compute_sample_performance(
         model=model2,
-        subj=1,
+        subj=subj,
         output_dir=args.output_root,
         masking=masking,
         measure=measure,
@@ -362,8 +367,8 @@ def find_corner_images(
     test_image_id, _ = extract_test_image_ids(subj=1)
     corner_image_ids = [test_image_id[idx] for idx in corner_idxes]
     with open(
-        "%s/output/clip/%s_vs_%s_corner_image_ids_%s_sample_%s.npy"
-        % (args.output_root, model1, model2, masking, measure),
+        "%s/output/clip/%s_vs_%s_corner_image_ids_%s_sample_%s_%s.npy"
+        % (args.output_root, model1, model2, masking, measure, subj),
         "wb",
     ) as f:
         pickle.dump(corner_image_ids, f)
@@ -386,8 +391,8 @@ def find_corner_images(
         # plt.title(image_labels[i])
         plt.tight_layout()
         plt.savefig(
-            "figures/CLIP/corner_images/sample_%s_images_%s_%s.png"
-            % (measure, image_labels[i], masking)
+            "figures/CLIP/corner_images/sample_%s_images_%s_%s_%s.png"
+            % (measure, image_labels[i], masking, subj)
         )
         plt.close()
 
@@ -395,7 +400,7 @@ def find_corner_images(
 def compare_model_and_brain_performance_on_COCO():
     import torch
     from scipy.stats import pearsonr
-    from extract_clip_features import load_captions
+    from utils.coco_utils import load_captions
 
     stimuli_dir = "/lab_data/tarrlab/common/datasets/NSD_images/images"
 
@@ -846,25 +851,25 @@ if __name__ == "__main__":
         )
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
-        plot_image_wise_performance("clip", "convnet_res50")
-        find_corner_images("clip", "convnet_res50")
+        
+        m1 = "clip"
+        m2 = "resnet50_bottleneck"
+
+        plot_image_wise_performance(m1, m2, measure="rsq")
+        
+        for subj in np.arange(1, 9):
+            find_corner_images("clip", "convnet_res50", subj=subj, measure="rsq")
 
         roi_list = list(roi_name_dict.keys())
         roi_list = ["floc-faces", "floc-bodies", "prf-visualrois", "floc-places"]
+        
         for roi in roi_list:
-            plot_image_wise_performance("convnet_res50", "clip", masking=roi)
-            find_corner_images("clip", "convnet_res50", masking=roi)
-            plot_image_wise_performance("bert_layer_13", "clip", masking=roi)
-            find_corner_images("clip", "bert_layer_13", masking=roi)
+            plot_image_wise_performance(m1, m2, masking=roi, measure="rsq")
 
-            plot_image_wise_performance(
-                "convnet_res50", "clip", masking=roi, measure="rsq"
-            )
-            find_corner_images("clip", "convnet_res50", masking=roi, measure="rsq")
-            plot_image_wise_performance(
-                "bert_layer_13", "clip", masking=roi, measure="rsq"
-            )
-            find_corner_images("clip", "bert_layer_13", masking=roi, measure="rsq")
+            for subj in np.arange(1, 9):
+                find_corner_images(m1, m2, masking=roi, measure="rsq", subj=subj)
+
+            
 
     if args.compare_brain_and_clip_performance:
         compare_model_and_brain_performance_on_COCO()
@@ -1182,16 +1187,16 @@ if __name__ == "__main__":
             ax.spines["right"].set_visible(False)
             ax.spines["top"].set_visible(False)
             # plt.gca().title.set_text(roi)
-        fig.supylabel("Unique Var. of CLIP", size=18)
-        fig.supxlabel("Unique Var. of " + r"$ResNet_I$", size=18)
+        fig.supylabel("Unique Var. of " + r"$ResNet_{CLIP}$", size=18)
+        fig.supxlabel("Unique Var. of " + r"$ResNet_{ImageNet}$", size=18)
 
         plt.tight_layout()
         plt.savefig(
             "figures/CLIP/performances_by_roi/unique_var_scatterplot_by_roi.png"
         )
 
-        fig.supylabel("Unique Var. of CLIP", size=20)
-        fig.supxlabel("Unique Var. of " + r"$ResNet_I$", size=20)
+        fig.supylabel("Unique Var. of " + r"$ResNet_{CLIP}$", size=20)
+        fig.supxlabel("Unique Var. of " + r"$ResNet_{ImageNet}$", size=20)
         plt.savefig(
             "figures/CLIP/performances_by_roi/unique_var_scatterplot_by_roi_poster.png"
         )
@@ -1411,8 +1416,8 @@ if __name__ == "__main__":
         plt.hist2d(df5["var_resnet"], df5["var_clip"], bins=100, norm=mpl.colors.LogNorm())
 
         plt.colorbar()
-        plt.xlabel("$ResNet_I$", size=22)
-        plt.ylabel("CLIP", size=22)
+        plt.xlabel("$ResNet_{ImageNet}$", size=20)
+        plt.ylabel("$ResNet_{CLIP}$", size=20)
         plt.xlim(-0.05, 0.9)
         plt.ylim(-0.05, 0.9)
         plt.grid(True)
@@ -1423,8 +1428,8 @@ if __name__ == "__main__":
         plt.hist2d(df5["uv_resnet"], df5["uv_clip"], bins=100, norm=mpl.colors.LogNorm(), cmap="magma")
 
         plt.colorbar()
-        plt.xlabel("$ResNet_I$", size=22)
-        plt.ylabel("CLIP", size=22)
+        plt.xlabel("$ResNet_{ImageNet}$", size=20)
+        plt.ylabel("$ResNet_{CLIP}$", size=20)
         plt.xlim(-0.15, 0.4)
         plt.ylim(-0.15, 0.4)
         plt.grid(True)

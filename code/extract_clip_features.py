@@ -16,28 +16,9 @@ import torch.nn as nn
 import clip
 from util.util import pytorch_pca
 from util.data_util import load_top1_objects_in_COCO, load_objects_in_COCO
+from util.coco_utils import load_captions
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-from pycocotools.coco import COCO
-
-trainFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
-valFile = "/lab_data/tarrlab/common/datasets/coco_annotations/captions_val2017.json"
-train_caps = COCO(trainFile)
-val_caps = COCO(valFile)
-
-
-def load_captions(cid):
-    annIds = train_caps.getAnnIds(imgIds=[cid])
-    anns = train_caps.loadAnns(annIds)
-    if anns == []:
-        annIds = val_caps.getAnnIds(imgIds=[cid])
-        anns = val_caps.loadAnns(annIds)
-
-    if anns == []:
-        print("no captions extracted for image: " + str(cid))
-
-    captions = [d["caption"] for d in anns]
-    return captions
 
 
 def load_object_caption_overlap(cid):
