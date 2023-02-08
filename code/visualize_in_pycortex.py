@@ -493,6 +493,14 @@ if __name__ == "__main__":
         noise_corrected=False,
     )
 
+    # volumes["GUSE R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="GUSE",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     noise_corrected=False,
+    # )
+
     volumes["clip-text-last R^2"] = make_volume(
         subj=args.subj,
         model="clip_text",
@@ -508,20 +516,20 @@ if __name__ == "__main__":
         measure="rsq",
     )
 
-    # volumes["bert-13 R^2"] = make_volume(
-    #     subj=args.subj,
-    #     model="bert_layer_13",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    # )
+    volumes["bert-13 R^2"] = make_volume(
+        subj=args.subj,
+        model="bert_layer_13",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
 
-    # volumes["resnet50 R^2"] = make_volume(
-    #     subj=args.subj,
-    #     # model="convnet_res50",
-    #     model="resnet50_bottleneck",
-    #     mask_with_significance=args.mask_sig,
-    #     measure="rsq",
-    # )
+    volumes["resnet50 R^2"] = make_volume(
+        subj=args.subj,
+        # model="convnet_res50",
+        model="resnet50_bottleneck",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+    )
 
     # volumes["clip&resnet50-clip ViT R^2"] = make_volume(
     #     subj=args.subj,
@@ -664,6 +672,16 @@ if __name__ == "__main__":
         vmax2=0.1,
     )
 
+    volumes["clipRN50_v_resnet50"] = cortex.Volume2D(
+        volumes["resnet50 R^2"],
+        volumes["clip-RN50-last R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
     volumes["clip_v_clip_text_unique"] = cortex.Volume2D(
         volumes["clip&clip_text-clip_text R^2"],
         volumes["clip&clip_text-clip R^2"],
@@ -673,6 +691,177 @@ if __name__ == "__main__":
         vmin2=0,
         vmax2=0.1,
     )
+
+    ### new volumes ###
+    volumes["YFCC clip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
+
+    volumes["YFCC simclr R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
+
+    ## comparing yfcc_clip with simclr
+    volumes["clip&simclr-clip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr_YFCC_clip",
+        model2="YFCC_clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["clip&simclr-simclr R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr_YFCC_clip",
+        model2="YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["yfcc_clip_v_simclr_unique"] = cortex.Volume2D(
+        volumes["clip&simclr-simclr R^2"],
+        volumes["clip&simclr-clip R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
+    ## comparing clipO with yfcc_clip
+    volumes["YFCC_clip&clipO-YFCC_clip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_clip_clip",
+        model2="YFCC_clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["YFCC_clip&clipO-clipO R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_clip_clip",
+        model2="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+    volumes["yfcc_clip_v_clipO_unique"] = cortex.Volume2D(
+        volumes["YFCC_clip&clipO-clipO R^2"],
+        volumes["YFCC_clip&clipO-YFCC_clip R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
+    ## comparing simclr with clipO
+    volumes["YFCC_simclr&clipO-YFCC_simclr R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr_clip",
+        model2="YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["YFCC_simclr&clipO-clipO R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr_clip",
+        model2="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+    volumes["yfcc_simclr_v_clipO_unique"] = cortex.Volume2D(
+        volumes["YFCC_simclr&clipO-clipO R^2"],
+        volumes["YFCC_simclr&clipO-YFCC_simclr R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
+    volumes["YFCC slip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
+
+    ## comparing slip with simclr
+
+    volumes["slip&simclr-slip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_slip_YFCC_simclr",
+        model2="YFCC_slip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["slip&simclr-simclr R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_slip_YFCC_simclr",
+        model2="YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["yfcc_slip_v_simclr_unique"] = cortex.Volume2D(
+        volumes["slip&simclr-simclr R^2"],
+        volumes["slip&simclr-slip R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
+    ## Comparing clipO with clip
+    volumes["clipO&slip-clipO R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_slip_clip",
+        model2="clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["clipO&slip-slip R^2"] = make_volume(
+        subj=args.subj,
+        model="YFCC_slip_clip",
+        model2="YFCC_slip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+    )
+
+    volumes["yfcc_slip_v_clipO_unique"] = cortex.Volume2D(
+        volumes["clipO&slip-clipO R^2"],
+        volumes["clipO&slip-slip R^2"],
+        cmap="PU_BuOr_covar_alpha",
+        vmin=0,
+        vmax=0.1,
+        vmin2=0,
+        vmax2=0.1,
+    )
+
+
     # volumes["clip_v_bert_unique"] = cortex.Volume2D(
     #     volumes["clip&bert13-clip R^2"],
     #     volumes["clip&bert13-bert13 R^2"],
