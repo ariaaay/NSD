@@ -17,8 +17,12 @@ def zero_strip(s):
 
 
 def r2_score(Real, Pred):
+    # print(Real.shape)
+    # print(Pred.shape)
     SSres = np.mean((Real - Pred) ** 2, 0)
+    # print(SSres.shape)
     SStot = np.var(Real, 0)
+    # print(SStot.shape)
     return np.nan_to_num(1 - SSres / SStot)
 
 
@@ -30,13 +34,16 @@ def zscore(mat, axis=None):
             mat, axis=axis, keepdims=True
         )
 
+
 def fdr_correct_p(var):
     from statsmodels.stats.multitest import fdrcorrection
+
     n = var.shape[0]
-    p_vals = np.sum(var<0, axis=0)/n #proportions of permutation below 0
-    fdr_p = fdrcorrection(p_vals) # corrected p
+    p_vals = np.sum(var < 0, axis=0) / n  # proportions of permutation below 0
+    fdr_p = fdrcorrection(p_vals)  # corrected p
     return fdr_p
-    
+
+
 def ztransform(val):
     val = np.clip(val, a_min=1e-4, a_max=0.999)
     val = np.log((1 + val) / (1 - val)) / 2.0

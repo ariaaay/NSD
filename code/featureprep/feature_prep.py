@@ -162,7 +162,10 @@ def extract_feature_by_imgs(
         featmat = np.array(featmat).squeeze()
 
     else:
-        print("ERROR: Feature spaces unknown...")
+        try:
+            all_feat = np.load("%s/%s.npy" % (features_dir, model))
+        except FileNotFoundError:
+            print("ERROR: Feature spaces unknown...")
 
     return featmat.squeeze()
 

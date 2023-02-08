@@ -9,9 +9,7 @@
 #SBATCH --error=/home/yuanw3/error_log/job.%J.err
 #SBATCH --output=/home/yuanw3/error_log/job.%J.out
 
-set -eu
-source venv/bin/activate
-module load cuda-10.1
-module load cudnn-10.1-v7.6.5.32
+python code/extract_features_across_models.py --model simclr
+python code/extract_features_across_models.py --model clip
+python code/extract_features_across_models.py --model blip
 
-python code/extract_convnet_features.py $1 --subsample pca --model vgg19 --subsampling_size 100

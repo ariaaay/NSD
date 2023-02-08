@@ -121,6 +121,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    print(args)
 
     brain_path = (
         "%s/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"

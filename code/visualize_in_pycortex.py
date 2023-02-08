@@ -29,34 +29,32 @@ def project_vols_to_mni(subj, vol):
     mni_data = mni_vol.get_fdata().T
     return mni_data
 
+
 def load_fdr_mask(OUTPUT_ROOT, model, fdr_mask_name, subj):
     if type(fdr_mask_name) is list:
         sig_mask1 = np.load(
-            "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy" % (OUTPUT_ROOT, fdr_mask_name[0], subj)
+            "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy"
+            % (OUTPUT_ROOT, fdr_mask_name[0], subj)
         )[0].astype(bool)
         sig_mask2 = np.load(
-            "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy" % (OUTPUT_ROOT, fdr_mask_name[1], subj)
+            "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy"
+            % (OUTPUT_ROOT, fdr_mask_name[1], subj)
         )[0].astype(bool)
         sig_mask = (sig_mask1.astype(int) + sig_mask2.astype(int)).astype(bool)
         return sig_mask
     elif fdr_mask_name is not None:
-            model = fdr_mask_name
+        model = fdr_mask_name
     try:
         sig_mask = np.load(
             "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy" % (OUTPUT_ROOT, model, subj)
         )[0].astype(bool)
         return sig_mask
-    except FileNotFoundError: # hasn't run the test yet
+    except FileNotFoundError:  # hasn't run the test yet
         return None
 
 
 def visualize_layerwise_max_corr_results(
-    model,
-    layer_num,
-    subj=1,
-    threshold=95,
-    start_with_zero=True,
-    order="asc"
+    model, layer_num, subj=1, threshold=95, start_with_zero=True, order="asc"
 ):
     val_array = list()
     for i in range(layer_num):
@@ -73,7 +71,7 @@ def visualize_layerwise_max_corr_results(
     threshold_performance = np.max(val_array, axis=0) * (threshold / 100)
     layeridx = np.zeros(threshold_performance.shape) - 1
 
-    i = 0 if order=="asc" else -1
+    i = 0 if order == "asc" else -1
     for v in tqdm(range(len(threshold_performance))):
         if threshold_performance[v] > 0:
             layeridx[v] = (
@@ -172,20 +170,19 @@ def make_volume(
             vals = vals - vals2
             print("model2:" + model2)
 
-        
     if mask_with_significance:
         if args.sig_method == "fdr":
             sig_mask = load_fdr_mask(OUTPUT_ROOT, model, fdr_mask_name, subj)
             if sig_mask is None:
                 print("Masking vals with nc only")
                 sig_mask = nc >= 10
-            
+
         elif args.sig_method == "pvalue":
             pvalues = load_model_performance(
                 model, output_root=OUTPUT_ROOT, subj=subj, measure="pvalue"
             )
             sig_mask = pvalues <= 0.05
-        
+
         try:
             vals[~sig_mask] = np.nan
         except IndexError:
@@ -200,7 +197,7 @@ def make_volume(
             vals[~sig_mask] = np.nan
 
     if (measure == "rsq") and (noise_corrected):
-        vals = vals / (nc/100)
+        vals = vals / (nc / 100)
         vals[np.isnan(vals)] = np.nan
     print("max:" + str(max(vals[~np.isnan(vals)])))
 
@@ -448,7 +445,9 @@ if __name__ == "__main__":
     }
 
     volumes["clip-ViT-last r"] = make_volume(
-        subj=args.subj, model="clip", mask_with_significance=args.mask_sig,
+        subj=args.subj,
+        model="clip",
+        mask_with_significance=args.mask_sig,
     )
 
     # volumes["clip-RN50-last r"] = make_volume(
@@ -612,7 +611,7 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
         measure="rsq",
         cmap="inferno",
-        fdr_mask_name=["clip_unique_var", "resnet_unique_var"]
+        fdr_mask_name=["clip_unique_var", "resnet_unique_var"],
     )
 
     volumes["clip&clip_text-clip R^2"] = make_volume(
@@ -891,7 +890,9 @@ if __name__ == "__main__":
         )
 
         volumes["clip_all_objects"] = make_volume(
-            subj=args.subj, model="clip_object", mask_with_significance=args.mask_sig,
+            subj=args.subj,
+            model="clip_object",
+            mask_with_significance=args.mask_sig,
         )
 
         volumes["COCO categories -r^2"] = make_volume(
@@ -902,7 +903,9 @@ if __name__ == "__main__":
         )
 
         volumes["COCO super categories"] = make_volume(
-            subj=args.subj, model="supcat", mask_with_significance=args.mask_sig,
+            subj=args.subj,
+            model="supcat",
+            mask_with_significance=args.mask_sig,
         )
 
         volumes["CLIP&CLIPtop1 - top1"] = make_volume(
@@ -1145,7 +1148,6 @@ if __name__ == "__main__":
         #         mask_with_significance=args.mask_sig,
         #     )
 
-        
         volumes["clip-RN-layerwise"] = visualize_layerwise_max_corr_results(
             "visual_layer_resnet", 7, threshold=85, mask_with_significance=args.mask_sig
         )
@@ -1180,12 +1182,15 @@ if __name__ == "__main__":
 
             for i in range(subj_proj.shape[0]):
                 key = "Proj " + str(i) + name_modifier
-                volumes[key] = make_pc_volume(args.subj, subj_proj_nan_out[i, :],)
+                volumes[key] = make_pc_volume(
+                    args.subj,
+                    subj_proj_nan_out[i, :],
+                )
 
             import matplotlib.pyplot as plt
 
             plt.figure()
-            plt.plot(np.sum(subj_proj ** 2, axis=1))
+            plt.plot(np.sum(subj_proj**2, axis=1))
             plt.savefig("figures/PCA/proj_norm_%s.png" % name_modifier)
 
             plt.figure()
