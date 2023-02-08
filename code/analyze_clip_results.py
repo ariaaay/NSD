@@ -565,31 +565,48 @@ def sample_level_semantic_analysis(
     )
 
 
-def image_level_scatter_plot(subj=1, model1="clip", model2="resnet50_bottleneck"):
+def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1):
+    from compute_feature_rdm import computeRSM
+    from scipy.stats import pearsonr
     # cocoId_subj = np.load(
     #     "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
     # )
-    rdm1 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1))
-    rdm2 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2))
-    tmp = np.ones(rdm1.shape)
+    try:
+        rsm1 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1))
+    except FileNotFoundError:
+        rsm1 = computeRSM(model1, args.feature_dir)
+        np.save(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1),
+            rsm1,
+        )
+
+    try:
+        rsm2 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2))
+    except FileNotFoundError:
+        rsm2 = computeRSM(model2, args.feature_dir)
+        np.save(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2),
+            rsm2,
+        )
+
+    tmp = np.ones(rsm1.shape)
     triu_flag = np.triu(tmp, k=1).astype(bool)
     # plt.figure(figsize=(20, 20))
     plt.box(False)
     # subsample 1000 point for plotting
-    sampling_idx = np.random.choice(len(rdm1[triu_flag]), size=10000, replace=False)
+    sampling_idx = np.random.choice(len(rsm1[triu_flag]), size=10000, replace=False)
     plt.scatter(
-        rdm1[triu_flag][sampling_idx], rdm2[triu_flag][sampling_idx], alpha=0.4, s=1
+        rsm1[triu_flag][sampling_idx], rsm2[triu_flag][sampling_idx], alpha=0.3, s=1, label=model2
     )
-    plt.xlim(0, 1)
-    plt.ylim(-0.25, 1)
+     
+    r = pearsonr(rsm1[triu_flag][sampling_idx],rsm2[triu_flag][sampling_idx])
+    # plt.xlim(0, 1)
+    # plt.ylim(-0.25, 1)
     # ax = plt.gca()
     # ax.spines['left'].set_position('center')
     # ax.spines['bottom'].set_position('center')
     # plt.axis("off")
-    plt.savefig(
-        "figures/CLIP/manifold_distance/%s_vs_%s.png" % (model1, model2), dpi=400
-    )
-
+    print(model2 + " r: " + str(r[0]))
     # rdm1[~triu_flag] = 0
     # rdm2[~triu_flag] = 0
     # ind = np.unravel_index(np.argsort(rdm1, axis=None), x.shape)
@@ -729,6 +746,9 @@ if __name__ == "__main__":
         type=str,
         default="/user_data/yuanw3/project_outputs/NSD",
         help="Specify the path to the output directory",
+    )
+    parser.add_argument(
+        "--feature_dir", default="/user_data/yuanw3/project_outputs/NSD/features"
     )
     parser.add_argument("--roi", type=str)
     parser.add_argument(
@@ -902,7 +922,14 @@ if __name__ == "__main__":
         coarse_level_semantic_analysis(subj=1)
 
     if args.image_level_scatter_plot:
-        image_level_scatter_plot(subj=1)
+        models = ["clip", "YFCC_clip", "YFCC_slip", "YFCC_simclr", "resnet50_bottleneck"]
+        plt.figure(figsize=(10, 10))
+        for model in models:
+            image_level_scatter_plot(model1="bert_layer_13", model2=model)
+        plt.legend()
+        plt.savefig(
+            "figures/CLIP/manifold_distance/bert_vs_others.png", dpi=400
+        )
 
     if args.extract_keywords_for_roi:
         with open(

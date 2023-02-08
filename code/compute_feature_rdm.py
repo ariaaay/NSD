@@ -24,6 +24,12 @@ def computeID(r, nres=20, fraction=0.9, method="euclidean", verbose=False):
     error = np.std(ID)
     return mean, error
 
+def computeRSM(model, feature_dir, subj=1):
+    feature_path = "%s/subj%d/%s.npy" % (feature_dir, subj, model)
+    feature = np.load(feature_path).squeeze()
+    rsm = np.corrcoef(feature)
+    return rsm
+
 
 if __name__ == "__main__":
 
@@ -40,12 +46,10 @@ if __name__ == "__main__":
     parser.add_argument("--RDM", action="store_true")
     args = parser.parse_args()
 
-    if args.RDM:
-        feature_path = "%s/subj%d/%s.npy" % (args.feature_dir, args.subj, args.feature)
-        feature = np.load(feature_path).squeeze()
-        rsm = np.corrcoef(feature)
+    if args.RSM:
+        computeRSM(args.feature, args.feature_dir, args.subj)
         np.save(
-            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, args.subj, args.feature),
+            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, subj, model),
             rsm,
         )
 

@@ -18,7 +18,7 @@
 # MODELS="
 # clip \
 # resnet50_bottleneck \
-# clip_visual_resnet
+# clip_visual_resnet \
 # clip_text \
 # bert_layer_13"
 
@@ -74,19 +74,36 @@
 # python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing
 # python code/run_modeling.py --model "resnet50_bottleneck" "clip" --subj $subj --fix_testing
 
+# YFCC_clip YFCC_simclr
 
-for subj in 1; do
-    echo $subj
+# MODELS="
+# YFCC_clip \
+# YFCC_simclr \
+# YFCC_slip"
+
+MODELS=(YFCC_clip \
+YFCC_simclr \
+YFCC_slip)
+
+for model in $MODELS; 
     # python code/run_modeling.py --model "clip_visual_resnet" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "clip" "clip_text" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "clip" --subj $subj --fix_testing --test
     # python code/run_modeling.py --model "clip_text" --subj $subj --fix_testing --test
-    python code/run_modeling.py --model "YFCC_clip" --subj $subj --fix_testing
-    python code/run_modeling.py --model "YFCC_simclr" --subj $subj --fix_testing
-    python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
-    python code/run_modeling.py --model "YFCC_blip" --subj $subj --fix_testing
-    python code/run_modeling.py --model "YFCC_simclr" "resnet50_bottleneck" --subj $subj --fix_testing
-
-
+    for subj in {2,3,4,6,7,8}; do
+        echo $subj
+        echo $model
+        python code/run_modeling.py --model $model --subj $subj --fix_testing --saving_dir output
+    done
+    # python code/run_modeling.py --model "YFCC_simclr" --subj $subj --fix_testing
+    # python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
+    # python code/run_modeling.py --model "YFCC_simclr" "resnet50_bottleneck" --subj $subj --fix_testing
+    # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing
+    
+    # python code/run_modeling.py --model "YFCC_simclr" "clip" --subj $subj --fix_testing --saving_dir output
+    # python code/run_modeling.py --model "YFCC_clip" "clip" --subj $subj --fix_testing --saving_dir output
+    # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing --saving_dir output
+    # python code/run_modeling.py --model "YFCC_slip" "clip" --subj $subj --fix_testing --saving_dir output
+    # python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --saving_dir output
 done

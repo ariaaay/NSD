@@ -114,7 +114,7 @@ def fit_encoding_model(
     fix_testing=False,
     cv=False,
     saving=True,
-    output_dir=None,
+    saving_dir=None,
 ):
 
     model_name += "_whole_brain"
@@ -122,10 +122,7 @@ def fit_encoding_model(
     if cv:
         print("Running cross validation")
 
-    if output_dir is None:
-        outpath = "output/encoding_results/subj%d" % subj
-    else:
-        outpath = "%s/encoding_results/subj%d" % (output_dir, subj)
+    outpath = "%s/encoding_results/subj%d" % (saving_dir, subj)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
@@ -195,30 +192,23 @@ def bootstrap_test(
     model_name,
     repeat=2000,
     subj=1,
-    output_dir=None,
+    saving_dir=None,
 ):
     print("Running bootstrap test of {} for {} times".format(model_name, repeat))
 
     # save rsq
-    outpath = "%s/bootstrap/subj%d/" % (output_dir, subj)
+    outpath = "%s/bootstrap/subj%d/" % (saving_dir, subj)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
 
     try:
-        # clf = pickle.load(
-        #     open(
-        #         "%s/encoding_results/subj%d/clf_%s_whole_brain.pkl"
-        #         % (output_dir, subj, model_name),
-        #         "rb",
-        #     )
-        # )
         weights = np.load(
             "%s/encoding_results/subj%d/weights_%s_whole_brain.npy"
-            % (output_dir, subj, model_name)
+            % (saving_dir, subj, model_name)
         )
         bias = np.load(
             "%s/encoding_results/subj%d/bias_%s_whole_brain.npy"
-            % (output_dir, subj, model_name)
+            % (saving_dir, subj, model_name)
         )
 
     except FileNotFoundError:
@@ -231,7 +221,7 @@ def bootstrap_test(
             cv=False,
             saving=True,
             fix_testing=42,
-            output_dir=output_dir,
+            saving_dir=saving_dir,
         )
         weights, bias = cv_outputs[6], cv_outputs[7]
         print(weights.shape)

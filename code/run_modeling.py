@@ -19,7 +19,7 @@ def run(
     test,
     fix_testing,
     cv,
-    output_dir,
+    saving_dir,
 ):
     if test:
         print("Running Bootstrap Test")
@@ -28,7 +28,7 @@ def run(
             br,
             model_name=model_name,
             subj=args.subj,
-            output_dir=output_dir,
+            saving_dir=saving_dir,
         )
 
     else:
@@ -41,7 +41,7 @@ def run(
             fix_testing=fix_testing,
             cv=cv,
             saving=True,
-            output_dir=output_dir,
+            saving_dir=saving_dir,
         )
 
 
@@ -87,8 +87,15 @@ if __name__ == "__main__":
         "--output_dir",
         type=str,
         default="/user_data/yuanw3/project_outputs/NSD/output",
-        help="Specify the path to the output directory",
+        help="Specify the path to the intermediate output directory that contains voxels masks etc",
     )
+
+    parser.add_argument(
+        "--saving_dir",
+        type=str,
+        default="/user_data/yuanw3/project_outputs/NSD/output",
+        help="saving dir for the encoding model results. Default is the same as the output but could be somewhere else.")
+
     parser.add_argument(
         "--features_dir",
         type=str,
@@ -211,5 +218,5 @@ if __name__ == "__main__":
             test=args.test,
             fix_testing=args.fix_testing,
             cv=args.cv,
-            output_dir=args.output_dir,
+            saving_dir=args.saving_dir,
         )
