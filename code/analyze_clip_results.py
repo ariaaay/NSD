@@ -31,18 +31,18 @@ from util.model_config import *
 
 # device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# from pycocotools.coco import COCO
+from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
-# annFile_train = (
-#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-# )
-# annFile_val = (
-#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-# )
-# coco_train = COCO(annFile_train)
-# coco_val = COCO(annFile_val)
+annFile_train = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+)
+annFile_val = (
+    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+)
+coco_train = COCO(annFile_train)
+coco_val = COCO(annFile_val)
 
 # annFile_train_caps = (
 #     "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
@@ -565,9 +565,10 @@ def sample_level_semantic_analysis(
     )
 
 
-def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1):
+def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1, i=1):
     from compute_feature_rdm import computeRSM
     from scipy.stats import pearsonr
+    from util.util import zscore
     # cocoId_subj = np.load(
     #     "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
     # )
@@ -595,9 +596,15 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
     plt.box(False)
     # subsample 1000 point for plotting
     sampling_idx = np.random.choice(len(rsm1[triu_flag]), size=10000, replace=False)
+    x = zscore(rsm1[triu_flag][sampling_idx])
+    y = zscore(rsm2[triu_flag][sampling_idx])
+    plt.subplot(2, 3, i)
     plt.scatter(
-        rsm1[triu_flag][sampling_idx], rsm2[triu_flag][sampling_idx], alpha=0.3, s=1, label=model2
+        x, y, alpha=0.2, s=2, label=model2
     )
+    b, a = np.polyfit(x, y, deg=1)
+    xseq = np.linspace(0, 1, num=100)
+    plt.plot(xseq, a + b * xseq, lw=1, color="k", label=model2+"_fit");
      
     r = pearsonr(rsm1[triu_flag][sampling_idx],rsm2[triu_flag][sampling_idx])
     # plt.xlim(0, 1)
@@ -607,10 +614,50 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
     # ax.spines['bottom'].set_position('center')
     # plt.axis("off")
     print(model2 + " r: " + str(r[0]))
+    plt.legend()
     # rdm1[~triu_flag] = 0
     # rdm2[~triu_flag] = 0
     # ind = np.unravel_index(np.argsort(rdm1, axis=None), x.shape)
 
+def category_based_similarity_analysis(model, threshold, subj=1):
+    from compute_feature_rdm import computeRSM
+    from scipy.stats import pearsonr
+    from util.util import zscore
+
+    try:
+        rsm = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model))
+    except FileNotFoundError:
+        rsm = computeRSM(model1, args.feature_dir)
+        np.save(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model),
+            rsm,
+        )
+
+    tmp = np.ones(rsm.shape)
+    triu_flag = np.triu(tmp, k=1).astype(bool)
+    
+    from featureprep.feature_prep import get_preloaded_features
+    stimulus_list = np.load("%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1))
+    COCO_cat_feat = get_preloaded_features(
+            1,
+            stimulus_list,
+            "cat",
+            features_dir="%s/features" % args.output_root,
+        )
+    print(COCO_cat_feat.shape)
+    person_flag = COCO_cat_feat[:, 0] > threshold
+    person_n = np.sum(person_flag)
+    cluster_flag = np.outer(person_flag, person_flag).astype(bool)
+    within_flag = cluster_flag * triu_flag
+    cross_flag = ~cluster_flag * triu_flag
+
+    within_cluster_score = np.mean(rsm[within_flag])
+    cross_cluster_score = np.mean(rsm[cross_flag])
+
+    # print(within_cluster_score)
+    # print(cross_cluster_score)
+
+    return within_cluster_score/(cross_cluster_score + within_cluster_score), person_n
 
 def make_roi_df(roi_names, subjs, update=False):
     if update:
@@ -778,6 +825,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image_level_scatter_plot", default=False, action="store_true"
     )
+    parser.add_argument(
+        "--category_based_similarity_analysis", default=False, action="store_true"
+    )
     parser.add_argument("--rerun_df", default=False, action="store_true")
     parser.add_argument("--weight_analysis", default=False, action="store_true")
     parser.add_argument(
@@ -924,9 +974,9 @@ if __name__ == "__main__":
     if args.image_level_scatter_plot:
         models = ["clip", "YFCC_clip", "YFCC_slip", "YFCC_simclr", "resnet50_bottleneck"]
         plt.figure(figsize=(10, 10))
-        for model in models:
-            image_level_scatter_plot(model1="bert_layer_13", model2=model)
-        plt.legend()
+        for m, model in enumerate(models):
+            image_level_scatter_plot(model1="bert_layer_13", model2=model, i=m+1)
+        # plt.legend()
         plt.savefig(
             "figures/CLIP/manifold_distance/bert_vs_others.png", dpi=400
         )
@@ -1562,3 +1612,22 @@ if __name__ == "__main__":
         plt.tight_layout()
 
         plt.savefig("figures/CLIP/var_clip_vs_nc_all_subj.png")
+
+
+if args.category_based_similarity_analysis:
+    thresholds = [0.1, 0.3, 0.5, 0.7, 0.9]
+    models = ["clip", "YFCC_clip", "YFCC_slip", "YFCC_simclr", "resnet50_bottleneck"]
+    for threshold in thresholds:
+        scores = []
+        for model in models:
+            score, person_n = category_based_similarity_analysis(model, threshold=threshold)
+            # print(model)
+            # print(score)
+            scores.append(score)
+        plt.figure()
+        plt.bar(np.arange(len(scores)), scores)
+        plt.xticks(ticks=np.arange(len(scores)), labels=models, rotation='45')
+        plt.ylabel("within/(within+cross)")
+        plt.title("# of pics with person: %d/10000" % person_n)
+        plt.subplots_adjust(bottom=0.25)
+        plt.savefig("figures/CLIP/category_based_sim/person_%.1f.png" % threshold)
