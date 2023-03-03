@@ -857,7 +857,6 @@ if __name__ == "__main__":
     parser.add_argument("--roi_value", default=0, type=int)
     args = parser.parse_args()
 
-    # scatter plot per voxels
     if args.process_bootstrap_results:
 
         joint_rsq = np.load(
