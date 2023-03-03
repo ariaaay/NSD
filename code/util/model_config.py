@@ -65,7 +65,7 @@ task_label_NSD_tmp = {
     # "reshade": "Reshading",
     "keypoint3d": "3D Keypoint",
     "keypoint2d": "2D Keypoint",
-    # "autoencoder": "Autoencoding",
+    # "auto[uencoder": "Autoencoding",
     # "colorization": "Color",
     "edge3d": "Occlusion Edges",
     "edge2d": "2D Edges",

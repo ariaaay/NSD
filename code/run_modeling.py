@@ -94,7 +94,8 @@ if __name__ == "__main__":
         "--saving_dir",
         type=str,
         default="/user_data/yuanw3/project_outputs/NSD/output",
-        help="saving dir for the encoding model results. Default is the same as the output but could be somewhere else.")
+        help="saving dir for the encoding model results. Default is the same as the output but could be somewhere else.",
+    )
 
     parser.add_argument(
         "--features_dir",
