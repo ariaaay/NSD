@@ -1,22 +1,23 @@
 #!/bin/sh
 
-#SBATCH --job-name=enco
+#SBATCH --job-name=2b_clip
 #SBATCH -p tarrq
 #SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=3
+#SBATCH --nodelist=mind-1-32
 #SBATCH --ntasks=2
-#SBATCH --mem=30G
+#SBATCH --mem=80G
 #SBATCH --time=10-00:00:00
 #SBATCH --error=/home/yuanw3/error_log/job.%J.err
 #SBATCH --output=/home/yuanw3/error_log/job.%J.out
 
-set -eu
-source venv/bin/activate
-module load cuda-10.1
-module load cudnn-10.1-v7.6.5.32
+source ~/.bashrc
+conda activate conda-env
+source ~/NSD/nsdvenv/bin/activate
 
-model=$1
+# model=$1
+model="clip laion2b_clip"
+sub=5
 
-sub=1
-
-echo "running convnet $model task on subject $sub"
-python code/run_modeling.py --model convnet_$model --subj $sub --fix_testing --notest --get_features_only
+echo "running $model on subject $sub"
+python code/run_modeling.py --model $model --subj $sub --fix_testing

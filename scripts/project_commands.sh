@@ -1,4 +1,4 @@
-for subj in {3,4,6,8}; do
+for subj in {1..8}; do
     echo "processing subj $subj"
     # extract trial ID list
     python code/extract_image_list.py --subj $subj --type trial
@@ -19,6 +19,7 @@ for subj in {3,4,6,8}; do
     python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-places
     python code/extract_cortical_voxel.py --subj $subj --mask_only --roi floc-bodies
     python code/extract_cortical_voxel.py --subj $subj --mask_only --roi Kastner2015
+    python code/extract_cortical_voxel.py --subj $subj --mask_only --roi HCP_MMP1
 
 
     # computer explainable variance for the data and output data averaged by repeats
