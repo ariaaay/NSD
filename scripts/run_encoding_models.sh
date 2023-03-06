@@ -22,15 +22,69 @@
 # clip_text \
 # bert_layer_13"
 
+MODELS=(YFCC_clip \
+YFCC_simclr \
+YFCC_slip)
+
 # for subj in {1..8}; do
-#     for model in $MODELS; do
-#         FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_${model}_whole_brain.p
-#         if test -f "$FILE"; then
-#             echo "$FILE exists."
-#         else
-#             python code/run_modeling.py --model $model --subj $subj --fix_testing
-#         fi
-#     done
+    # for model in $MODELS; do
+    #     FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_${model}_whole_brain.p
+    #     if test -f "$FILE"; then
+    #         echo "$FILE exists."
+    #     else
+    #         python code/run_modeling.py --model $model --subj $subj --fix_testing
+    #     fi
+    # done
+
+    # FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_YFCC_slip_YFCC_simclr_whole_brain.p
+    # if test -f "$FILE"; then
+    #     echo "$FILE exists."
+    # else
+    #     python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing
+    # fi
+
+    # FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_YFCC_simclr_YFCC_clip_whole_brain.p
+    # if test -f "$FILE"; then
+    #     echo "$FILE exists."
+    # else
+    #     python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
+    # fi
+
+    # FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_YFCC_slip_clip_whole_brain.p
+    # if test -f "$FILE"; then
+    #     echo "$FILE exists."
+    # else
+    #     python code/run_modeling.py --model "YFCC_slip" "clip" --subj $subj --fix_testing
+    # fi
+
+#     python code/run_modeling.py --model YFCC_clip_layer_n-1 --subj $subj --fix_testing
+#     python code/run_modeling.py --model laion2b_clip --subj $subj --fix_testing
+#     python code/run_modeling.py --model laion400m_clip --subj $subj --fix_testing
+
+
+# done
+
+# python code/run_modeling.py --model laion2b_clip laion400m_clip --subj 5 --fix_testing
+# python code/run_modeling.py --model clip laion400m_clip --subj 1 --fix_testing
+# python code/run_modeling.py --model clip laion400m_clip --subj 2 --fix_testing
+
+
+# python code/run_modeling.py --model laion400m_clip --subj 5 --fix_testing
+
+# python code/run_modeling.py --model YFCC_clip_layer_n-1 --subj 5 --fix_testing
+
+# python code/run_modeling.py --model laion400m_clip --subj 7 --fix_testing
+# python code/run_modeling.py --model laion2b_clip --subj 7 --fix_testing
+# python code/run_modeling.py --model laion2b_clip laion400m_clip --subj 7 --fix_testing
+# python code/run_modeling.py --model clip laion400m_clip --subj 7 --fix_testing
+
+
+# python code/run_modeling.py --model laion400m_clip --subj 1 --fix_testing
+# python code/run_modeling.py --model laion2b_clip --subj 1 --fix_testing
+# python code/run_modeling.py --model laion2b_clip laion400m_clip --subj 1 --fix_testing
+
+
+
 
 #     FILE=/user_data/yuanw3/project_outputs/NSD/output/encoding_results/subj$subj/corr_clip_visual_resnet_resnet50_bottleneck_whole_brain.p
 #     if test -f "$FILE"; then
@@ -81,29 +135,48 @@
 # YFCC_simclr \
 # YFCC_slip"
 
-MODELS=(YFCC_clip \
-YFCC_simclr \
-YFCC_slip)
 
-for model in $MODELS; 
-    # python code/run_modeling.py --model "clip_visual_resnet" --subj $subj --fix_testing --test
-    # python code/run_modeling.py --model "clip" "clip_text" --subj $subj --fix_testing --test
-    # python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing --test
-    # python code/run_modeling.py --model "clip" --subj $subj --fix_testing --test
-    # python code/run_modeling.py --model "clip_text" --subj $subj --fix_testing --test
-    for subj in {2,3,4,6,7,8}; do
-        echo $subj
-        echo $model
-        python code/run_modeling.py --model $model --subj $subj --fix_testing --saving_dir output
-    done
-    # python code/run_modeling.py --model "YFCC_simclr" --subj $subj --fix_testing
-    # python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
-    # python code/run_modeling.py --model "YFCC_simclr" "resnet50_bottleneck" --subj $subj --fix_testing
-    # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing
+# for model in $MODELS; 
+#     # python code/run_modeling.py --model "clip_visual_resnet" --subj $subj --fix_testing --test
+#     # python code/run_modeling.py --model "clip" "clip_text" --subj $subj --fix_testing --test
+#     # python code/run_modeling.py --model "resnet50_bottleneck" --subj $subj --fix_testing --test
+#     # python code/run_modeling.py --model "clip" --subj $subj --fix_testing --test
+#     # python code/run_modeling.py --model "clip_text" --subj $subj --fix_testing --test
+#     for subj in {6,7,8}; do
+#         echo $subj
+#         echo $model
+#         python code/run_modeling.py --model $model --subj $subj --fix_testing --saving_dir output
+#     done
+#     # python code/run_modeling.py --model "YFCC_simclr" --subj $subj --fix_testing
+#     # python code/run_modeling.py --model "YFCC_simclr" "YFCC_clip" --subj $subj --fix_testing
+#     # python code/run_modeling.py --model "YFCC_simclr" "resnet50_bottleneck" --subj $subj --fix_testing
+#     # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing
     
-    # python code/run_modeling.py --model "YFCC_simclr" "clip" --subj $subj --fix_testing --saving_dir output
-    # python code/run_modeling.py --model "YFCC_clip" "clip" --subj $subj --fix_testing --saving_dir output
-    # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing --saving_dir output
-    # python code/run_modeling.py --model "YFCC_slip" "clip" --subj $subj --fix_testing --saving_dir output
-    # python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --saving_dir output
+#     # python code/run_modeling.py --model "YFCC_simclr" "clip" --subj $subj --fix_testing --saving_dir output
+#     # python code/run_modeling.py --model "YFCC_clip" "clip" --subj $subj --fix_testing --saving_dir output
+#     # python code/run_modeling.py --model "YFCC_slip" --subj $subj --fix_testing --saving_dir output
+#     # python code/run_modeling.py --model "YFCC_slip" "clip" --subj $subj --fix_testing --saving_dir output
+#     # python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --saving_dir output
+# done
+
+# MODELS=(
+# "YFCC_slip" \
+# "YFCC_simclr" \
+# "YFCC_slip YFCC_simclr"
+# )
+
+# for subj in {5,1,2,7}; do
+#     echo $subj
+#     python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --test
+# done
+
+# MODELS=(
+# "laion2b_clip laion400m_clip" \
+# "laion400m_clip" \
+# "laion2b_clip"
+# )
+
+for subj in {5,1,2,7}; do
+    echo $subj 
+    python code/run_modeling.py --model "laion2b_clip" "laion400m_clip" --subj $subj --fix_testing --test
 done

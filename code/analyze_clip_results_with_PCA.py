@@ -69,6 +69,11 @@ def extract_single_subject_weight(subj, args):
         "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
         % (args.output_root, subj, args.model)
     )
+
+    # w = np.load(
+    #     "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+    #     % (args.output_root, subj, model)
+    # )
     w = fill_in_nan_voxels(w, subj, args.output_root)
     if args.roi_only is not None:
         roi_mask = np.load(
@@ -225,7 +230,7 @@ def get_PCs(args, data=None, return_pca_object=False):
         plt.plot(pca.explained_variance_ratio_)
         plt.xlabel("Principal Components")
         plt.ylabel("Explained Variance")
-        plt.xtick(ticks=np.arange(20) + 1)
+        plt.xticks(ticks=np.arange(20) + 1)
         plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if return_pca_object:
@@ -344,6 +349,9 @@ if __name__ == "__main__":
         for i in tqdm(range(PCs.shape[0])):
             n_samples = int(len(stimulus_list) / 20)
             sample_idx = np.arange(0, len(stimulus_list), n_samples)
+            print(activations.shape)
+            print(PCs.shape)
+
             scores = activations.squeeze() @ PCs[i, :]
             sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][sample_idx]]
 

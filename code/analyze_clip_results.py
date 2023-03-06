@@ -35,14 +35,14 @@ from pycocotools.coco import COCO
 
 # mw.configure(backend="Agg")
 
-annFile_train = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-)
-annFile_val = (
-    "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
-)
-coco_train = COCO(annFile_train)
-coco_val = COCO(annFile_val)
+# annFile_train = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+# )
+# annFile_val = (
+#     "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+# )
+# coco_train = COCO(annFile_train)
+# coco_val = COCO(annFile_val)
 
 # annFile_train_caps = (
 #     "/lab_data/tarrlab/common/datasets/coco_annotations/captions_train2017.json"
@@ -569,11 +569,14 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
     from compute_feature_rdm import computeRSM
     from scipy.stats import pearsonr
     from util.util import zscore
+
     # cocoId_subj = np.load(
     #     "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
     # )
     try:
-        rsm1 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1))
+        rsm1 = np.load(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1)
+        )
     except FileNotFoundError:
         rsm1 = computeRSM(model1, args.feature_dir)
         np.save(
@@ -582,7 +585,9 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
         )
 
     try:
-        rsm2 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2))
+        rsm2 = np.load(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2)
+        )
     except FileNotFoundError:
         rsm2 = computeRSM(model2, args.feature_dir)
         np.save(
@@ -599,14 +604,12 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
     x = zscore(rsm1[triu_flag][sampling_idx])
     y = zscore(rsm2[triu_flag][sampling_idx])
     plt.subplot(2, 3, i)
-    plt.scatter(
-        x, y, alpha=0.2, s=2, label=model2
-    )
+    plt.scatter(x, y, alpha=0.2, s=2, label=model2)
     b, a = np.polyfit(x, y, deg=1)
     xseq = np.linspace(0, 1, num=100)
-    plt.plot(xseq, a + b * xseq, lw=1, color="k", label=model2+"_fit");
-     
-    r = pearsonr(rsm1[triu_flag][sampling_idx],rsm2[triu_flag][sampling_idx])
+    plt.plot(xseq, a + b * xseq, lw=1, color="k", label=model2 + "_fit")
+
+    r = pearsonr(rsm1[triu_flag][sampling_idx], rsm2[triu_flag][sampling_idx])
     # plt.xlim(0, 1)
     # plt.ylim(-0.25, 1)
     # ax = plt.gca()
@@ -619,13 +622,16 @@ def image_level_scatter_plot(model1="clip", model2="resnet50_bottleneck", subj=1
     # rdm2[~triu_flag] = 0
     # ind = np.unravel_index(np.argsort(rdm1, axis=None), x.shape)
 
+
 def category_based_similarity_analysis(model, threshold, subj=1):
     from compute_feature_rdm import computeRSM
     from scipy.stats import pearsonr
     from util.util import zscore
 
     try:
-        rsm = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model))
+        rsm = np.load(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model)
+        )
     except FileNotFoundError:
         rsm = computeRSM(model1, args.feature_dir)
         np.save(
@@ -635,15 +641,18 @@ def category_based_similarity_analysis(model, threshold, subj=1):
 
     tmp = np.ones(rsm.shape)
     triu_flag = np.triu(tmp, k=1).astype(bool)
-    
+
     from featureprep.feature_prep import get_preloaded_features
-    stimulus_list = np.load("%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1))
+
+    stimulus_list = np.load(
+        "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, 1)
+    )
     COCO_cat_feat = get_preloaded_features(
-            1,
-            stimulus_list,
-            "cat",
-            features_dir="%s/features" % args.output_root,
-        )
+        1,
+        stimulus_list,
+        "cat",
+        features_dir="%s/features" % args.output_root,
+    )
     print(COCO_cat_feat.shape)
     person_flag = COCO_cat_feat[:, 0] > threshold
     person_n = np.sum(person_flag)
@@ -657,7 +666,8 @@ def category_based_similarity_analysis(model, threshold, subj=1):
     # print(within_cluster_score)
     # print(cross_cluster_score)
 
-    return within_cluster_score/(cross_cluster_score + within_cluster_score), person_n
+    return within_cluster_score / (cross_cluster_score + within_cluster_score), person_n
+
 
 def make_roi_df(roi_names, subjs, update=False):
     if update:
@@ -841,12 +851,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--process_bootstrap_results", default=False, action="store_true"
     )
+    parser.add_argument("--cross_model_comparison", default=False, action="store_true")
     parser.add_argument("--nc_scatter_plot", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
     args = parser.parse_args()
 
-    # scatter plot per voxels
     if args.process_bootstrap_results:
 
         joint_rsq = np.load(
@@ -972,14 +982,18 @@ if __name__ == "__main__":
         coarse_level_semantic_analysis(subj=1)
 
     if args.image_level_scatter_plot:
-        models = ["clip", "YFCC_clip", "YFCC_slip", "YFCC_simclr", "resnet50_bottleneck"]
+        models = [
+            "clip",
+            "YFCC_clip",
+            "YFCC_slip",
+            "YFCC_simclr",
+            "resnet50_bottleneck",
+        ]
         plt.figure(figsize=(10, 10))
         for m, model in enumerate(models):
-            image_level_scatter_plot(model1="bert_layer_13", model2=model, i=m+1)
+            image_level_scatter_plot(model1="bert_layer_13", model2=model, i=m + 1)
         # plt.legend()
-        plt.savefig(
-            "figures/CLIP/manifold_distance/bert_vs_others.png", dpi=400
-        )
+        plt.savefig("figures/CLIP/manifold_distance/bert_vs_others.png", dpi=400)
 
     if args.extract_keywords_for_roi:
         with open(
@@ -1620,14 +1634,165 @@ if args.category_based_similarity_analysis:
     for threshold in thresholds:
         scores = []
         for model in models:
-            score, person_n = category_based_similarity_analysis(model, threshold=threshold)
+            score, person_n = category_based_similarity_analysis(
+                model, threshold=threshold
+            )
             # print(model)
             # print(score)
             scores.append(score)
         plt.figure()
         plt.bar(np.arange(len(scores)), scores)
-        plt.xticks(ticks=np.arange(len(scores)), labels=models, rotation='45')
+        plt.xticks(ticks=np.arange(len(scores)), labels=models, rotation="45")
         plt.ylabel("within/(within+cross)")
         plt.title("# of pics with person: %d/10000" % person_n)
         plt.subplots_adjust(bottom=0.25)
         plt.savefig("figures/CLIP/category_based_sim/person_%.1f.png" % threshold)
+
+
+if args.cross_model_comparison:
+    from util.model_config import *
+    # plot ROI averaged prediction across models
+    df = pd.DataFrame()
+    models = [
+        # "resnet50_bottleneck",
+        "YFCC_clip",
+        "YFCC_simclr",
+        "YFCC_slip",
+        "laion400m_clip",
+        "clip",
+        "laion2b_clip",
+    ]
+    # model_sizes = ["1m", "15m", "15m", "15m", "400m", "400m", "2b"]
+    model_sizes = ["15m", "15m", "15m", "400m", "400m", "2b"]
+    model_size_for_plot = {"1m": 100, "15m": 200, "400m": 400, "2b": 600}
+    subjs = [1, 2, 5, 7]
+    # rois = [
+    #     "prf-visualrois": 'all'],
+    #     "floc-faces",
+    #     "floc-places",
+    #     "floc-bodies": ,
+    #     "HCP": "TPOJ1"
+    # ]
+    # rois_name = {
+    #     "prf-visualrois": "Early Visual",
+    #     "floc-bodies": "Body",
+    #     "floc-faces": "Face",
+    #     "floc-places": "Place",
+    # }
+
+    roa_list = [
+            ("prf-visualrois", "V1v"),
+            ("prf-visualrois", "h4v"),
+            ("floc-places", "RSC"),
+            ("floc-places", "PPA"),
+            ("floc-places", "OPA"),
+            ("floc-bodies", "EBA"),
+            ("floc-faces", "FFA-1"),
+            ("floc-faces", "FFA-2"),
+            ("HCP_MMP1", "TPOJ1"),
+            ("HCP_MMP1", "TPOJ2"),
+            ("HCP_MMP1", "TPOJ3"),
+            # ("language", "AG"),
+        ]
+    # rois_name = [v for _, v in roa_list]
+
+
+    # l = (4, 2, 0)
+    # s = (4, 2, 45)
+    # sl = (8, 2, 0)
+    # l = "P"
+    # s = "X"
+    # sl = "*"
+
+    model_type = {
+        "clip": "Lang (OpenAI)",
+        # "resnet50_bottleneck": "Labels",
+        "laion400m_clip": "Lang (Laion)",
+        "laion2b_clip": "Lang (Laion)",
+        "YFCC_clip": "Lang (YFCC)",
+        "YFCC_simclr": "SSL",
+        "YFCC_slip": "SSL + Lang (YFCC)",
+    }
+
+    marker_type={
+        "Lang (OpenAI)": "1",
+        # "resnet50_bottleneck": "Labels",
+        "Lang (Laion)": "2",
+        "Lang (YFCC)": "3",
+        "SSL": "x",
+        "SSL + Lang (YFCC)": (8, 2, 0), 
+    }
+
+    for i, model in enumerate(tqdm(models)):
+        for (roi_type, roi_lab) in roa_list:
+            # rsqs = []
+            for subj in subjs:
+                rsq = load_model_performance(
+                    model, output_root=args.output_root, subj=subj, measure="rsq"
+                )
+                roi_mask = np.load(
+                    "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                    % (args.output_root, subj, subj, roi_type)
+                )
+                roi_dict = roi_name_dict[roi_type]
+                roi_val = list(roi_dict.keys())[list(roi_dict.values()).index(roi_lab)]
+                # print(roi_lab, roi_val)
+                roi_selected_vox = roi_mask == int(roi_val)
+                # print(np.sum(roi_selected_vox))
+                # import pdb; pdb.set_trace()
+                # rsqs.append(np.mean(rsq[roi_selected_vox]))
+                rsq_mean = np.mean(rsq[roi_selected_vox])
+
+                vd = {}
+                vd["Regions"] = roi_lab
+                vd["Model"] = model
+                vd["Dataset size"] = model_sizes[i]
+                vd["Model type"] = model_type[model]
+                vd["Mean Performance"] = rsq_mean
+                vd["Subject"] = str(subj)
+            # vd["perf_std"] = np.std(rsqs[roi_selected_vox])
+            # 
+
+                df = df.append(vd, ignore_index=True)
+    df.to_csv("%s/output/clip/cross_model_comparison.csv" % args.output_root)
+
+    import seaborn.objects as so
+    from seaborn import axes_style
+
+    (
+        so.Plot(
+            df,
+            x="Regions",
+            y="Mean Performance",
+            # color="Subject",
+            color="Dataset size",
+            marker="Model type",
+            pointsize="Dataset size",
+            # ymin=0,
+            # ymax=0.25,
+        )
+        .add(
+            so.Dot(),
+            so.Agg(),
+            so.Jitter(),
+            # so.Dodge(by=["color"]),
+            so.Dodge(),
+        )
+        # .add(so.Range(), so.Est(errorbar="sd"), so.Dodge())
+        .scale(
+            marker=marker_type, 
+            pointsize=(13, 6))
+        .theme(
+            {
+                **axes_style("white"),
+                **{
+                    "legend.frameon": False,
+                    "axes.spines.right": False,
+                    "axes.spines.top": False,
+                    # "axes.grid": True,
+                    # "axes.grid.axis": "x",
+                },
+            }
+        )
+        .save("figures/model_comp/subj1257.png", bbox_inches="tight")
+    )
