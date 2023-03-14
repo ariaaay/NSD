@@ -185,3 +185,62 @@ def extract_single_roi(roi_name, output_dir, subj):
                 output_masks.append(roi_mask == int(k))
                 roi_labels.append(v)
     return output_masks, roi_labels
+
+def compute_sample_performance(model, subj, output_dir, masking="sig", measure="corrs"):
+    """
+    Returns sample-wise performances for encoding model.
+    """
+    if measure == "corrs":
+        from scipy.stats import pearsonr
+
+        metric = pearsonr
+    elif measure == "rsq":
+        from sklearn.metrics import r2_score
+
+        metric = r2_score
+
+    try:
+        sample_corrs = np.load(
+            "%s/output/clip/%s_sample_%s_%s.npy" % (output_dir, model, measure, masking)
+        )
+        if len(sample_corrs.shape) == 2:
+            sample_corrs = np.array(sample_corrs)[:, 0]
+            np.save(
+                "%s/output/clip/%s_sample_corrs_%s.npy" % (output_dir, model, masking),
+                sample_corrs,
+            )
+    except FileNotFoundError:
+        yhat, ytest = load_model_performance(
+            model, output_root=output_dir, measure="pred"
+        )
+        if masking == "sig":
+            pvalues = load_model_performance(
+                model, output_root=output_dir, measure="pvalue"
+            )
+            sig_mask = pvalues <= 0.05
+
+            sample_corrs = [
+                metric(ytest[:, sig_mask][i, :], yhat[:, sig_mask][i, :])
+                for i in range(ytest.shape[0])
+            ]
+
+        else:
+            roi = np.load(
+                "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                % (output_dir, subj, subj, masking)
+            )
+            roi_mask = roi > 0
+            sample_corrs = [
+                metric(ytest[:, roi_mask][i, :], yhat[:, roi_mask][i, :])
+                for i in range(ytest.shape[0])
+            ]
+
+        if measure == "corr":
+            sample_corrs = np.array(sample_corrs)[:, 0]
+        np.save(
+            "%s/output/clip/%s_sample_%s_%s.npy"
+            % (output_dir, model, measure, masking),
+            sample_corrs,
+        )
+
+    return sample_corrs

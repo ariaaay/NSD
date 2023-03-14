@@ -8,7 +8,6 @@ from sklearn.model_selection import (
     KFold,
     PredefinedSplit,
     train_test_split,
-    GroupShuffleSplit,
     ShuffleSplit,
 )
 

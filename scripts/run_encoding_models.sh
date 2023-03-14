@@ -165,10 +165,10 @@ YFCC_slip)
 # "YFCC_slip YFCC_simclr"
 # )
 
-# for subj in {5,1,2,7}; do
-#     echo $subj
-#     python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --test
-# done
+for subj in {5,1,2,7}; do
+    echo $subj
+    python code/run_modeling.py --model "YFCC_slip" "YFCC_simclr" --subj $subj --fix_testing --test
+done
 
 # MODELS=(
 # "laion2b_clip laion400m_clip" \
@@ -176,7 +176,7 @@ YFCC_slip)
 # "laion2b_clip"
 # )
 
-for subj in {5,1,2,7}; do
-    echo $subj 
-    python code/run_modeling.py --model "laion2b_clip" "laion400m_clip" --subj $subj --fix_testing --test
-done
+# for subj in {5,1,2,7}; do
+#     echo $subj 
+#     python code/run_modeling.py --model "laion2b_clip" "laion400m_clip" --subj $subj --fix_testing --test
+# done
