@@ -391,6 +391,21 @@ if __name__ == "__main__":
         vmax=np.max(language_vals),
     )
 
+    vals = np.load("./output/rdm_based_analysis/voxel_diff_clip_vs_resnet50_bottleneck_0.8_0.2_br.npy")
+    cortical_mask = np.load(
+        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+        % (OUTPUT_ROOT, args.subj, args.subj)
+    )
+    all_vals = project_vals_to_3d(vals, cortical_mask)
+    rdm_volume = cortex.Volume(
+        all_vals,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+    )
+
     # roi_int = vis_roi_ind()
     # roi_int_volume = make_volume(subj=args.subj, vals=roi_int, measure="rsq")
 
@@ -441,7 +456,8 @@ if __name__ == "__main__":
         # "food": food_volume,
         # "food_mask": food_mask_volume
         # "roi_int": roi_int_volume
-        "nsd_general": nsd_general_volume
+        "nsd_general": nsd_general_volume,
+        "rdm_bottom_right": rdm_volume
     }
 
     # volumes["clip-ViT-last r"] = make_volume(
@@ -568,7 +584,7 @@ if __name__ == "__main__":
         model2="clip_visual_resnet",
         mask_with_significance=args.mask_sig,
         measure="rsq",
-        fdr_mask_name=["resnet_unique_var", "clip_unique_var"],
+        fdr_mask_name="resnet_unique_var",
     )
 
     # volumes["clip ViT&resnet50-resnet50 R^2"] = make_volume(
@@ -611,7 +627,7 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
         measure="rsq",
         cmap="inferno",
-        fdr_mask_name=["clip_unique_var", "resnet_unique_var"],
+        fdr_mask_name="clip_unique_var",
     )
 
     # volumes["clip&clip_text-clip R^2"] = make_volume(
@@ -811,6 +827,7 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
         measure="rsq",
         cmap="inferno",
+        fdr_mask_name="YFCC_simclr_unique_var",
     )
 
     volumes["slip&simclr-simclr R^2"] = make_volume(
@@ -820,16 +837,17 @@ if __name__ == "__main__":
         mask_with_significance=args.mask_sig,
         measure="rsq",
         cmap="inferno",
+        fdr_mask_name="YFCC_slip_unique_var",
     )
 
-    volumes["slip-simclr R^2"] = make_volume(
-        subj=args.subj,
-        model="YFCC_slip",
-        model2="YFCC_simclr",
-        mask_with_significance=args.mask_sig,
-        measure="rsq",
-        cmap="inferno",
-    )
+    # volumes["slip-simclr R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="YFCC_slip",
+    #     model2="YFCC_simclr",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     cmap="inferno",
+    # )
 
     volumes["yfcc_slip_v_simclr_unique"] = cortex.dataset.Volume2D(
         volumes["slip&simclr-simclr R^2"],
