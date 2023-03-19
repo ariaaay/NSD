@@ -334,6 +334,22 @@ def make_roi_volume(roi_name):
     )
     return roi_volume
 
+def show_voxel_diff_in_repr_samples(model1, model2, quad="br"):
+        import glob
+        fname = glob.glob("./output/rdm_based_analysis/voxel_corr_%s_vs_%s_*%s.npy" % (model1, model2, quad))
+        vals = np.load(fname[0])
+        all_vals = project_vals_to_3d(vals, cortical_mask)
+
+        rdm_volume = cortex.Volume(
+            all_vals,
+            "subj%02d" % args.subj,
+            "func1pt8_to_anat0pt8_autoFSbbr",
+            mask=cortex.utils.get_cortical_mask(
+                "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+            ),
+        )
+        return rdm_volume
+
 
 if __name__ == "__main__":
     import cortex
@@ -352,6 +368,7 @@ if __name__ == "__main__":
     parser.add_argument("--on_cluster", action="store_true")
     # parser.add_argument("--with_noise_ceiling", default=False, action="store_true")
     parser.add_argument("--show_more", action="store_true")
+    parser.add_argument("--show_repr_sim", action="store_true")
     parser.add_argument("--vis_method", type=str, default="webgl")
 
     args = parser.parse_args()
@@ -376,6 +393,11 @@ if __name__ == "__main__":
     # sulc_volume = make_roi_volume("corticalsulc")
     nsd_general_volume = make_roi_volume("nsdgeneral")
 
+    cortical_mask = np.load(
+            "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+            % (OUTPUT_ROOT, args.subj, args.subj)
+        )
+
     lang_ROI = np.load(
         "./output/voxels_masks/language_ROIs.npy", allow_pickle=True
     ).item()
@@ -389,21 +411,6 @@ if __name__ == "__main__":
         ),
         vmin=np.min(language_vals),
         vmax=np.max(language_vals),
-    )
-
-    vals = np.load("./output/rdm_based_analysis/voxel_diff_clip_vs_resnet50_bottleneck_0.8_0.2_br.npy")
-    cortical_mask = np.load(
-        "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-        % (OUTPUT_ROOT, args.subj, args.subj)
-    )
-    all_vals = project_vals_to_3d(vals, cortical_mask)
-    rdm_volume = cortex.Volume(
-        all_vals,
-        "subj%02d" % args.subj,
-        "func1pt8_to_anat0pt8_autoFSbbr",
-        mask=cortex.utils.get_cortical_mask(
-            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
-        ),
     )
 
     # roi_int = vis_roi_ind()
@@ -454,11 +461,20 @@ if __name__ == "__main__":
         # "EV": ev_volume,
         # "EV - old": old_ev_volume,
         # "food": food_volume,
-        # "food_mask": food_mask_volume
-        # "roi_int": roi_int_volume
+        # "food_mask": food_mask_volume,
+        # "roi_int": roi_int_volume,
         "nsd_general": nsd_general_volume,
-        "rdm_bottom_right": rdm_volume
+        # "rdm_bottom_right": rdm_volume,
     }
+
+    yfcc_simclr = load_model_performance("YFCC_simCLR", subj=args.subj, measure="rsq")
+    yfcc_slip = load_model_performance("YFCC_slip", subj=args.subj, measure="rsq")
+    yfcc_slip_simclr_joint = load_model_performance("YFCC_slip_YFCC_simclr", subj=args.subj, measure="rsq")
+    nc = np.load(
+        "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
+        % (OUTPUT_ROOT, args.subj, args.subj)
+    )
+    
 
     # volumes["clip-ViT-last r"] = make_volume(
     #     subj=args.subj,
@@ -840,6 +856,30 @@ if __name__ == "__main__":
         fdr_mask_name="YFCC_slip_unique_var",
     )
 
+    # # MNI
+    # for s in range(1,9):
+    #     volume = make_volume(
+    #         subj=s,
+    #         model="YFCC_slip_YFCC_simclr",
+    #         model2="YFCC_simclr",
+    #         mask_with_significance=args.mask_sig,
+    #         measure="rsq",
+    #         cmap="inferno",
+    #         fdr_mask_name="YFCC_slip_unique_var",
+    #     )
+    #     mni_data = project_vols_to_mni(s, volume.data)
+
+    #     mni_vol = cortex.Volume(
+    #         mni_data,
+    #         "fsaverage",
+    #         "atlas",
+    #         cmap="inferno",
+    #     )
+    #     volumes["subj%d - MNI" % s] = mni_vol
+
+    #     cortex.quickflat.make_figure(mni_vol, with_roi=False)
+
+
     # volumes["slip-simclr R^2"] = make_volume(
     #     subj=args.subj,
     #     model="YFCC_slip",
@@ -977,7 +1017,7 @@ if __name__ == "__main__":
     )
 
 
-    volumes["laion400m_v_clipO_unique"] = cortex.dataset.Volume2D(
+    volumes["clipO_v_laion400m_unique"] = cortex.dataset.Volume2D(
         volumes["laion400m&clipO-laion400m R^2"],
         volumes["laion400m&clipO-clipO R^2"],
         cmap="PU_BuOr_covar_alpha",
@@ -986,6 +1026,8 @@ if __name__ == "__main__":
         vmin2=0,
         vmax2=0.05,
     )
+
+    
 
 
     # volumes["YFCC clip n-1  R^2"] = make_volume(
@@ -1018,6 +1060,43 @@ if __name__ == "__main__":
     #     vmin2=0,
     #     vmax2=0.1,
     # )
+
+    vals = (yfcc_slip_simclr_joint - yfcc_simclr) / ((nc / 100) - yfcc_simclr)
+    all_vals = project_vals_to_3d(vals, cortical_mask)
+    tmp_volume = cortex.Volume(
+        all_vals,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+    )
+    volumes["YFCC slip uvar / (NC-simclr) R^2"] = tmp_volume
+    volumes["YFCC slip & simclr"] = make_volume(
+        subj=args.subj,
+        model="YFCC_slip_YFCC_simclr",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        cmap="inferno",
+          )
+    volumes["YFCC slip uvar / (NC-simclr) R^2 vs joint model 2D"] = cortex.dataset.Volume2D(
+            volumes["YFCC slip uvar / (NC-simclr) R^2"],
+            volumes["YFCC slip & simclr"],
+            cmap="PU_BuOr_covar_alpha",
+        )
+
+    if args.subj == 1 & args.show_repr_sim:
+        model1, model2 = "YFCC_slip", "YFCC_simclr"
+        volumes["%s vs %s in repr sim BR"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
+        volumes["%s vs %s in repr sim TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
+
+        model1, model2 = "YFCC_clip", "YFCC_simclr"
+        volumes["%s vs %s in repr sim BR"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
+        volumes["%s vs %s in repr sim TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
+
+        model1, model2 = "clip", "resnet50_bottleneck"
+        volumes["%s vs %s in repr sim BR" % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
+        volumes["%s vs %s in repr sim TL" % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
 
     if args.subj == 1 & args.show_more:
         volumes["clip_top1_object"] = make_volume(
@@ -1365,16 +1444,6 @@ if __name__ == "__main__":
         #     plt.plot(inertia, label="%d PCS" % n)
         # plt.savefig("figures/pca/clustering/inertia_across_pc_num.png")
 
-        # MNI
-        # mni_data = project_vols_to_mni(args.subj, volume)
-
-        # mni_vol = cortex.Volume(
-        #     mni_data,
-        #     "fsaverage",
-        #     "atlas",
-        #     cmap="BrBG_r",
-        # )
-        # volumes["PC1 - MNI"] = mni_vol
 
         # # visualize PC projections
         # subj_proj = np.load(
@@ -1387,6 +1456,15 @@ if __name__ == "__main__":
         #         args.subj,
         #         subj_proj[i, :],
         #     )
+
+        mni_data = project_vols_to_mni(s, volume)
+
+        mni_vol = cortex.Volume(
+            mni_data,
+            "fsaverage",
+            "atlas",
+            cmap="inferno",
+        )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
