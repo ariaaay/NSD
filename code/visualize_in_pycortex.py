@@ -183,6 +183,7 @@ def make_volume(
             )
             sig_mask = pvalues <= 0.05
 
+        print("Mask name: " + str(fdr_mask_name) + ". # of sig voxels: " + str(np.sum(sig_mask)))
         try:
             vals[~sig_mask] = np.nan
         except IndexError:
@@ -335,20 +336,31 @@ def make_roi_volume(roi_name):
     return roi_volume
 
 def show_voxel_diff_in_repr_samples(model1, model2, quad="br"):
+    def load_brain_response(model1, model2, quad):
         import glob
         fname = glob.glob("./output/rdm_based_analysis/voxel_corr_%s_vs_%s_*%s.npy" % (model1, model2, quad))
         vals = np.load(fname[0])
         all_vals = project_vals_to_3d(vals, cortical_mask)
-
-        rdm_volume = cortex.Volume(
-            all_vals,
-            "subj%02d" % args.subj,
-            "func1pt8_to_anat0pt8_autoFSbbr",
-            mask=cortex.utils.get_cortical_mask(
-                "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
-            ),
-        )
-        return rdm_volume
+        return all_vals
+        
+    if quad == "br-tl":
+        b1 = load_brain_response(model1, model2, "br")
+        b2 = load_brain_response(model1, model2, "tl")
+        all_vals = b1-b2
+    else:
+        all_vals = load_brain_response(model1, model2, quad)
+        
+    rdm_volume = cortex.Volume(
+        all_vals,
+        "subj%02d" % args.subj,
+        "func1pt8_to_anat0pt8_autoFSbbr",
+        mask=cortex.utils.get_cortical_mask(
+            "subj%02d" % args.subj, "func1pt8_to_anat0pt8_autoFSbbr"
+        ),
+        vmin = -0.1,
+        vmax = 0.1
+    )
+    return rdm_volume
 
 
 if __name__ == "__main__":
@@ -1086,17 +1098,15 @@ if __name__ == "__main__":
         )
 
     if args.subj == 1 & args.show_repr_sim:
-        model1, model2 = "YFCC_slip", "YFCC_simclr"
-        volumes["%s vs %s in repr sim BR"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
-        volumes["%s vs %s in repr sim TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
+        model_list = [["YFCC_slip", "YFCC_simclr"], ["YFCC_clip", "YFCC_simclr"], ["clip", "resnet50_bottleneck"]]
+        for models in model_list:
+            model1, model2 = models
+            volumes["%s vs %s in repr sim BR"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
+            volumes["%s vs %s in repr sim TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
+            volumes["%s vs %s in repr sim BR-TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br-tl")
+            volumes["%s vs %s in repr sim BR - base"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br_sub_baseline")
+            volumes["%s vs %s in repr sim TL - base"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl_sub_baseline")
 
-        model1, model2 = "YFCC_clip", "YFCC_simclr"
-        volumes["%s vs %s in repr sim BR"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
-        volumes["%s vs %s in repr sim TL"  % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
-
-        model1, model2 = "clip", "resnet50_bottleneck"
-        volumes["%s vs %s in repr sim BR" % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "br")
-        volumes["%s vs %s in repr sim TL" % (model1, model2)] = show_voxel_diff_in_repr_samples(model1, model2, "tl")
 
     if args.subj == 1 & args.show_more:
         volumes["clip_top1_object"] = make_volume(
