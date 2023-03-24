@@ -384,7 +384,7 @@ if __name__ == "__main__":
     parser.add_argument("--vis_method", type=str, default="webgl")
 
     args = parser.parse_args()
-
+    print(args)
     if args.on_cluster:
         ROI_FILE_ROOT = (
             "/lab_data/tarrlab/common/datasets/NSD/nsddata/ppdata/subj%02d/func1pt8mm/roi"
@@ -394,16 +394,16 @@ if __name__ == "__main__":
         OUTPUT_ROOT = "."
         ROI_FILE_ROOT = "./roi_data/subj%02d" % args.subj
 
-    visual_roi_volume = make_roi_volume("prf-visualrois")
-    ecc_roi_volume = make_roi_volume("prf-eccrois")
-    place_roi_volume = make_roi_volume("floc-places")
-    face_roi_volume = make_roi_volume("floc-faces")
-    body_roi_volume = make_roi_volume("floc-bodies")
-    # word_roi_volume = make_roi_volume("floc-words")
-    kastner_volume = make_roi_volume("Kastner2015")
-    hcp_volume = make_roi_volume("HCP_MMP1")
-    # sulc_volume = make_roi_volume("corticalsulc")
-    nsd_general_volume = make_roi_volume("nsdgeneral")
+    # visual_roi_volume = make_roi_volume("prf-visualrois")
+    # ecc_roi_volume = make_roi_volume("prf-eccrois")
+    # place_roi_volume = make_roi_volume("floc-places")
+    # face_roi_volume = make_roi_volume("floc-faces")
+    # body_roi_volume = make_roi_volume("floc-bodies")
+    # # word_roi_volume = make_roi_volume("floc-words")
+    # kastner_volume = make_roi_volume("Kastner2015")
+    # hcp_volume = make_roi_volume("HCP_MMP1")
+    # # sulc_volume = make_roi_volume("corticalsulc")
+    # nsd_general_volume = make_roi_volume("nsdgeneral")
 
     cortical_mask = np.load(
             "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
@@ -459,29 +459,29 @@ if __name__ == "__main__":
     # )
 
     volumes = {
-        "Visual ROIs": visual_roi_volume,
-        "Eccentricity ROIs": ecc_roi_volume,
-        "Places ROIs": place_roi_volume,
-        "Faces ROIs": face_roi_volume,
-        "Bodies ROIs": body_roi_volume,
+        # "Visual ROIs": visual_roi_volume,
+        # "Eccentricity ROIs": ecc_roi_volume,
+        # "Places ROIs": place_roi_volume,
+        # "Faces ROIs": face_roi_volume,
+        # "Bodies ROIs": body_roi_volume,
         # "Words ROIs": word_roi_volume,
-        "Kastner2015": kastner_volume,
-        "HCP": hcp_volume,
+        # "Kastner2015": kastner_volume,
+        # "HCP": hcp_volume,
         # "sulcus": sulc_volume,
-        "Language ROIs": language_volume,
+        # "Language ROIs": language_volume,
         # "Noise Ceiling": nc_volume,
         # "EV": ev_volume,
         # "EV - old": old_ev_volume,
         # "food": food_volume,
         # "food_mask": food_mask_volume,
         # "roi_int": roi_int_volume,
-        "nsd_general": nsd_general_volume,
+        # "nsd_general": nsd_general_volume,
         # "rdm_bottom_right": rdm_volume,
     }
 
-    yfcc_simclr = load_model_performance("YFCC_simCLR", subj=args.subj, measure="rsq")
-    yfcc_slip = load_model_performance("YFCC_slip", subj=args.subj, measure="rsq")
-    yfcc_slip_simclr_joint = load_model_performance("YFCC_slip_YFCC_simclr", subj=args.subj, measure="rsq")
+    yfcc_simclr = load_model_performance("YFCC_simclr", output_root=OUTPUT_ROOT, subj=args.subj, measure="rsq")
+    yfcc_slip = load_model_performance("YFCC_slip", output_root=OUTPUT_ROOT, subj=args.subj, measure="rsq")
+    yfcc_slip_simclr_joint = load_model_performance("YFCC_slip_YFCC_simclr", output_root=OUTPUT_ROOT, subj=args.subj, measure="rsq")
     nc = np.load(
         "%s/output/noise_ceiling/subj%01d/noise_ceiling_1d_subj%02d.npy"
         % (OUTPUT_ROOT, args.subj, args.subj)
@@ -867,29 +867,6 @@ if __name__ == "__main__":
         cmap="inferno",
         fdr_mask_name="YFCC_slip_unique_var",
     )
-
-    # # MNI
-    # for s in range(1,9):
-    #     volume = make_volume(
-    #         subj=s,
-    #         model="YFCC_slip_YFCC_simclr",
-    #         model2="YFCC_simclr",
-    #         mask_with_significance=args.mask_sig,
-    #         measure="rsq",
-    #         cmap="inferno",
-    #         fdr_mask_name="YFCC_slip_unique_var",
-    #     )
-    #     mni_data = project_vols_to_mni(s, volume.data)
-
-    #     mni_vol = cortex.Volume(
-    #         mni_data,
-    #         "fsaverage",
-    #         "atlas",
-    #         cmap="inferno",
-    #     )
-    #     volumes["subj%d - MNI" % s] = mni_vol
-
-    #     cortex.quickflat.make_figure(mni_vol, with_roi=False)
 
 
     # volumes["slip-simclr R^2"] = make_volume(
@@ -1467,18 +1444,19 @@ if __name__ == "__main__":
         #         subj_proj[i, :],
         #     )
 
-        mni_data = project_vols_to_mni(s, volume)
+        # mni_data = project_vols_to_mni(s, volume)
 
-        mni_vol = cortex.Volume(
-            mni_data,
-            "fsaverage",
-            "atlas",
-            cmap="inferno",
-        )
+        # mni_vol = cortex.Volume(
+        #     mni_data,
+        #     "fsaverage",
+        #     "atlas",
+        #     cmap="inferno",
+        # )
 
         # cortex.quickflat.make_figure(mni_vol, with_roi=False)
         # print("***********")
         # print(volumes["PC1"])
+
 
     if args.show_clustering:
         model = "clip"
@@ -1505,6 +1483,88 @@ if __name__ == "__main__":
         subj_port = "4111" + str(args.subj)
         # cortex.webgl.show(data=volumes, autoclose=False, port=int(subj_port))
         cortex.webgl.show(data=volumes, port=int(subj_port), recache=False)
+
+    elif args.vis_method == "MNI":
+        for s in range(1,9):
+            volume = make_volume(
+                subj=s,
+                model="YFCC_slip_YFCC_simclr",
+                model2="YFCC_simclr",
+                mask_with_significance=args.mask_sig,
+                measure="rsq",
+                cmap="inferno",
+                fdr_mask_name="YFCC_slip_unique_var",
+            )
+            # volume.data[~np.isnan(volume.data)] = 1
+            mni_data = project_vols_to_mni(s, volume)
+            mni_vol = cortex.Volume(
+                mni_data,
+                "fsaverage",
+                "atlas",
+                cmap="inferno",
+                vmin=0,
+                vmax=0.05,
+            )
+            volumes["subj%d - MNI" % s] = mni_vol
+
+            # cortex.quickflat.make_figure(mni_vol, with_roi=False)
+            filename = "figures/flatmap/mni/subj%d_YFCC_slip_unique_var.png" % s
+            _ = cortex.quickflat.make_png(
+                    filename,
+                    mni_vol,
+                    linewidth=3,
+                    labelsize="20pt",
+                    with_curvature=True,
+                    recache=True,
+                    # roi_list=roi_list,
+                )
+
+            mni_data[~np.isnan(mni_data)] = 1
+            print(np.sum(mni_data[~np.isnan(mni_data)]))
+            mni_sig_vol = cortex.Volume(
+                mni_data,
+                "fsaverage",
+                "atlas",
+                vmin=0,
+                vmax=1,
+            )
+
+            filename = "figures/flatmap/mni/subj%d_YFCC_slip_unique_var_sig_vox.png" % s
+            _ = cortex.quickflat.make_png(
+                    filename,
+                    mni_vol,
+                    linewidth=3,
+                    labelsize="20pt",
+                    with_curvature=True,
+                    recache=True,
+                    # roi_list=roi_list,
+                )
+
+            if s == 1:
+                group_data = mni_data
+            else:
+                group_data += mni_data
+
+        group_vol = cortex.Volume(
+                group_data,
+                "fsaverage",
+                "atlas",
+                cmap="inferno",
+                vmin=0,
+                vmax=8,
+            )
+        volumes["group - MNI"] = group_vol
+
+        filename = "figures/flatmap/mni/YFCC_slip_unique_var_group_sig_vox.png"
+        _ = cortex.quickflat.make_png(
+                filename,
+                group_vol,
+                linewidth=3,
+                labelsize="20pt",
+                with_curvature=True,
+                recache=True,
+                # roi_list=roi_list,
+            )
 
     elif args.vis_method == "quickflat":
         roi_list = ["RSC", "PPA", "OPA", "EBA", "EarlyVis", "FFA-1", "FFA-2"]
