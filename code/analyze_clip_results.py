@@ -7,6 +7,7 @@ import argparse
 
 # from msilib.schema import File
 import pickle
+import matplotlib as mpl
 
 import pandas as pd
 import seaborn as sns
@@ -367,6 +368,7 @@ if __name__ == "__main__":
         "--process_bootstrap_results", default=False, action="store_true"
     )
     parser.add_argument("--cross_model_comparison", default=False, action="store_true")
+    parser.add_argument("--roi_voxel_analysis_between_models", default=False, action="store_true")
     parser.add_argument("--nc_scatter_plot", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
@@ -437,7 +439,6 @@ if __name__ == "__main__":
             for subj in np.arange(1, 9):
                 find_corner_images(m1, m2, masking=roi, measure="rsq", subj=subj)
     
-
     if args.performance_analysis_by_roi:
         sns.set(style="whitegrid", font_scale=4.5)
 
@@ -1026,3 +1027,75 @@ if __name__ == "__main__":
             )
             .save("figures/model_comp/subj1257.png", bbox_inches="tight")
         )
+
+    if args.roi_voxel_analysis_between_models:
+        from util.model_config import *
+
+        model1 = "YFCC_slip"
+        model2 = "YFCC_simclr"
+
+        roi = "EBA"
+        roi_regions = "floc-bodies"
+        roi_dict = roi_name_dict[roi_regions]
+        roi_val = list(roi_dict.keys())[list(roi_dict.values()).index(roi)]
+        print(roi_val)
+
+        m1_us, m1_mps, m2_us, m2_mps = [], [], [], []
+        for s in np.arange(1,9):
+            roi_mask = np.load(
+                    "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                    % (args.output_root, s, s, roi_regions)
+                )
+            roi_mask = roi_mask == roi_val
+
+
+            m1_rsq = load_model_performance(model1, output_root=args.output_root, subj=s, measure="rsq")
+            m2_rsq = load_model_performance(model2, output_root=args.output_root, subj=s, measure="rsq")
+            joint_rsq = load_model_performance("%s_%s" % (model1, model2), output_root=args.output_root, subj=s, measure="rsq")
+
+            m1_u = joint_rsq - m2_rsq
+            m2_u = joint_rsq - m1_rsq
+            m1_us.append(m1_u[roi_mask])
+            m2_us.append(m2_u[roi_mask])
+            m1_mps.append(m1_rsq[roi_mask])
+            m2_mps.append(m2_rsq[roi_mask])
+
+        m1_ru = np.hstack(m1_us)
+        m2_ru = np.hstack(m2_us)
+        m1_mps = np.hstack(m1_mps)
+        m2_mps = np.hstack(m2_mps)
+
+        print(m1_ru.shape)
+        print(m1_mps.shape)
+
+        plt.figure()
+        plt.hist2d(
+            m1_ru,
+            m2_ru,
+            bins=100,
+            norm=mpl.colors.LogNorm(),
+            cmap="magma",
+        )
+        plt.savefig("figures/CLIP/voxel_wise_performance/unique_var_hist2d_%s_v_%s_in_%s.png" % (model1, model2, roi))
+
+        plt.figure(figsize=(10,15))
+        plt.scatter(m1_ru, m2_ru, alpha=0.3)
+        plt.xlabel(model1)
+        plt.ylabel(model2)
+        plt.title("Unique Variances")
+        plt.plot([-0.08, 0.1], [-0.08, 0.1], linewidth=1, color="red")
+        plt.xlabel("YFCC SLIP")
+        plt.ylabel("YFCC simCLR")
+        plt.savefig("figures/CLIP/voxel_wise_performance/unique_var_%s_v_%s_in_%s.png" % (model1, model2, roi))
+
+        plt.figure()
+        plt.scatter(m1_mps, m2_mps, alpha=0.3)
+        plt.xlabel(model1)
+        plt.ylabel(model2)
+        plt.title("Model Performance")
+        plt.plot([-0.08, 0.95], [-0.08, 0.95], linewidth=1, color="red")
+        plt.xlabel("YFCC SLIP")
+        plt.ylabel("YFCC simCLR")
+        plt.savefig("figures/CLIP/voxel_wise_performance/%s_v_%s_in_%s.png" % (model1, model2, roi))
+
+

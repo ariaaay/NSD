@@ -39,7 +39,12 @@ def make_word_cloud(text, saving_fname):
 
 
 def make_name_modifier(args):
-    if (args.threshold == 0) and (args.best_voxel_n == 0) and (args.roi_only is None):
+    if (
+        (args.threshold == 0)
+        and (args.best_voxel_n == 0)
+        and (args.roi_only is None)
+        and (args.model_unique_var is None)
+    ):
         raise NameError("One of the selection criteria has to be used.")
 
     if args.roi_only is not None:
@@ -53,6 +58,9 @@ def make_name_modifier(args):
         name_modifier = "acc_%.1f" % args.threshold
     elif args.best_voxel_n != 0:
         name_modifier = "best_%d" % args.best_voxel_n
+    elif args.model_unique_var is not None:
+        name_modifier = "%s_unique_var" % args.model_unique_var
+        return name_modifier
 
     if args.mask_out_roi is not None:
         name_modifier += "_minus_%s" % args.mask_out_roi
@@ -105,6 +113,17 @@ def extract_single_subject_weight(subj, args):
 
         weight_mask = ~roi_mask
         print("masking out %d voxels..." % sum(roi_mask))
+
+    elif args.model_unique_var is not None:
+        fdr_p = np.load(
+            "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+            % (args.output_root, args.model_unique_var, subj)
+        )
+        weight_mask = fdr_p[1] < 0.05
+        # print(weight_mask.shape)
+        weight_mask = fill_in_nan_voxels(
+            weight_mask, subj=subj, output_root=args.output_root
+        )
     else:
         weight_mask = np.ones(w.shape[1])
 
@@ -148,7 +167,8 @@ def extract_single_subject_weight(subj, args):
 
 
 def load_weight_matrix_from_subjs_for_pca(args):
-    subjs = np.arange(1, 9)
+    # subjs = np.arange(1, 9)
+    subjs = [1, 2, 5, 7]
     name_modifier = make_name_modifier(args)
     group_w_path = "%s/output/pca/%s/%s/weight_matrix.npy" % (
         args.output_root,
@@ -259,6 +279,7 @@ if __name__ == "__main__":
     parser.add_argument("--best_voxel_n", type=int, default=0)
     parser.add_argument("--roi_only", default=None, nargs="+")
     parser.add_argument("--sub_roi", default=None)
+    parser.add_argument("--model_unique_var", default=None)
     parser.add_argument("--mask_out_roi", default=None)
     parser.add_argument("--nc_corrected", default=False, action="store_true")
     parser.add_argument("--plotting", default=True)
@@ -294,13 +315,13 @@ if __name__ == "__main__":
     plt.savefig("figures/PCA/ev/%s_pca_group_%s.png" % (args.model, name_modifier))
 
     if args.group_pca_analysis:
-        from analyze_clip_results import (
-            extract_text_activations,
-            extract_emb_keywords,
+        from util.coco_utils import (
             get_coco_anns,
             get_coco_image,
             get_coco_caps,
         )
+
+        from interpret_models import extract_text_activations, extract_emb_keywords
         from featureprep.feature_prep import get_preloaded_features
 
         PCs, name_modifier = get_PCs(args)
@@ -326,9 +347,9 @@ if __name__ == "__main__":
         from pycocotools.coco import COCO
 
         annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-        # annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
         coco_train = COCO(annFile_train)
-        # coco_val = COCO(annFile_val)
+        coco_val = COCO(annFile_val)
 
         cats = coco_train.loadCats(coco_train.getCatIds())
         id2cat = {}
@@ -349,8 +370,6 @@ if __name__ == "__main__":
         for i in tqdm(range(PCs.shape[0])):
             n_samples = int(len(stimulus_list) / 20)
             sample_idx = np.arange(0, len(stimulus_list), n_samples)
-            print(activations.shape)
-            print(PCs.shape)
 
             scores = activations.squeeze() @ PCs[i, :]
             sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][sample_idx]]
@@ -358,7 +377,7 @@ if __name__ == "__main__":
             # plot images
             for j, id in enumerate(sampled_img_ids):
                 plt.subplot(20, 20, i * 20 + j + 1)
-                I = get_coco_image(id)
+                I = get_coco_image(id, coco_train, coco_val)
                 plt.axis("off")
                 plt.imshow(I)
         plt.tight_layout()
@@ -378,7 +397,7 @@ if __name__ == "__main__":
                 plt.figure()
                 for j, id in enumerate(best_img_ids):
                     plt.subplot(4, 5, j + 1)
-                    I = get_coco_image(id)
+                    I = get_coco_image(id, coco_train, coco_val)
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
@@ -391,7 +410,7 @@ if __name__ == "__main__":
                 plt.figure()
                 for j, id in enumerate(worst_img_ids):
                     plt.subplot(4, 5, j + 1)
-                    I = get_coco_image(id)
+                    I = get_coco_image(id, coco_train, coco_val)
                     plt.axis("off")
                     plt.imshow(I)
                 plt.tight_layout()
