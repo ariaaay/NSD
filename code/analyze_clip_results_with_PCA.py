@@ -347,7 +347,9 @@ if __name__ == "__main__":
         from pycocotools.coco import COCO
 
         annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
-        annFile_val = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        annFile_val = (
+            "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        )
         coco_train = COCO(annFile_train)
         coco_val = COCO(annFile_val)
 

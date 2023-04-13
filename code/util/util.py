@@ -130,7 +130,8 @@ def sum_squared_error(x1, x2):
 
 
 def ev(data, biascorr=True):
-    """Computes the amount of variance in a voxel's response that can be explained by the
+    """
+    Computes the amount of variance in a voxel's response that can be explained by the
     mean response of that voxel over multiple repetitions of the same stimulus.
 
     If [biascorr], the explainable variance is corrected for bias, and will have mean zero
@@ -138,7 +139,7 @@ def ev(data, biascorr=True):
 
     Data is assumed to be a 2D matrix: time x repeats.
     """
-    ev = 1 - (data.T - data.mean(1)).var() / data.var()
+    ev = 1 - np.nanvar(data.T - np.nanmean(data, axis=1)) / np.nanvar(data)
     if biascorr:
         return ev - ((1 - ev) / (data.shape[1] - 1.0))
     else:

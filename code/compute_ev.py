@@ -23,10 +23,10 @@ def extract_subject_trials_index_shared1000(stim, subj):
 def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
     l = np.load(
         "%s/trials_subj%02d.npy" % (args.output_dir, subj)
-    )  # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id
+    )  # size should be 10000 by 3 for subj 1,2,5,7; ordered by image id. entries are trial numbers
 
     repeat_n = l.shape[0]
-    print("The number of images with 3 repetitions are: " + str(repeat_n))
+    # print("The number of images with 3 repetitions are: " + str(repeat_n))
 
     try:
         assert l.shape == (repeat_n, 3)
@@ -45,6 +45,7 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
             % (args.output_dir, subj, roi)
         )
 
+    # data size is # of total trials X # of voxels
     ev_list = []
     avg_mat = np.zeros(
         (repeat_n, data.shape[1])
@@ -52,9 +53,11 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
 
     print("Brain data shape is:")
     print(data.shape)
+    # import pdb; pdb.set_trace()
     # fill in 0s for nonexisting trials
     if data.shape[0] < 30000:
         tmp = np.zeros((30000, data.shape[1]))
+        tmp[:] = np.nan
         tmp[: data.shape[0], :] = data.copy()
         data = tmp
 
@@ -67,10 +70,11 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
                 print("Index Error")
                 print(r, v)
 
+        # repeat size: 3 x # repeated images
         repeat = np.array(repeat).T
         try:
             assert repeat.shape == (repeat_n, 3)
-            avg_mat[:, v] = np.mean(repeat, axis=1)
+            avg_mat[:, v] = np.nanmean(repeat, axis=1)
         except AssertionError:
             print(repeat.shape)
 
@@ -159,16 +163,14 @@ if __name__ == "__main__":
     # stim = pd.read_pickle("/lab_data/tarrlab/common/datasets/NSD/nsddata/experiments/nsd/nsd_stim_info_merged.pkl")
 
     if args.compute_ev:
-        try:
-            all_evs = np.load(
-                "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag)
-            )
-        except FileNotFoundError:
-            print("computing EVs")
-            all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
-            np.save(
-                "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs
-            )
+        # try:
+        #     all_evs = np.load(
+        #         "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag)
+        #     )
+        # except FileNotFoundError:
+        print("computing EVs")
+        all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
+        np.save("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs)
 
         plt.figure()
         plt.hist(all_evs)

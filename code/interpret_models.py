@@ -21,7 +21,11 @@ from sklearn.decomposition import PCA
 import clip
 
 from util.util import fdr_correct_p
-from util.data_util import load_model_performance, extract_test_image_ids
+from util.data_util import (
+    load_model_performance,
+    extract_test_image_ids,
+    fill_in_nan_voxels,
+)
 from util.model_config import *
 
 # device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -38,15 +42,20 @@ def extract_text_activations(model, word_lists):
     return np.array(activations)
 
 
-def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
-    roi_mask = np.load(
-        "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-        % (args.output_root, args.subj, args.subj, roi_name)
-    )
-    roi_selected_vox = np.zeros((roi_mask.shape))
-    for v in roi_vals:
-        roi_selected_vox += roi_mask == v
-    roi_selected_vox = roi_selected_vox > 0
+def extract_keywords_for_roi(
+    w, activations, common_words, roi_name=None, roi_vals=None, mask=None
+):
+    if mask is None:
+        roi_mask = np.load(
+            "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.output_root, args.subj, args.subj, roi_name)
+        )
+        roi_selected_vox = np.zeros((roi_mask.shape))
+        for v in roi_vals:
+            roi_selected_vox += roi_mask == v
+        roi_selected_vox = roi_selected_vox > 0
+    else:
+        roi_selected_vox = mask
 
     roi_w = w[:, roi_selected_vox]
 
@@ -74,7 +83,7 @@ def extract_keywords_for_roi(w, roi_name, roi_vals, activations, common_words):
     )
 
 
-def extract_captions_for_voxel(roi, n=3):
+def extract_captions_for_voxel(roi=None, mask=None, n=3):
     """
     voxel that are selected by the mask will be assigned integer values
     """
@@ -137,25 +146,30 @@ def extract_captions_for_voxel(roi, n=3):
 
     best_caption_dict = dict()
 
-    roi_mask = np.load(
-        "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-        % (args.output_root, args.subj, args.subj, roi)
-    )
+    if mask is None:
+        if roi is not None:
+            roi_mask = np.load(
+                "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                % (args.output_root, args.subj, args.subj, roi)
+            )
 
-    try:  # take out zero voxels
-        non_zero_mask = np.load(
-            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
-            % (args.output_root, args.subj, args.subj)
-        )
-        print("Masking zero voxels...")
-        roi_mask = roi_mask[non_zero_mask]
-    except FileNotFoundError:
-        pass
+            try:  # take out zero voxels
+                non_zero_mask = np.load(
+                    "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+                    % (args.output_root, args.subj, args.subj)
+                )
+                print("Masking zero voxels...")
+                roi_mask = roi_mask[non_zero_mask]
+            except FileNotFoundError:
+                pass
 
-    if args.roi_value != 0:
-        mask = roi_mask == args.roi_value
-    else:
-        mask = roi_mask > 0
+            if args.roi_value != 0:
+                mask = roi_mask == args.roi_value
+            else:
+                mask = roi_mask > 0
+        else:
+            raise ValueError("Mask or roi cannot both be None.")
+
     print(str(sum(mask)) + " voxels for optimization")
     vox_w = w[:, mask]
 
@@ -195,6 +209,16 @@ def compute_average_pairwise_brain_corr(subj=1, sample_n=5000):
         "%s/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
         % (args.output_root, subj)
     )
+    try:
+        non_zero_mask = np.load(
+            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (args.output_root, subj, subj)
+        )
+        print("Masking zero voxels...")
+        bdata = bdata[:, non_zero_mask]
+    except FileNotFoundError:
+        pass
+
     select_ind = np.random.choice(bdata.shape[0], size=sample_n * 2, replace=True)
 
     b1 = bdata[select_ind[:sample_n], :]
@@ -202,8 +226,8 @@ def compute_average_pairwise_brain_corr(subj=1, sample_n=5000):
     b_corr = np.array([pearsonr(b1[:, v], b2[:, v])[0] for v in range(b1.shape[1])])
     print(b_corr.shape)
     np.save(
-        "%s/output/rdm_based_analysis/voxel_corr_baseline_n%d.npy"
-        % (args.output_root, sample_n),
+        "%s/output/rdm_based_analysis/subj%d/voxel_corr_baseline_n%d.npy"
+        % (args.output_root, subj, sample_n),
         b_corr,
     )
 
@@ -287,6 +311,11 @@ def sample_level_semantic_analysis(
     from util.coco_utils import get_coco_image, get_coco_caps
     from sklearn.model_selection import train_test_split
 
+    if not os.path.exists(
+        "%s/output/rdm_based_analysis/subj%d/" % (args.output_root, subj)
+    ):
+        os.makedirs("%s/output/rdm_based_analysis/subj%d/" % (args.output_root, subj))
+
     # load coco id in presentation to this subject
     # load model prediction accuracy
     # load brain response to compute voxel similarity
@@ -295,21 +324,58 @@ def sample_level_semantic_analysis(
     cocoId_subj = np.load(
         "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
     )
+    try:
+        rsm1 = np.load(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1)
+        )
+    except FileNotFoundError:
+        from compute_feature_rdm import computeRSM
 
-    rsm1 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1))
-    rsm2 = np.load("%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2))
+        rsm1 = computeRSM(model1, args.feature_dir)
+        np.save(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model1),
+            rsm1,
+        )
+
+    try:
+        rsm2 = np.load(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2)
+        )
+    except FileNotFoundError:
+        from compute_feature_rdm import computeRSM
+
+        rsm2 = computeRSM(model2, args.feature_dir)
+        np.save(
+            "%s/output/rdms/subj%02d_%s.npy" % (args.output_root, subj, model2),
+            rsm2,
+        )
 
     # plot max diff images
-    # model_name_for_fig = [(model1, model2), (model2, model1)]
-    # plot_max_diff_images(rsm1, rsm2, cocoId_subj, model_name_for_fig, print_caption=print_caption, print_distance=print_distance)
+    model_name_for_fig = [(model1, model2), (model2, model1)]
+    plot_max_diff_images(
+        rsm1,
+        rsm2,
+        cocoId_subj,
+        model_name_for_fig,
+        print_caption=print_caption,
+        print_distance=print_distance,
+    )
 
+    triu_flag = np.triu(np.ones(rsm1.shape), 1).astype(bool)
+    perc = 97.5
     if threshold[2] == "br":
-        select_pair = (rsm1 > threshold[0]) * (rsm2 < threshold[1])
+        # import pdb; pdb.set_trace()
+        t1 = np.percentile(rsm1[triu_flag], perc)
+        t2 = np.percentile(rsm2[triu_flag], (100 - perc))
+        select_pair = (rsm1 > t1) * (rsm2 < t2)
+        print(t1, t2, threshold[2])
     elif threshold[2] == "tl":
-        select_pair = (rsm1 < threshold[0]) * (rsm2 > threshold[1])
+        t1 = np.percentile(rsm1[triu_flag], (100 - perc))
+        t2 = np.percentile(rsm2[triu_flag], perc)
+        print(t1, t2, threshold[2])
+        select_pair = (rsm1 < t1) * (rsm2 > t2)
 
     num_pairs = np.sum(select_pair)
-    print(threshold)
     print("number of pair of images selected: " + str(num_pairs / 2))
     ind = np.unravel_index(np.argsort(select_pair, axis=None), select_pair.shape)
     # b/c symmetry of RDM, every two pairs are the same
@@ -326,6 +392,22 @@ def sample_level_semantic_analysis(
         "%s/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
         % (args.output_root, subj)
     )
+
+    try:
+        non_zero_mask = np.load(
+            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (args.output_root, subj, subj)
+        )
+        print("Masking zero voxels...")
+        bdata = bdata[:, non_zero_mask]
+    except FileNotFoundError:
+        pass
+
+    print("NaNs? Finite?:")
+    print(np.any(np.isnan(bdata)))
+    print(np.all(np.isfinite(bdata)))
+    print("Brain response size is: " + str(bdata.shape))
+
     b1 = bdata[trial_id_pair[:, 0], :]
     b2 = bdata[trial_id_pair[:, 1], :]
     b_corr = np.array([pearsonr(b1[:, v], b2[:, v])[0] for v in range(b1.shape[1])])
@@ -333,19 +415,21 @@ def sample_level_semantic_analysis(
     normalize_flag = ""
     if normalize == "sub_baseline":
         baseline = np.load(
-            "%s/output/rdm_based_analysis/voxel_corr_baseline_n%d.npy"
-            % (args.output_root, 5000)
+            "%s/output/rdm_based_analysis/subj%d/voxel_corr_baseline_n%d.npy"
+            % (args.output_root, subj, 5000)
         )
         b_corr = b_corr - baseline
         normalize_flag = "_sub_baseline"
+
     np.save(
-        "%s/output/rdm_based_analysis/voxel_corr_%s_vs_%s_%.2f_%.2f_%s%s.npy"
+        "%s/output/rdm_based_analysis/subj%d/voxel_corr_%s_vs_%s_%.2f_%.2f_%s%s.npy"
         % (
             args.output_root,
+            subj,
             model1,
             model2,
-            threshold[0],
-            threshold[1],
+            t1,
+            t2,
             threshold[2],
             normalize_flag,
         ),
@@ -370,9 +454,13 @@ def sample_level_semantic_analysis(
             plt.title(cap)
             plt.axis("off")
     plt.tight_layout()
+
+    if not os.path.exists("figures/CLIP/RDM_based_analysis/subj%d/" % subj):
+        os.makedirs("figures/CLIP/RDM_based_analysis/subj%d/" % subj)
+
     plt.savefig(
-        "figures/CLIP/RDM_based_analysis/%s_vs_%s_%.2f_%.2f_%s.png"
-        % (model1, model2, threshold[0], threshold[1], threshold[2])
+        "figures/CLIP/RDM_based_analysis/subj%d/%s_vs_%s_%.2f_%.2f_%s.png"
+        % (subj, model1, model2, t1, t2, threshold[2])
     )
 
     # # compare model performances
@@ -490,7 +578,7 @@ def image_level_scatter_plot(
     i=1,
     subplot=False,
     do_zscore=False,
-    threshold=(0, 0, 0),
+    # threshold=(0, 0, 0),
 ):
     """
     Compare model presentations across pairs of sampled images.
@@ -525,12 +613,12 @@ def image_level_scatter_plot(
             rsm2,
         )
 
+    tmp = np.ones(rsm1.shape)
+    triu_flag = np.triu(tmp, k=1).astype(bool)
     # subsample 1000 point for plotting
     sampling_idx = np.random.choice(len(rsm1[triu_flag]), size=10000, replace=False)
     # sampling_idx = np.arange(rsm1.shape[0])
 
-    tmp = np.ones(rsm1.shapedt)
-    triu_flag = np.triu(tmp, k=1).astype(bool)
     if do_zscore:
         x = zscore(rsm1[triu_flag][sampling_idx])
         y = zscore(rsm2[triu_flag][sampling_idx])
@@ -543,10 +631,19 @@ def image_level_scatter_plot(
     plt.scatter(x, y, alpha=0.2, s=2, label=model2)
     plt.box(False)
 
-    if threshold[2] == "br":
-        select = (x > threshold[0]) * (y < threshold[1])
-    elif threshold[2] == "tl":
-        select = (x < threshold[0]) * (y > threshold[1])
+    perc = 95
+    corner = "br"
+    t1 = np.percentile(rsm1[triu_flag], perc)
+    t2 = np.percentile(rsm2[triu_flag], (100 - perc))
+    br_select = (x > t1) * (y < t2)
+    print(t1, t2, corner)
+
+    corner = "tl"
+    t1 = np.percentile(rsm1[triu_flag], (100 - perc))
+    t2 = np.percentile(rsm2[triu_flag], perc)
+    print(t1, t2, corner)
+    tl_select = (x < t1) * (y > t2)
+    select = br_select + tl_select
 
     print(np.sum(select))
     plt.scatter(x[select], y[select], c="r", s=2)
@@ -566,7 +663,8 @@ def image_level_scatter_plot(
     # plt.axis("off")
     # plt.legend()
     plt.savefig(
-        "figures/CLIP/manifold_distance/%s_vs_%s.png" % (model1, model2), dpi=400
+        "figures/CLIP/manifold_distance/subj%d/%s_vs_%s.png" % (subj, model1, model2),
+        dpi=400,
     )
 
 
@@ -621,6 +719,57 @@ def category_based_similarity_analysis(model, threshold, subj=1):
     return within_cluster_score / (cross_cluster_score + within_cluster_score), person_n
 
 
+def max_img4vox(weight, subj, model, save_name):
+    from util.coco_utils import (
+        get_coco_anns,
+        get_coco_image,
+        get_coco_caps,
+    )
+
+    from featureprep.feature_prep import get_preloaded_features
+
+    subj = 1  # using images that subj 1 saw as a random "sample"
+
+    stimulus_list = np.load(
+        "%s/output/coco_ID_of_repeats_subj%02d.npy" % (args.output_root, subj)
+    )
+
+    activations = get_preloaded_features(
+        subj,
+        stimulus_list,
+        "%s" % model,
+        features_dir="%s/features" % args.output_root,
+    )
+    # getting scores and plotting
+
+    # plot sampled images
+    plt.figure(figsize=(30, 30))
+
+    print(weight.shape)
+
+    for w in tqdm(range(weight.shape[1])):
+        # scores = np.mean(activations.squeeze() @ weight, axis=1)
+        scores = activations.squeeze() @ weight[:, w]
+        sampled_img_ids = stimulus_list[np.argsort(scores)[::-1][:20]]
+
+        # plot images
+        for j, id in enumerate(sampled_img_ids):
+            plt.subplot(4, 5, j + 1)
+            I = get_coco_image(id, coco_train, coco_val)
+            plt.axis("off")
+            plt.imshow(I)
+        plt.tight_layout()
+
+        # plt.savefig(
+        #     "figures/CLIP/max_img4vox/%s_max_images_%s.png"
+        #     % (args.model, save_name)
+        # )
+        plt.savefig(
+            "figures/CLIP/max_img4vox/single_voxel/%s_max_images_%s_%d.png"
+            % (args.model, save_name, w)
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -639,6 +788,7 @@ if __name__ == "__main__":
         "--feature_dir", default="/user_data/yuanw3/project_outputs/NSD/features"
     )
     parser.add_argument("--roi", type=str)
+    parser.add_argument("--model", type=str)
     parser.add_argument("--roi_value", default=0, type=int)
     parser.add_argument(
         "--coarse_level_semantic_analysis", default=False, action="store_true"
@@ -664,6 +814,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--extract_captions_for_roi", default=None, type=str)
     parser.add_argument("--mask", default=False, action="store_true")
+    parser.add_argument("--vox_img_maximization", default=False, action="store_true")
     args = parser.parse_args()
 
     if args.compare_brain_and_clip_performance:
@@ -686,32 +837,30 @@ if __name__ == "__main__":
         # # plt.legend()
         # plt.savefig("figures/CLIP/manifold_distance/bert_vs_others.png", dpi=400)
 
-        model1, model2 = "clip", "resnet50_bottleneck"
-        threshold = (0.8, 0.2, "br")
-        plt.figure()
-        image_level_scatter_plot(
-            model1=model1, model2=model2, do_zscore=False, threshold=threshold
-        )
+        # model1, model2 = "clip", "resnet50_bottleneck"
+        # # threshold = (0.8, 0.2, "br")
+        # plt.figure()
+        # image_level_scatter_plot(model1=model1, model2=model2, do_zscore=False)
 
         model1, model2 = "YFCC_clip", "YFCC_simclr"
-        threshold = (0.6, 0.8, "br")
+        # threshold = (0.6, 0.8, "br")
         plt.figure()
         image_level_scatter_plot(
-            model1="YFCC_clip",
-            model2="YFCC_simclr",
+            model1,
+            model2,
             do_zscore=False,
-            threshold=threshold,
+            # threshold=threshold,
         )
 
-        model1, model2 = "YFCC_clip", "YFCC_simclr"
-        threshold = (0.6, 0.8, "br")
-        plt.figure()
-        image_level_scatter_plot(
-            model1="YFCC_slip",
-            model2="YFCC_simclr",
-            do_zscore=False,
-            threshold=threshold,
-        )
+        # model1, model2 = "YFCC_slip", "YFCC_simclr"
+        # # threshold = (0.6, 0.8, "br")
+        # plt.figure()
+        # image_level_scatter_plot(
+        #     model1,
+        #     model2,
+        #     do_zscore=False,
+        #     # threshold=threshold,
+        # )
 
     if args.extract_keywords_for_roi:
         with open(
@@ -743,14 +892,38 @@ if __name__ == "__main__":
             % (args.output_root, args.subj)
         )
 
-        extract_keywords_for_roi(w, "floc-faces", [2, 3], activations, common_words)
-        extract_keywords_for_roi(w, "floc-bodies", [1, 2, 3], activations, common_words)
+        # extract_keywords_for_roi(w, activations, common_words, "floc-faces", [2, 3])
+        # extract_keywords_for_roi(w, activations, common_words, "floc-bodies", [1, 2, 3])
+        # extract_keywords_for_roi(
+        #     w, activations, common_words, "floc-places", [1, 2, 3, 4]
+        # )
+        model = "YFCC_slip"
+        fdr_p = np.load(
+            "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+            % (args.output_root, model, args.subj)
+        )
+        weight_mask = fdr_p[1] < 0.05
         extract_keywords_for_roi(
-            w, "floc-places", [1, 2, 3, 4], activations, common_words
+            w,
+            activations,
+            common_words,
+            roi_name="YFCC_slip_unique_var",
+            mask=weight_mask,
         )
 
     if args.extract_captions_for_roi is not None:
-        extract_captions_for_voxel(args.extract_captions_for_roi)
+        from util.model_config import roi_name_dict
+
+        if args.extract_captions_for_roi in roi_name_dict.keys():
+            extract_captions_for_voxel(args.extract_captions_for_roi)
+        else:
+            model = args.extract_captions_for_roi
+            fdr_p = np.load(
+                "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+                % (args.output_root, model, args.subj)
+            )
+            weight_mask = fdr_p[1] < 0.05
+            extract_captions_for_voxel(mask=weight_mask, roi="%s_unique_var" % model)
 
     if args.sample_level_semantic_analysis:
         from pycocotools.coco import COCO
@@ -772,78 +945,79 @@ if __name__ == "__main__":
         coco_train_caps = COCO(annFile_train_caps)
         coco_val_caps = COCO(annFile_val_caps)
 
-        normalize = "sub_baseline"
-        # compute_average_pairwise_brain_corr(subj=args.subj, sample_n=5000)
+        compute_average_pairwise_brain_corr(subj=args.subj, sample_n=5000)
 
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="clip",
-        #     model2="resnet50_bottleneck",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.8, 0.2, "br"),
-        #     normalize=normalize,
-        # )
+        for normalize in ["sub_baseline", "None"]:
 
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="YFCC_clip",
-        #     model2="YFCC_simclr",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.65, 0.8, "br"),
-        #     normalize=normalize,
-        # )
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="clip",
+                model2="resnet50_bottleneck",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.8, 0.2, "br"),
+                normalize=normalize,
+            )
 
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="YFCC_slip",
-        #     model2="YFCC_simclr",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.65, 0.8, "br"),
-        #     normalize=normalize,
-        # )
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="YFCC_clip",
+                model2="YFCC_simclr",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.65, 0.8, "br"),
+                normalize=normalize,
+            )
 
-        sample_level_semantic_analysis(
-            subj=args.subj,
-            model1="clip",
-            model2="resnet50_bottleneck",
-            print_caption=True,
-            print_distance=False,
-            threshold=(0.3, 0.4, "tl"),
-            normalize=normalize,
-        )
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="YFCC_slip",
+                model2="YFCC_simclr",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.65, 0.8, "br"),
+                normalize=normalize,
+            )
 
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="YFCC_clip",
-        #     model2="YFCC_simclr",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.25, 0.9, "tl"),
-        #     normalize=normalize,
-        # )
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="clip",
+                model2="resnet50_bottleneck",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.3, 0.4, "tl"),
+                normalize=normalize,
+            )
 
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="YFCC_slip",
-        #     model2="YFCC_simclr",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.35, 0.9, "tl"),
-        #     normalize=normalize,
-        # )
-        
-        # sample_level_semantic_analysis(
-        #     subj=args.subj,
-        #     model1="YFCC_slip",
-        #     model2="YFCC_simclr",
-        #     print_caption=True,
-        #     print_distance=False,
-        #     threshold=(0.35, 0.9, "tl"),
-        #     normalize=None,
-        # )
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="YFCC_clip",
+                model2="YFCC_simclr",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.25, 0.9, "tl"),
+                normalize=normalize,
+            )
+
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="YFCC_slip",
+                model2="YFCC_simclr",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.35, 0.9, "tl"),
+                normalize=normalize,
+            )
+
+            sample_level_semantic_analysis(
+                subj=args.subj,
+                model1="YFCC_slip",
+                model2="YFCC_simclr",
+                print_caption=True,
+                print_distance=False,
+                threshold=(0.35, 0.9, "tl"),
+                normalize=None,
+            )
 
         # sample_level_semantic_analysis(
         #     subj=args.subj, model1="clip", model2="bert_layer_13"
@@ -996,3 +1170,57 @@ if __name__ == "__main__":
         plt.tight_layout()
 
         plt.savefig("figures/CLIP/human_judgement_rsm_comparison_bert13.png")
+
+    if args.vox_img_maximization:
+        from pycocotools.coco import COCO
+
+        annFile_train = "/lab_data/tarrlab/common/datasets/coco_annotations/instances_train2017.json"
+        annFile_val = (
+            "/lab_data/tarrlab/common/datasets/coco_annotations/instances_val2017.json"
+        )
+        coco_train = COCO(annFile_train)
+        coco_val = COCO(annFile_val)
+
+        w = np.load(
+            "%s/output/encoding_results/subj%d/weights_%s_whole_brain.npy"
+            % (args.output_root, args.subj, args.model)
+        )
+        w = fill_in_nan_voxels(w, args.subj, args.output_root)
+
+        # visualize slip uni var vox
+        fdr_p = np.load(
+            "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+            % (args.output_root, "YFCC_slip", args.subj)
+        )
+        weight_mask_slipu = fdr_p[1] < 0.0001
+        import pdb
+
+        pdb.set_trace()
+        print(np.sum(weight_mask_slipu))
+        weight_mask_slipu = fill_in_nan_voxels(
+            weight_mask_slipu, subj=args.subj, output_root=args.output_root
+        )
+        max_img4vox(
+            w[:, weight_mask_slipu],
+            args.subj,
+            args.model,
+            save_name="YFCC_slip_unique_var",
+        )
+
+        # visualize general EBA voxel
+        roi_mask = np.load(
+            "%s/output/voxels_masks/subj%d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.output_root, args.subj, args.subj, "floc-bodies")
+        )
+        # weight_mask_eba = roi_mask == 1
+        # weight_mask_eba = fill_in_nan_voxels(
+        #     weight_mask_eba, subj=args.subj, output_root=args.output_root
+        # )
+        # max_img4vox(w[:, weight_mask_eba], args.subj, args.model, save_name="EBA")
+
+        # visualize EBA - SLIP unique var
+        # weight_mask_diff1 = np.clip((weight_mask_eba.astype(int) - weight_mask_slipu.astype(int)), 0, 1).astype(bool)
+        # max_img4vox(w[:, weight_mask_diff1], args.subj, args.model, save_name="EBA-slipu")
+
+        # weight_mask_diff2 = np.clip((weight_mask_slipu.astype(int) - weight_mask_eba.astype(int)), 0, 1).astype(bool)
+        # max_img4vox(w[:, weight_mask_diff2], args.subj, args.model, save_name="slipu-EBA")
