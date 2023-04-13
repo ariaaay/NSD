@@ -348,10 +348,20 @@ def show_voxel_diff_in_repr_samples(model1, model2, quad="br"):
         import glob
 
         fname = glob.glob(
-            "./output/rdm_based_analysis/voxel_corr_%s_vs_%s_*%s.npy"
-            % (model1, model2, quad)
+            "./output/rdm_based_analysis/subj%d/voxel_corr_%s_vs_%s_*%s.npy"
+            % (args.subj, model1, model2, quad)
         )
         vals = np.load(fname[0])
+        
+        non_zero_mask = np.load(
+            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+            % (OUTPUT_ROOT, args.subj, args.subj)
+        )
+        print("Masking zero voxels...")
+        tmp = np.zeros(non_zero_mask.shape)
+        tmp[non_zero_mask] = vals
+        vals = tmp
+
         all_vals = project_vals_to_3d(vals, cortical_mask)
         return all_vals
 
@@ -1083,7 +1093,7 @@ if __name__ == "__main__":
         cmap="PU_BuOr_covar_alpha",
     )
 
-    if args.subj == 1 & args.show_repr_sim:
+    if args.show_repr_sim:
         model_list = [
             ["YFCC_slip", "YFCC_simclr"],
             ["YFCC_clip", "YFCC_simclr"],
@@ -1529,6 +1539,7 @@ if __name__ == "__main__":
                 labelsize="20pt",
                 with_curvature=True,
                 recache=False,
+                with_colorbar=False,
                 # roi_list=roi_list,
             )
 
