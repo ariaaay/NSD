@@ -48,9 +48,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.RSM:
-        computeRSM(args.feature, args.feature_dir, args.subj)
+        rsm = computeRSM(args.feature, args.feature_dir, args.subj)
         np.save(
-            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, subj, model),
+            "%s/rdms/subj%02d_%s.npy" % (args.output_dir, args.subj, args.feature),
             rsm,
         )
 

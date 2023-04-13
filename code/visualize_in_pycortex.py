@@ -1505,10 +1505,21 @@ if __name__ == "__main__":
         cortex.webgl.show(data=volumes, port=int(subj_port), recache=False)
 
     elif args.vis_method == "MNI":
-        mask_threshold = 0.1
-        
+        group_mni_data = []
+        mni_mask = cortex.utils.get_cortical_mask("fsaverage", "atlas")
+
         for s in range(1, 9):
             print("SUBJECT: " + str(s))
+
+            # visualize in MNI space
+
+            cortical_mask = np.load(
+                "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
+                % (OUTPUT_ROOT, s, s)
+            )
+            mask = cortex.utils.get_cortical_mask(
+                "subj%02d" % s, "func1pt8_to_anat0pt8_autoFSbbr"
+            )
 
             volume = make_volume(
                 subj=s,
@@ -1517,137 +1528,94 @@ if __name__ == "__main__":
                 mask_with_significance=args.mask_sig,
                 measure="rsq",
                 cmap="inferno",
-                fdr_mask_name="YFCC_slip_unique_var",
-                vmin=0,
-                vmax=0.05
+                # fdr_mask_name="YFCC_slip_unique_var",
             )
-            filename = "figures/flatmap/subj%d/YFCC_slip_unique_var.png" % s
-            _ = cortex.quickflat.make_png(
-                filename,
-                volume,
-                linewidth=3,
-                labelsize="20pt",
-                with_curvature=True,
-                recache=False,
-                # roi_list=roi_list,
-            )
+            mni_data = project_vols_to_mni(s, volume)
+            # group_mni_data.append(mni_data.flatten())
+            group_mni_data.append(mni_data[mni_mask])
 
-        #     # visualize in MNI space
+        from scipy.stats import ttest_1samp
+        from statsmodels.stats.multitest import fdrcorrection
 
-        #     sig_mask = load_fdr_mask(OUTPUT_ROOT, "YFCC_slip_YFCC_simclr", "YFCC_slip_unique_var", s)
-        #     cortical_mask = np.load(
-        #         "%s/output/voxels_masks/subj%d/cortical_mask_subj%02d.npy"
-        #         % (OUTPUT_ROOT, s, s)
-        #     )
-        #     mask = cortex.utils.get_cortical_mask(
-        #         "subj%02d" % s, "func1pt8_to_anat0pt8_autoFSbbr"
-        #     )
-            
-        #     try:
-        #         sig_vals = project_vals_to_3d(sig_mask, cortical_mask)
-        #     except ValueError:
-        #         non_zero_mask = np.load(
-        #             "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
-        #             % (OUTPUT_ROOT, s, s)
-        #         )
-        #         print("Masking zero voxels with mask...")
-            
-        #         sig_mask_tmp = np.zeros(non_zero_mask.shape)
-        #         sig_mask_tmp[non_zero_mask] = sig_mask
-        #         sig_mask = sig_mask_tmp.astype(bool)
-        #         sig_vals = project_vals_to_3d(sig_mask, cortical_mask)
-                
-        #     mask_vol = cortex.dataset.Volume(
-        #         sig_vals,
-        #         "subj%02d" % s,
-        #         "func1pt8_to_anat0pt8_autoFSbbr",
-        #         mask=mask,
-        #     )
+        t, p_val = ttest_1samp(np.array(group_mni_data), 0, alternative="greater")
+        print(t)
+        print(p_val.shape)
+        # p_val = p_val.reshape(mni_data.shape)
 
-        #     mask_in_mni = project_vols_to_mni(s, mask_vol)
-        #     print("Before thresholding, # of significant voxel: " + str(np.sum(mask_in_mni)))
-        #     mask_in_mni = mask_in_mni > mask_threshold
-        #     print("After thresholding, # of significant voxel: " + str(np.sum(mask_in_mni)))
-        #     # import pdb; pdb.set_trace()
+        # np.save("%s/output/ci_threshold/YFCC_slip_group_t_test_p.npy" % OUTPUT_ROOT, p_val)
+        np.save("%s/output/ci_threshold/YFCC_slip_group_t_test_t.npy" % OUTPUT_ROOT, t)
+        import pdb
 
-        #     volume = make_volume(
-        #         subj=s,
-        #         model="YFCC_slip_YFCC_simclr",
-        #         model2="YFCC_simclr",
-        #         mask_with_significance=args.mask_sig,
-        #         measure="rsq",
-        #         cmap="inferno",
-        #         # fdr_mask_name="YFCC_slip_unique_var",
-        #     )
-        #     # volume.data[~np.isnan(volume.data)] = 1
-        #     mni_data = project_vols_to_mni(s, volume)
-        #     mni_data[~mask_in_mni] = np.nan
-        #     mni_vol = cortex.Volume(
-        #         mni_data,
-        #         "fsaverage",
-        #         "atlas",
-        #         cmap="inferno",
-        #         vmin=0,
-        #         vmax=0.05,
-        #     )
-        #     volumes["subj%d - MNI" % s] = mni_vol
+        pdb.set_trace()
 
-        #     # cortex.quickflat.make_figure(mni_vol, with_roi=False)
-        #     filename = "figures/flatmap/mni/subj%d_YFCC_slip_unique_var.png" % s
-        #     _ = cortex.quickflat.make_png(
-        #         filename,
-        #         mni_vol,
-        #         linewidth=3,
-        #         labelsize="20pt",
-        #         with_curvature=True,
-        #         recache=False,
-        #         # roi_list=roi_list,
-        #     )
+        p_val_to_show = p_val.copy()
+        p_val_to_show[p_val > 0.05] = np.nan
 
-        #     mni_sig_vol = cortex.Volume(
-        #         mask_in_mni,
-        #         "fsaverage",
-        #         "atlas",
-        #         vmin=0,
-        #         vmax=1,
-        #     )
+        p_val_3d = np.zeros(mni_mask.shape)
+        p_val_3d[mni_mask] = p_val_to_show
+        # all_vals = np.swapaxes(all_vals, 0, 2)
 
-        #     filename = "figures/flatmap/mni/subj%d_YFCC_slip_unique_var_sig_vox.png" % s
-        #     _ = cortex.quickflat.make_png(
-        #         filename,
-        #         mni_vol,
-        #         linewidth=3,
-        #         labelsize="20pt",
-        #         with_curvature=True,
-        #         recache=False,
-        #         # roi_list=roi_list,
-        #     )
+        # p_val_to_show_3d = project_vals_to_3d(p_val_to_show, mni_mask)
+        p_vol = cortex.Volume(
+            p_val_3d,
+            "fsaverage",
+            "atlas",
+            cmap="Blues_r",
+            vmin=0,
+            vmax=0.05,
+        )
 
-        #     if s == 1:
-        #         group_data = mask_in_mni
-        #     else:
-        #         group_data += mask_in_mni
+        # -log10
 
-        # group_vol = cortex.Volume(
-        #     group_data,
-        #     "fsaverage",
-        #     "atlas",
-        #     cmap="inferno",
-        #     vmin=0,
-        #     vmax=8,
-        # )
-        # volumes["group - MNI"] = group_vol
+        # cortex.quickflat.make_figure(p_vol, with_roi=False)
+        filename = "figures/flatmap/mni/group_YFCC_slip_p.png"
+        _ = cortex.quickflat.make_png(
+            filename,
+            p_vol,
+            linewidth=1,
+            labelsize="17pt",
+            with_curvature=True,
+            recache=False,
+            # roi_list=roi_list,
+        )
 
-        # filename = "figures/flatmap/mni/YFCC_slip_unique_var_group_sig_vox.png"
-        # _ = cortex.quickflat.make_png(
-        #     filename,
-        #     group_vol,
-        #     linewidth=3,
-        #     labelsize="20pt",
-        #     with_curvature=True,
-        #     recache=True,
-        #     # roi_list=roi_list,
-        # )
+        mask_for_nan = ~np.isnan(p_val)
+        fdr_p = fdrcorrection(p_val[mask_for_nan])[1]
+        # fdr_p = fdrcorrection(p_val)[1]
+
+        fdr_p_full = np.ones(p_val.shape)
+        fdr_p_full[mask_for_nan] = fdr_p
+
+        fdr_p_val_3d = np.zeros(mni_mask.shape)
+        fdr_p_val_3d[mni_mask] = fdr_p_full
+
+        fdr_p_vol = cortex.Volume(
+            fdr_p_val_3d,
+            "fsaverage",
+            "atlas",
+            cmap="Blues_r",
+            vmin=0,
+            vmax=0.05,
+        )
+
+        # -log10
+
+        # cortex.quickflat.make_figure(p_vol, with_roi=False)
+        filename = "figures/flatmap/mni/group_YFCC_slip_fdr_p.png"
+        _ = cortex.quickflat.make_png(
+            filename,
+            fdr_p_vol,
+            linewidth=1,
+            labelsize="17pt",
+            with_curvature=True,
+            recache=False,
+            # roi_list=roi_list,
+        )
+
+        np.save(
+            "%s/output/ci_threshold/YFCC_slip_group_t_test_fdr_p.npy" % OUTPUT_ROOT,
+            fdr_p_full,
+        )
 
     elif args.vis_method == "quickflat":
         roi_list = ["RSC", "PPA", "OPA", "EBA", "EarlyVis", "FFA-1", "FFA-2"]

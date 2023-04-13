@@ -44,7 +44,7 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
             "%s/cortical_voxels/cortical_voxel_across_sessions_subj%02d%s.npy"
             % (args.output_dir, subj, roi)
         )
-    
+
     # data size is # of total trials X # of voxels
     ev_list = []
     avg_mat = np.zeros(
@@ -170,9 +170,7 @@ if __name__ == "__main__":
         # except FileNotFoundError:
         print("computing EVs")
         all_evs = compute_ev(args.subj, roi, args.biascorr, args.zscored_input)
-        np.save(
-            "%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs
-        )
+        np.save("%s/evs_subj%02d%s.npy" % (args.output_dir, args.subj, tag), all_evs)
 
         plt.figure()
         plt.hist(all_evs)

@@ -186,6 +186,7 @@ def extract_single_roi(roi_name, output_dir, subj):
                 roi_labels.append(v)
     return output_masks, roi_labels
 
+
 def compute_sample_performance(model, subj, output_dir, masking="sig", measure="corrs"):
     """
     Returns sample-wise performances for encoding model.

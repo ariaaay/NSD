@@ -7,6 +7,7 @@ from math import sqrt
 import numpy as np
 import torch
 
+
 def zero_strip(s):
     if s[0] == "0":
         s = s[1:]

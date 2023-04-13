@@ -26,7 +26,11 @@ from sklearn.decomposition import PCA
 import clip
 
 from util.util import fdr_correct_p
-from util.data_util import load_model_performance, extract_test_image_ids, compute_sample_performance
+from util.data_util import (
+    load_model_performance,
+    extract_test_image_ids,
+    compute_sample_performance,
+)
 from util.coco_utils import get_coco_image
 from util.model_config import *
 
@@ -53,7 +57,6 @@ from pycocotools.coco import COCO
 # )
 # coco_train_caps = COCO(annFile_train_caps)
 # coco_val_caps = COCO(annFile_val_caps)
-
 
 
 def plot_image_wise_performance(model1, model2, masking="sig", measure="corrs"):
@@ -301,7 +304,8 @@ def process_bootstrap_result_for_uv(model1, model2):
     fdr_p = fdr_correct_p(m2_rsq)
     print(np.sum(fdr_p[1] < 0.05))
     np.save(
-        "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy" % (args.output_root, model2, args.subj),
+        "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy"
+        % (args.output_root, model2, args.subj),
         fdr_p,
     )
 
@@ -313,13 +317,16 @@ def process_bootstrap_result_for_uv(model1, model2):
     fdr_p = fdr_correct_p(m1_unique_var)
     print(np.sum(fdr_p[1] < 0.05))
     np.save(
-        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy" % (args.output_root, model1, args.subj), fdr_p
+        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+        % (args.output_root, model1, args.subj),
+        fdr_p,
     )
 
     fdr_p = fdr_correct_p(m2_unique_var)
     print(np.sum(fdr_p[1] < 0.05))
     np.save(
-        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy" % (args.output_root, model2, args.subj),
+        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
+        % (args.output_root, model2, args.subj),
         fdr_p,
     )
 
@@ -368,7 +375,9 @@ if __name__ == "__main__":
         "--process_bootstrap_results", default=False, action="store_true"
     )
     parser.add_argument("--cross_model_comparison", default=False, action="store_true")
-    parser.add_argument("--roi_voxel_analysis_between_models", default=False, action="store_true")
+    parser.add_argument(
+        "--roi_voxel_analysis_between_models", default=False, action="store_true"
+    )
     parser.add_argument("--nc_scatter_plot", default=False, action="store_true")
     parser.add_argument("--mask", default=False, action="store_true")
     parser.add_argument("--roi_value", default=0, type=int)
@@ -438,7 +447,7 @@ if __name__ == "__main__":
 
             for subj in np.arange(1, 9):
                 find_corner_images(m1, m2, masking=roi, measure="rsq", subj=subj)
-    
+
     if args.performance_analysis_by_roi:
         sns.set(style="whitegrid", font_scale=4.5)
 
@@ -891,6 +900,7 @@ if __name__ == "__main__":
 
     if args.cross_model_comparison:
         from util.model_config import *
+
         # plot ROI averaged prediction across models
         df = pd.DataFrame()
         models = [
@@ -906,6 +916,7 @@ if __name__ == "__main__":
         model_sizes = ["15m", "15m", "15m", "400m", "400m", "2b"]
         model_size_for_plot = {"1m": 100, "15m": 200, "400m": 400, "2b": 600}
         subjs = [1, 2, 5, 7]
+        # subjs = np.arange(1,9)
         # rois = [
         #     "prf-visualrois": 'all'],
         #     "floc-faces",
@@ -921,19 +932,27 @@ if __name__ == "__main__":
         # }
 
         roa_list = [
-                ("prf-visualrois", "V1v"),
-                ("prf-visualrois", "h4v"),
-                ("floc-places", "RSC"),
-                ("floc-places", "PPA"),
-                ("floc-places", "OPA"),
-                ("floc-bodies", "EBA"),
-                ("floc-faces", "FFA-1"),
-                ("floc-faces", "FFA-2"),
-                # ("HCP_MMP1", "TPOJ1"),
-                ("HCP_MMP1", "TPOJ2"),
-                ("HCP_MMP1", "TPOJ3"),
-                # ("language", "AG"),
-            ]
+            ("prf-visualrois", "V1v"),
+            ("prf-visualrois", "h4v"),
+            ("floc-places", "RSC"),
+            ("floc-places", "PPA"),
+            ("floc-places", "OPA"),
+            ("floc-bodies", "EBA"),
+            ("floc-faces", "FFA-1"),
+            ("floc-faces", "FFA-2"),
+            # ("HCP_MMP1", "TPOJ1"),
+            ("HCP_MMP1", "TPOJ2"),
+            ("HCP_MMP1", "TPOJ3"),
+            # ("language", "AG"),
+        ]
+
+        roi_type_name_dict = {
+            "prf-visualrois": "EarlyVis",
+            "floc-places": "Scene",
+            "floc-bodies": "Body",
+            "floc-faces": "Face",
+            "HCP_MMP1": "TPOJ",
+        }
 
         model_type = {
             "clip": "Lang (OpenAI)",
@@ -945,13 +964,22 @@ if __name__ == "__main__":
             "YFCC_slip": "SSL + Lang (YFCC)",
         }
 
-        marker_type={
-            "Lang (OpenAI)": "1",
+        # marker_type={
+        #     "Lang (OpenAI)": "1",
+        #     # "resnet50_bottleneck": "Labels",
+        #     "Lang (Laion)": "2",
+        #     "Lang (YFCC)": "3",
+        #     "SSL": "x",
+        #     "SSL + Lang (YFCC)": (8, 2, 0),
+        # }
+
+        marker_type = {
+            "Lang (OpenAI)": "^",
             # "resnet50_bottleneck": "Labels",
-            "Lang (Laion)": "2",
-            "Lang (YFCC)": "3",
-            "SSL": "x",
-            "SSL + Lang (YFCC)": (8, 2, 0), 
+            "Lang (Laion)": "v",
+            "Lang (YFCC)": "<",
+            "SSL": "s",
+            "SSL + Lang (YFCC)": "h",
         }
 
         for i, model in enumerate(tqdm(models)):
@@ -966,7 +994,9 @@ if __name__ == "__main__":
                         % (args.output_root, subj, subj, roi_type)
                     )
                     roi_dict = roi_name_dict[roi_type]
-                    roi_val = list(roi_dict.keys())[list(roi_dict.values()).index(roi_lab)]
+                    roi_val = list(roi_dict.keys())[
+                        list(roi_dict.values()).index(roi_lab)
+                    ]
                     # print(roi_lab, roi_val)
                     roi_selected_vox = roi_mask == int(roi_val)
                     # print(np.sum(roi_selected_vox))
@@ -975,17 +1005,20 @@ if __name__ == "__main__":
                     rsq_mean = np.mean(rsq[roi_selected_vox])
 
                     vd = {}
-                    vd["Regions"] = roi_lab
+                    # vd["Regions"] = roi_lab
+                    vd["Regions"] = roi_type_name_dict[roi_type]
                     vd["Model"] = model
                     vd["Dataset size"] = model_sizes[i]
                     vd["Model type"] = model_type[model]
-                    vd["Mean Performance"] = rsq_mean
+                    vd["Mean Performance (R^2)"] = rsq_mean
                     vd["Subject"] = str(subj)
-                # vd["perf_std"] = np.std(rsqs[roi_selected_vox])
-                # 
+                    # vd["perf_std"] = np.std(rsqs[roi_selected_vox])
+                    #
 
                     df = df.append(vd, ignore_index=True)
-        df.to_csv("%s/output/clip/cross_model_comparison.csv" % args.output_root)
+        df.to_csv(
+            "%s/output/clip/cross_model_comparison_roi_type.csv" % args.output_root
+        )
 
         import seaborn.objects as so
         from seaborn import axes_style
@@ -994,7 +1027,7 @@ if __name__ == "__main__":
             so.Plot(
                 df,
                 x="Regions",
-                y="Mean Performance",
+                y="Mean Performance (R^2)",
                 # color="Subject",
                 color="Dataset size",
                 marker="Model type",
@@ -1005,13 +1038,11 @@ if __name__ == "__main__":
             .add(
                 so.Dot(),
                 so.Agg(),
-                # so.Jitter(.2),
+                # so.Jitter(.1),
                 so.Dodge(),
             )
-            # .add(so.Range(), so.Est(errorbar="sd"), so.Dodge())
-            .scale(
-                marker=marker_type, 
-                pointsize=(12, 6))
+            # .add(so.Range(), so.Est(errorbar="se"), so.Dodge())
+            .scale(marker=marker_type, pointsize=(12, 6))
             .theme(
                 {
                     **axes_style("white"),
@@ -1025,7 +1056,7 @@ if __name__ == "__main__":
                     },
                 }
             )
-            .save("figures/model_comp/subj1257.png", bbox_inches="tight")
+            .save("figures/model_comp/roi_type.png", bbox_inches="tight")
         )
 
     if args.roi_voxel_analysis_between_models:
@@ -1041,17 +1072,25 @@ if __name__ == "__main__":
         print(roi_val)
 
         m1_us, m1_mps, m2_us, m2_mps = [], [], [], []
-        for s in np.arange(1,9):
+        for s in np.arange(1, 9):
             roi_mask = np.load(
-                    "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-                    % (args.output_root, s, s, roi_regions)
-                )
+                "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                % (args.output_root, s, s, roi_regions)
+            )
             roi_mask = roi_mask == roi_val
 
-
-            m1_rsq = load_model_performance(model1, output_root=args.output_root, subj=s, measure="rsq")
-            m2_rsq = load_model_performance(model2, output_root=args.output_root, subj=s, measure="rsq")
-            joint_rsq = load_model_performance("%s_%s" % (model1, model2), output_root=args.output_root, subj=s, measure="rsq")
+            m1_rsq = load_model_performance(
+                model1, output_root=args.output_root, subj=s, measure="rsq"
+            )
+            m2_rsq = load_model_performance(
+                model2, output_root=args.output_root, subj=s, measure="rsq"
+            )
+            joint_rsq = load_model_performance(
+                "%s_%s" % (model1, model2),
+                output_root=args.output_root,
+                subj=s,
+                measure="rsq",
+            )
 
             m1_u = joint_rsq - m2_rsq
             m2_u = joint_rsq - m1_rsq
@@ -1068,17 +1107,27 @@ if __name__ == "__main__":
         print(m1_ru.shape)
         print(m1_mps.shape)
 
-        plt.figure()
-        plt.hist2d(
+        fig, ax = plt.subplots()
+        ax.hist2d(
             m1_ru,
             m2_ru,
             bins=100,
             norm=mpl.colors.LogNorm(),
             cmap="magma",
         )
-        plt.savefig("figures/CLIP/voxel_wise_performance/unique_var_hist2d_%s_v_%s_in_%s.png" % (model1, model2, roi))
+        plt.xlabel("YFCC SLIP")
+        plt.ylabel("YFCC simCLR")
+        ax.set_aspect(1)
+        ax.set_xlim(-0.04, 0.07)
+        ax.set_ylim(-0.04, 0.07)
+        ax.plot([-0.02, 0.06], [-0.02, 0.06], linewidth=1, color="red")
 
-        plt.figure(figsize=(10,15))
+        fig.savefig(
+            "figures/CLIP/voxel_wise_performance/unique_var_hist2d_%s_v_%s_in_%s.png"
+            % (model1, model2, roi)
+        )
+
+        plt.figure(figsize=(5, 5))
         plt.scatter(m1_ru, m2_ru, alpha=0.3)
         plt.xlabel(model1)
         plt.ylabel(model2)
@@ -1086,7 +1135,10 @@ if __name__ == "__main__":
         plt.plot([-0.08, 0.1], [-0.08, 0.1], linewidth=1, color="red")
         plt.xlabel("YFCC SLIP")
         plt.ylabel("YFCC simCLR")
-        plt.savefig("figures/CLIP/voxel_wise_performance/unique_var_%s_v_%s_in_%s.png" % (model1, model2, roi))
+        plt.savefig(
+            "figures/CLIP/voxel_wise_performance/unique_var_%s_v_%s_in_%s.png"
+            % (model1, model2, roi)
+        )
 
         plt.figure()
         plt.scatter(m1_mps, m2_mps, alpha=0.3)
@@ -1096,6 +1148,7 @@ if __name__ == "__main__":
         plt.plot([-0.08, 0.95], [-0.08, 0.95], linewidth=1, color="red")
         plt.xlabel("YFCC SLIP")
         plt.ylabel("YFCC simCLR")
-        plt.savefig("figures/CLIP/voxel_wise_performance/%s_v_%s_in_%s.png" % (model1, model2, roi))
-
-
+        plt.savefig(
+            "figures/CLIP/voxel_wise_performance/%s_v_%s_in_%s.png"
+            % (model1, model2, roi)
+        )
