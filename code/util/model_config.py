@@ -30,6 +30,14 @@ model_features = dict()
 model_features["taskrepr"] = taskrepr_features
 model_features["convnet"] = convnet_structures
 
+model_label = {
+    "YFCC_simclr": "YFCC simCLR",
+    "YFCC_clip": "YFCC CLIP",
+    "YFCC_slip": "YFCC SLIP",
+    "laion400m_clip": "LAION400m CLIP",
+    "laion2b_clip": "LAION2b CLIP",
+    "clip": "OpenAI CLIP"
+}
 
 task_label = {
     "class_1000": "Object Class",

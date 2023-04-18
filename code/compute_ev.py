@@ -75,6 +75,8 @@ def compute_ev(subj, roi="", biascorr=False, zscored_input=False):
         try:
             assert repeat.shape == (repeat_n, 3)
             avg_mat[:, v] = np.nanmean(repeat, axis=1)
+            print("NaNs:")
+            print(np.sum(np.isnan(avg_mat[:, v])))
         except AssertionError:
             print(repeat.shape)
 

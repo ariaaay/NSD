@@ -337,6 +337,96 @@ def compute_ci_cutoff(n, ci=0.95):
     return ci_ind
 
 
+def plot_model_comparison_on_ROI(roi_regions, roi, model1, model2):
+    roi_dict = roi_name_dict[roi_regions]
+    roi_val = list(roi_dict.keys())[list(roi_dict.values()).index(roi)]
+    # print(roi_val)
+
+    m1_us, m1_mps, m2_us, m2_mps = [], [], [], []
+    # for s in np.arange(1, 9):
+    for s in [1, 2, 5, 7]:
+        roi_mask = np.load(
+            "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+            % (args.output_root, s, s, roi_regions)
+        )
+        roi_mask = roi_mask == roi_val
+
+        m1_rsq = load_model_performance(
+            model1, output_root=args.output_root, subj=s, measure="rsq"
+        )
+        m2_rsq = load_model_performance(
+            model2, output_root=args.output_root, subj=s, measure="rsq"
+        )
+        joint_rsq = load_model_performance(
+            "%s_%s" % (model1, model2),
+            output_root=args.output_root,
+            subj=s,
+            measure="rsq",
+        )
+
+        m1_u = joint_rsq - m2_rsq
+        m2_u = joint_rsq - m1_rsq
+        m1_us.append(m1_u[roi_mask])
+        m2_us.append(m2_u[roi_mask])
+        m1_mps.append(m1_rsq[roi_mask])
+        m2_mps.append(m2_rsq[roi_mask])
+
+    m1_ru = np.hstack(m1_us)
+    m2_ru = np.hstack(m2_us)
+    m1_mps = np.hstack(m1_mps)
+    m2_mps = np.hstack(m2_mps)
+
+    # print(m1_ru.shape)
+    # print(m1_mps.shape)
+
+    fig, ax = plt.subplots()
+    ax.hist2d(
+        m1_ru,
+        m2_ru,
+        bins=100,
+        norm=mpl.colors.LogNorm(),
+        cmap="magma",
+    )
+    plt.xlabel(model_label[model1])
+    plt.ylabel(model_label[model2])
+    ax.set_aspect(1)
+    ax.set_xlim(-0.05, 0.08)
+    ax.set_ylim(-0.05, 0.08)
+    ax.spines[['right', 'top']].set_visible(False)
+    ax.plot([-0.02, 0.06], [-0.02, 0.06], linewidth=1, color="red")
+
+    fig.savefig(
+        "figures/CLIP/voxel_wise_performance/unique_var_hist2d_%s_v_%s_in_%s.png"
+        % (model1, model2, roi)
+    )
+
+    # plt.figure(figsize=(5, 5))
+    # plt.scatter(m1_ru, m2_ru, alpha=0.3)
+    # plt.xlabel(model1)
+    # plt.ylabel(model2)
+    # plt.title("Unique Variances")
+    # plt.plot([-0.08, 0.1], [-0.08, 0.1], linewidth=1, color="red")
+    # plt.xlabel("YFCC SLIP")
+    # plt.ylabel("YFCC simCLR")
+    # plt.savefig(
+    #     "figures/CLIP/voxel_wise_performance/unique_var_%s_v_%s_in_%s.png"
+    #     % (model1, model2, roi)
+    # )
+
+    # plt.figure()
+    # plt.scatter(m1_mps, m2_mps, alpha=0.3)
+    # plt.xlabel(model1)
+    # plt.ylabel(model2)
+    # plt.title("Model Performance")
+    # plt.plot([-0.08, 0.95], [-0.08, 0.95], linewidth=1, color="red")
+    # plt.xlabel("YFCC SLIP")
+    # plt.ylabel("YFCC simCLR")
+    # plt.savefig(
+    #     "figures/CLIP/voxel_wise_performance/%s_v_%s_in_%s.png"
+    #     % (model1, model2, roi)
+    # )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -1058,97 +1148,23 @@ if __name__ == "__main__":
             )
             .save("figures/model_comp/roi_type.png", bbox_inches="tight")
         )
+    # if args.scatter_plot_3_conds:
+    #     df = pd.load_csv(
+    #         "%s/output/clip/cross_model_comparison_roi_type.csv" % args.output_root
+    #     )
+    #     plt.figure()
+    #     plt.scatter()
+
 
     if args.roi_voxel_analysis_between_models:
         from util.model_config import *
-
-        model1 = "YFCC_slip"
-        model2 = "YFCC_simclr"
-
         roi = "EBA"
         roi_regions = "floc-bodies"
-        roi_dict = roi_name_dict[roi_regions]
-        roi_val = list(roi_dict.keys())[list(roi_dict.values()).index(roi)]
-        print(roi_val)
 
-        m1_us, m1_mps, m2_us, m2_mps = [], [], [], []
-        for s in np.arange(1, 9):
-            roi_mask = np.load(
-                "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
-                % (args.output_root, s, s, roi_regions)
-            )
-            roi_mask = roi_mask == roi_val
+        plot_model_comparison_on_ROI(roi_regions, roi, "YFCC_slip", "YFCC_simclr")
 
-            m1_rsq = load_model_performance(
-                model1, output_root=args.output_root, subj=s, measure="rsq"
-            )
-            m2_rsq = load_model_performance(
-                model2, output_root=args.output_root, subj=s, measure="rsq"
-            )
-            joint_rsq = load_model_performance(
-                "%s_%s" % (model1, model2),
-                output_root=args.output_root,
-                subj=s,
-                measure="rsq",
-            )
+        plot_model_comparison_on_ROI(roi_regions, roi, "laion2b_clip", "laion400m_clip")
 
-            m1_u = joint_rsq - m2_rsq
-            m2_u = joint_rsq - m1_rsq
-            m1_us.append(m1_u[roi_mask])
-            m2_us.append(m2_u[roi_mask])
-            m1_mps.append(m1_rsq[roi_mask])
-            m2_mps.append(m2_rsq[roi_mask])
+        plot_model_comparison_on_ROI(roi_regions, roi, "clip", "laion400m_clip")
 
-        m1_ru = np.hstack(m1_us)
-        m2_ru = np.hstack(m2_us)
-        m1_mps = np.hstack(m1_mps)
-        m2_mps = np.hstack(m2_mps)
-
-        print(m1_ru.shape)
-        print(m1_mps.shape)
-
-        fig, ax = plt.subplots()
-        ax.hist2d(
-            m1_ru,
-            m2_ru,
-            bins=100,
-            norm=mpl.colors.LogNorm(),
-            cmap="magma",
-        )
-        plt.xlabel("YFCC SLIP")
-        plt.ylabel("YFCC simCLR")
-        ax.set_aspect(1)
-        ax.set_xlim(-0.04, 0.07)
-        ax.set_ylim(-0.04, 0.07)
-        ax.plot([-0.02, 0.06], [-0.02, 0.06], linewidth=1, color="red")
-
-        fig.savefig(
-            "figures/CLIP/voxel_wise_performance/unique_var_hist2d_%s_v_%s_in_%s.png"
-            % (model1, model2, roi)
-        )
-
-        plt.figure(figsize=(5, 5))
-        plt.scatter(m1_ru, m2_ru, alpha=0.3)
-        plt.xlabel(model1)
-        plt.ylabel(model2)
-        plt.title("Unique Variances")
-        plt.plot([-0.08, 0.1], [-0.08, 0.1], linewidth=1, color="red")
-        plt.xlabel("YFCC SLIP")
-        plt.ylabel("YFCC simCLR")
-        plt.savefig(
-            "figures/CLIP/voxel_wise_performance/unique_var_%s_v_%s_in_%s.png"
-            % (model1, model2, roi)
-        )
-
-        plt.figure()
-        plt.scatter(m1_mps, m2_mps, alpha=0.3)
-        plt.xlabel(model1)
-        plt.ylabel(model2)
-        plt.title("Model Performance")
-        plt.plot([-0.08, 0.95], [-0.08, 0.95], linewidth=1, color="red")
-        plt.xlabel("YFCC SLIP")
-        plt.ylabel("YFCC simCLR")
-        plt.savefig(
-            "figures/CLIP/voxel_wise_performance/%s_v_%s_in_%s.png"
-            % (model1, model2, roi)
-        )
+        

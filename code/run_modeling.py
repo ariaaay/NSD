@@ -150,6 +150,10 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
+    # dead with trials that are nan because subjects has never seen the images
+    trial_mask = np.sum(np.isnan(br_data), axis=1) <= 0 
+    br_data = br_data[trial_mask, :]
+
     print("NaNs? Finite?:")
     print(np.any(np.isnan(br_data)))
     print(np.all(np.isfinite(br_data)))
@@ -189,6 +193,8 @@ if __name__ == "__main__":
                 feature_mat = np.hstack((feature_mat, more_feature))
 
                 model_name_to_save += "_" + model
+
+    feature_mat = feature_mat[trial_mask, :]
 
     if args.subset_data is not None:
         subset_cat = args.subset_data

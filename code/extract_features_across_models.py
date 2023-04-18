@@ -54,6 +54,29 @@ def extract_last_layer_feature(model, dataset="YFCC"):
         )
 
         model.load_state_dict(state_dict, strict=True)
+    
+    elif "IC" in dataset:
+        import clip
+        model, _ = clip.load("RN50", device=device)
+        preprocess = transforms.Compose(
+            [
+                transforms.RandomResizedCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                )
+            ]
+        )
+
+        ckpt_path = "models/%s.pt" % dataset
+        print("Loading checkpoint from: " + ckpt_path)
+        ckpt = torch.load(ckpt_path, map_location="cpu")
+        state_dict = OrderedDict()
+        for k, v in ckpt["state_dict"].items():
+            state_dict[k.replace("module.", "")] = v
+        
+        model.load_state_dict(state_dict, strict=True)
+
 
     elif dataset == "laion400m":
         model, _, preprocess = open_clip.create_model_and_transforms(
@@ -83,7 +106,7 @@ def extract_last_layer_feature(model, dataset="YFCC"):
     return all_features
 
 
-def extract_visual_transformer_feature(model_name, dataset):
+def extract_visual_transformer_feature(model_name):
     import torchextractor as tx
     import clip
     from util.coco_utils import load_captions
@@ -148,7 +171,7 @@ def extract_visual_transformer_feature(model_name, dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--subj", default=1, type=int)
+    parser.add_argument("--subj", default=0, type=int)
     parser.add_argument(
         "--feature_dir",
         type=str,

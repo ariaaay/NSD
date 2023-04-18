@@ -243,16 +243,20 @@ def plot_max_diff_images(
     from util.coco_utils import get_coco_image, get_coco_caps
 
     diff1 = rsm1 - rsm2  # close in 1, far in 2
-    diff2 = rsm2 - rsm1
+    # diff2 = rsm2 - rsm1
     ind_1 = np.unravel_index(np.argsort(diff1, axis=None), diff1.shape)
-    ind_2 = np.unravel_index(np.argsort(diff2, axis=None), diff2.shape)
+    # ind_2 = np.unravel_index(np.argsort(diff2, axis=None), diff2.shape)
     # b/c symmetry of RDM, every two pairs are the same
     trial_id_pair_1 = [(ind_1[0][::-1][i], ind_1[1][::-1][i]) for i in range(0, 30, 2)]
-    trial_id_pair_2 = [(ind_2[0][::-1][i], ind_2[1][::-1][i]) for i in range(0, 30, 2)]
+    # trial_id_pair_2 = [(ind_2[0][::-1][i], ind_2[1][::-1][i]) for i in range(0, 30, 2)]
+    trial_id_pair_2 = [(ind_1[0][i], ind_1[1][i]) for i in range(0, 30, 2)]
 
     plt.figure(figsize=(20, 30))
     for m, trial_id_pair in enumerate([trial_id_pair_1, trial_id_pair_2]):
         for i in range(10):
+            if trial_id_pair[i][0] == trial_id_pair[i][1]: # a pair of the same image
+                continue
+
             plt.subplot(10, 2, i * 2 + 1)
             id = cocoId_subj[trial_id_pair[i][0]]
             I = get_coco_image(id, coco_train, coco_val)
@@ -269,6 +273,7 @@ def plot_max_diff_images(
                 try:
                     caption = caption[0]
                 except IndexError:
+                    print("cant find caption for " + str(id))
                     caption = " "
                 t += caption
             plt.title(t)
@@ -284,6 +289,7 @@ def plot_max_diff_images(
                 try:
                     caption = caption[0]
                 except IndexError:
+                    print("cant find caption for " + str(id))
                     caption = " "
                 plt.title(str(id) + caption)
             plt.axis("off")
@@ -301,7 +307,7 @@ def sample_level_semantic_analysis(
     model2="resnet50_bottleneck",
     print_caption=False,
     print_distance=False,
-    threshold=(0.5, 0.5),
+    threshold=None,
     normalize="sub_baseline",
 ):
     """
@@ -361,116 +367,108 @@ def sample_level_semantic_analysis(
         print_distance=print_distance,
     )
 
-    triu_flag = np.triu(np.ones(rsm1.shape), 1).astype(bool)
-    perc = 97.5
-    if threshold[2] == "br":
-        # import pdb; pdb.set_trace()
-        t1 = np.percentile(rsm1[triu_flag], perc)
-        t2 = np.percentile(rsm2[triu_flag], (100 - perc))
-        select_pair = (rsm1 > t1) * (rsm2 < t2)
-        print(t1, t2, threshold[2])
-    elif threshold[2] == "tl":
-        t1 = np.percentile(rsm1[triu_flag], (100 - perc))
-        t2 = np.percentile(rsm2[triu_flag], perc)
-        print(t1, t2, threshold[2])
-        select_pair = (rsm1 < t1) * (rsm2 > t2)
+    if threshold is not None:
+        triu_flag = np.triu(np.ones(rsm1.shape), 1).astype(bool)
+        perc = 97.5
+        if threshold[2] == "br":
+            # import pdb; pdb.set_trace()
+            t1 = np.percentile(rsm1[triu_flag], perc)
+            t2 = np.percentile(rsm2[triu_flag], (100 - perc))
+            select_pair = (rsm1 > t1) * (rsm2 < t2)
+            print(t1, t2, threshold[2])
+        elif threshold[2] == "tl":
+            t1 = np.percentile(rsm1[triu_flag], (100 - perc))
+            t2 = np.percentile(rsm2[triu_flag], perc)
+            print(t1, t2, threshold[2])
+            select_pair = (rsm1 < t1) * (rsm2 > t2)
 
-    num_pairs = np.sum(select_pair)
-    print("number of pair of images selected: " + str(num_pairs / 2))
-    ind = np.unravel_index(np.argsort(select_pair, axis=None), select_pair.shape)
-    # b/c symmetry of RDM, every two pairs are the same
-    trial_id_pair = [[ind[0][::-1][i], ind[1][::-1][i]] for i in range(0, num_pairs, 2)]
-    trial_id_pair = np.array(trial_id_pair)
+        num_pairs = np.sum(select_pair)
+        print("number of pair of images selected: " + str(num_pairs / 2))
+        ind = np.unravel_index(np.argsort(select_pair, axis=None), select_pair.shape)
+        # b/c symmetry of RDM, every two pairs are the same
+        trial_id_pair = [[ind[0][::-1][i], ind[1][::-1][i]] for i in range(0, num_pairs, 2)]
+        trial_id_pair = np.array(trial_id_pair)
 
-    print(trial_id_pair.shape)
+        print(trial_id_pair.shape)
 
-    # compare brain image
-    print("Computing brain correlation...")
-    from scipy.stats import pearsonr
+        # compare brain image
+        print("Computing brain correlation...")
+        from scipy.stats import pearsonr
 
-    bdata = np.load(
-        "%s/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
-        % (args.output_root, subj)
-    )
-
-    try:
-        non_zero_mask = np.load(
-            "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
-            % (args.output_root, subj, subj)
+        bdata = np.load(
+            "%s/output/cortical_voxels/averaged_cortical_responses_zscored_by_run_subj%02d.npy"
+            % (args.output_root, subj)
         )
-        print("Masking zero voxels...")
-        bdata = bdata[:, non_zero_mask]
-    except FileNotFoundError:
-        pass
 
-    print("NaNs? Finite?:")
-    print(np.any(np.isnan(bdata)))
-    print(np.all(np.isfinite(bdata)))
-    print("Brain response size is: " + str(bdata.shape))
+        try:
+            non_zero_mask = np.load(
+                "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
+                % (args.output_root, subj, subj)
+            )
+            print("Masking zero voxels...")
+            bdata = bdata[:, non_zero_mask]
+        except FileNotFoundError:
+            pass
 
-    b1 = bdata[trial_id_pair[:, 0], :]
-    b2 = bdata[trial_id_pair[:, 1], :]
-    b_corr = np.array([pearsonr(b1[:, v], b2[:, v])[0] for v in range(b1.shape[1])])
-    print(b_corr.shape)
-    normalize_flag = ""
-    if normalize == "sub_baseline":
-        baseline = np.load(
-            "%s/output/rdm_based_analysis/subj%d/voxel_corr_baseline_n%d.npy"
-            % (args.output_root, subj, 5000)
+        print("NaNs? Finite?:")
+        print(np.any(np.isnan(bdata)))
+        print(np.all(np.isfinite(bdata)))
+        print("Brain response size is: " + str(bdata.shape))
+
+        b1 = bdata[trial_id_pair[:, 0], :]
+        b2 = bdata[trial_id_pair[:, 1], :]
+        b_corr = np.array([pearsonr(b1[:, v], b2[:, v])[0] for v in range(b1.shape[1])])
+        print(b_corr.shape)
+        normalize_flag = ""
+        if normalize == "sub_baseline":
+            baseline = np.load(
+                "%s/output/rdm_based_analysis/subj%d/voxel_corr_baseline_n%d.npy"
+                % (args.output_root, subj, 5000)
+            )
+            b_corr = b_corr - baseline
+            normalize_flag = "_sub_baseline"
+
+        np.save(
+            "%s/output/rdm_based_analysis/subj%d/voxel_corr_%s_vs_%s_%.2f_%.2f_%s%s.npy"
+            % (
+                args.output_root,
+                subj,
+                model1,
+                model2,
+                t1,
+                t2,
+                threshold[2],
+                normalize_flag,
+            ),
+            b_corr,
         )
-        b_corr = b_corr - baseline
-        normalize_flag = "_sub_baseline"
 
-    np.save(
-        "%s/output/rdm_based_analysis/subj%d/voxel_corr_%s_vs_%s_%.2f_%.2f_%s%s.npy"
-        % (
-            args.output_root,
-            subj,
-            model1,
-            model2,
-            t1,
-            t2,
-            threshold[2],
-            normalize_flag,
-        ),
-        b_corr,
-    )
+        ## visualize the image
+        print("visualizing images...")
+        plt.figure(figsize=(20, 30))
+        for i, pair in enumerate(trial_id_pair[:30]):
+            for j in range(2):
+                plt.subplot(30, 2, i * 2 + j + 1)
+                id = cocoId_subj[pair[j]]
+                I = get_coco_image(id, coco_train, coco_val)
+                C = get_coco_caps(id, coco_train_caps, coco_val_caps)
+                try:
+                    cap = C[0]
+                except IndexError:
+                    print(C)
+                    cap = " "
+                plt.imshow(I)
+                plt.title(cap)
+                plt.axis("off")
+        plt.tight_layout()
 
-    ## visualize the image
-    print("visualizing images...")
-    plt.figure(figsize=(20, 30))
-    for i, pair in enumerate(trial_id_pair[:30]):
-        for j in range(2):
-            plt.subplot(30, 2, i * 2 + j + 1)
-            id = cocoId_subj[pair[j]]
-            I = get_coco_image(id, coco_train, coco_val)
-            C = get_coco_caps(id, coco_train_caps, coco_val_caps)
-            try:
-                cap = C[0]
-            except IndexError:
-                print(C)
-                cap = " "
-            plt.imshow(I)
-            plt.title(cap)
-            plt.axis("off")
-    plt.tight_layout()
+        if not os.path.exists("figures/CLIP/RDM_based_analysis/subj%d/" % subj):
+            os.makedirs("figures/CLIP/RDM_based_analysis/subj%d/" % subj)
 
-    if not os.path.exists("figures/CLIP/RDM_based_analysis/subj%d/" % subj):
-        os.makedirs("figures/CLIP/RDM_based_analysis/subj%d/" % subj)
-
-    plt.savefig(
-        "figures/CLIP/RDM_based_analysis/subj%d/%s_vs_%s_%.2f_%.2f_%s.png"
-        % (subj, model1, model2, t1, t2, threshold[2])
-    )
-
-    # # compare model performances
-    # pred = load_model_performance(model=model1, output_root=args.output_root, subj=subj, measure="rsq")
-
-    # p2 = load_model_performance(model=model2, output_root=args.output_root, subj=subj, measure="rsq")
-
-    # _, test_idx = train_test_split(np.arange(bdata.shape[0]), test_size=0.15, random_state=42)
-    # for pair in trial_id_pair:
-    #     if (pair[0] in test_idx) and (pair[1] in test_idx):
+        plt.savefig(
+            "figures/CLIP/RDM_based_analysis/subj%d/%s_vs_%s_%.2f_%.2f_%s.png"
+            % (subj, model1, model2, t1, t2, threshold[2])
+        )
 
 
 def compare_model_and_brain_performance_on_COCO():
@@ -949,75 +947,102 @@ if __name__ == "__main__":
 
         for normalize in ["sub_baseline", "None"]:
 
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="clip",
+            #     model2="resnet50_bottleneck",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.8, 0.2, "br"),
+            #     normalize=normalize,
+            # )
+
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="YFCC_clip",
+            #     model2="YFCC_simclr",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.65, 0.8, "br"),
+            #     normalize=normalize,
+            # )
+
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="YFCC_slip",
+            #     model2="YFCC_simclr",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.65, 0.8, "br"),
+            #     normalize=normalize,
+            # )
+
             sample_level_semantic_analysis(
                 subj=args.subj,
                 model1="clip",
-                model2="resnet50_bottleneck",
+                model2="visual_layer_11",
                 print_caption=True,
                 print_distance=False,
-                threshold=(0.8, 0.2, "br"),
-                normalize=normalize,
-            )
-
-            sample_level_semantic_analysis(
-                subj=args.subj,
-                model1="YFCC_clip",
-                model2="YFCC_simclr",
-                print_caption=True,
-                print_distance=False,
-                threshold=(0.65, 0.8, "br"),
-                normalize=normalize,
-            )
-
-            sample_level_semantic_analysis(
-                subj=args.subj,
-                model1="YFCC_slip",
-                model2="YFCC_simclr",
-                print_caption=True,
-                print_distance=False,
-                threshold=(0.65, 0.8, "br"),
                 normalize=normalize,
             )
 
             sample_level_semantic_analysis(
                 subj=args.subj,
                 model1="clip",
-                model2="resnet50_bottleneck",
+                model2="laion400m_clip",
                 print_caption=True,
                 print_distance=False,
-                threshold=(0.3, 0.4, "tl"),
                 normalize=normalize,
             )
 
             sample_level_semantic_analysis(
                 subj=args.subj,
-                model1="YFCC_clip",
-                model2="YFCC_simclr",
+                model1="laion2b_clip",
+                model2="laion400m_clip",
                 print_caption=True,
                 print_distance=False,
-                threshold=(0.25, 0.9, "tl"),
                 normalize=normalize,
             )
 
-            sample_level_semantic_analysis(
-                subj=args.subj,
-                model1="YFCC_slip",
-                model2="YFCC_simclr",
-                print_caption=True,
-                print_distance=False,
-                threshold=(0.35, 0.9, "tl"),
-                normalize=normalize,
-            )
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="clip",
+            #     model2="resnet50_bottleneck",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.3, 0.4, "tl"),
+            #     normalize=normalize,
+            # )
 
-            sample_level_semantic_analysis(
-                subj=args.subj,
-                model1="YFCC_slip",
-                model2="YFCC_simclr",
-                print_caption=True,
-                print_distance=False,
-                threshold=(0.35, 0.9, "tl"),
-                normalize=None,
-            )
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="YFCC_clip",
+            #     model2="YFCC_simclr",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.25, 0.9, "tl"),
+            #     normalize=normalize,
+            # )
+
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="YFCC_slip",
+            #     model2="YFCC_simclr",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.35, 0.9, "tl"),
+            #     normalize=normalize,
+            # )
+
+            # sample_level_semantic_analysis(
+            #     subj=args.subj,
+            #     model1="YFCC_slip",
+            #     model2="YFCC_simclr",
+            #     print_caption=True,
+            #     print_distance=False,
+            #     threshold=(0.35, 0.9, "tl"),
+            #     normalize=None,
+            # )
 
         # sample_level_semantic_analysis(
         #     subj=args.subj, model1="clip", model2="bert_layer_13"
