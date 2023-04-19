@@ -1038,6 +1038,78 @@ if __name__ == "__main__":
         vmax2=0.05,
     )
 
+    volumes["IC title R^2"] = make_volume(
+        subj=args.subj,
+        model="IC_title_clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
+
+    volumes["IC title+ R^2"] = make_volume(
+        subj=args.subj,
+        model="IC_title_tag_description_clip",
+        mask_with_significance=args.mask_sig,
+        measure="rsq",
+        noise_corrected=False,
+    )
+
+    # volumes["IC title& I - I R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="IC_title_clip_resnet50_bottleneck",
+    #     model2="resnet50_bottleneck",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     cmap="inferno",
+    # )
+
+    # volumes["IC title & I - IC title R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="IC_title_clip_resnet50_bottleneck",
+    #     model2="IC_title_clip",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     cmap="inferno",
+    # )
+
+    # volumes["IC title+ & I - I R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="IC_title_tag_description_clip_resnet50_bottleneck",
+    #     model2="resnet50_bottleneck",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     cmap="inferno",
+    # )
+    # volumes["IC title+ & I - IC title+ R^2"] = make_volume(
+    #     subj=args.subj,
+    #     model="IC_title_tag_description_clip_resnet50_bottleneck",
+    #     model2="IC_title_tag_description_clip",
+    #     mask_with_significance=args.mask_sig,
+    #     measure="rsq",
+    #     cmap="inferno",
+    # )
+
+    # volumes["IC_title_v_I_unique"] = cortex.dataset.Volume2D(
+    #     volumes["IC title & I - I R^2"],
+    #     volumes["IC title & I - IC title R^2"],
+    #     cmap="PU_BuOr_covar_alpha",
+    #     vmin=0,
+    #     vmax=0.05,
+    #     vmin2=0,
+    #     vmax2=0.05,
+    # )
+
+    # volumes["IC_title+_v_I_unique"] = cortex.dataset.Volume2D(
+    #     volumes["IC title+ & I - I R^2"],
+    #     volumes["IC title+ & I - IC title+ R^2"],
+    #     cmap="PU_BuOr_covar_alpha",
+    #     vmin=0,
+    #     vmax=0.05,
+    #     vmin2=0,
+    #     vmax2=0.05,
+    # )
+
+
     # volumes["YFCC clip n-1  R^2"] = make_volume(
     #     subj=args.subj,
     #     model="YFCC_clip_layer_n-1",

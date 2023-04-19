@@ -48,5 +48,4 @@ for subj in {1..8}; do
     INFILE=$MIND_DIR/subj$subj/rsq_IC_title_tag_description_clip_resnet50_bottleneck_whole_brain.p
     scp yuanw3@mind.cs.cmu.edu:$INFILE $OUTDIR
     
-
 done
