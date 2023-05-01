@@ -151,7 +151,7 @@ if __name__ == "__main__":
         pass
 
     # dead with trials that are nan because subjects has never seen the images
-    trial_mask = np.sum(np.isnan(br_data), axis=1) <= 0 
+    trial_mask = np.sum(np.isnan(br_data), axis=1) <= 0
     br_data = br_data[trial_mask, :]
 
     print("NaNs? Finite?:")

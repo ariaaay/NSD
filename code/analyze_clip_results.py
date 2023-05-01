@@ -279,33 +279,33 @@ def make_roi_df(roi_names, subjs, update=False):
     return df
 
 
-def process_bootstrap_result_for_uv(model1, model2):
+def process_bootstrap_result_for_uv(subj, model1, model2):
     joint_rsq = np.load(
         "%s/output/bootstrap/subj%01d/rsq_dist_%s_%s_whole_brain.npy"
-        % (args.output_root, args.subj, model1, model2)
+        % (args.output_root, subj, model1, model2)
     )
     m1_rsq = np.load(
         "%s/output/bootstrap/subj%01d/rsq_dist_%s_whole_brain.npy"
-        % (args.output_root, args.subj, model1)
+        % (args.output_root, subj, model1)
     )
     m2_rsq = np.load(
         "%s/output/bootstrap/subj%01d/rsq_dist_%s_whole_brain.npy"
-        % (args.output_root, args.subj, model2)
+        % (args.output_root, subj, model2)
     )
 
     fdr_p = fdr_correct_p(m1_rsq)
-    print(np.sum(fdr_p[1] < 0.05))
+    # print(np.sum(fdr_p[1] < 0.05))
     np.save(
         "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy"
-        % (args.output_root, model1, args.subj),
+        % (args.output_root, model1, subj),
         fdr_p,
     )
 
     fdr_p = fdr_correct_p(m2_rsq)
-    print(np.sum(fdr_p[1] < 0.05))
+    # print(np.sum(fdr_p[1] < 0.05))
     np.save(
         "%s/output/ci_threshold/%s_fdr_p_subj%01d.npy"
-        % (args.output_root, model2, args.subj),
+        % (args.output_root, model2, subj),
         fdr_p,
     )
 
@@ -315,18 +315,18 @@ def process_bootstrap_result_for_uv(model1, model2):
     del m1_rsq
     del m2_rsq
     fdr_p = fdr_correct_p(m1_unique_var)
-    print(np.sum(fdr_p[1] < 0.05))
+    # print(np.sum(fdr_p[1] < 0.05))
     np.save(
-        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
-        % (args.output_root, model1, args.subj),
+        "%s/output/ci_threshold/%s-%s_unique_var_fdr_p_subj%01d.npy"
+        % (args.output_root, model1, model2, subj),
         fdr_p,
     )
 
     fdr_p = fdr_correct_p(m2_unique_var)
-    print(np.sum(fdr_p[1] < 0.05))
+    # print(np.sum(fdr_p[1] < 0.05))
     np.save(
-        "%s/output/ci_threshold/%s_unique_var_fdr_p_subj%01d.npy"
-        % (args.output_root, model2, args.subj),
+        "%s/output/ci_threshold/%s-%s_unique_var_fdr_p_subj%01d.npy"
+        % (args.output_root, model2, model1, subj),
         fdr_p,
     )
 
@@ -380,19 +380,20 @@ def plot_model_comparison_on_ROI(roi_regions, roi, model1, model2):
     # print(m1_mps.shape)
 
     fig, ax = plt.subplots()
-    ax.hist2d(
+    h = ax.hist2d(
         m1_ru,
         m2_ru,
         bins=100,
         norm=mpl.colors.LogNorm(),
-        cmap="magma",
+        cmap="YlOrRd",
     )
+    fig.colorbar(h[3], ax=ax)
     plt.xlabel(model_label[model1])
     plt.ylabel(model_label[model2])
     ax.set_aspect(1)
-    ax.set_xlim(-0.05, 0.08)
-    ax.set_ylim(-0.05, 0.08)
-    ax.spines[['right', 'top']].set_visible(False)
+    ax.set_xlim(-0.05, 0.1)
+    ax.set_ylim(-0.05, 0.1)
+    ax.spines[["right", "top"]].set_visible(False)
     ax.plot([-0.02, 0.06], [-0.02, 0.06], linewidth=1, color="red")
 
     fig.savefig(
@@ -474,9 +475,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.process_bootstrap_results:
-        # process_bootstrap_result_for_uv("clip_visual_resnet", "resnet50_bottleneck")
-        process_bootstrap_result_for_uv("YFCC_slip", "YFCC_simclr")
-        # process_bootstrap_result_for_uv("clip", "laion400m_clip")
+        # for subj in np.arange(1,9):
+        # process_bootstrap_result_for_uv(subj, "clip_visual_resnet", "resnet50_bottleneck")
+        for subj in [1, 2, 5, 7]:
+            # process_bootstrap_result_for_uv(subj, "YFCC_slip", "YFCC_simclr")
+            # process_bootstrap_result_for_uv(subj, "laion2b_clip","laion400m_clip")
+            process_bootstrap_result_for_uv(subj, "clip", "laion400m_clip")
 
     if args.plot_voxel_wise_performance:
         model1 = "convnet_res50"
@@ -1005,8 +1009,8 @@ if __name__ == "__main__":
         # model_sizes = ["1m", "15m", "15m", "15m", "400m", "400m", "2b"]
         model_sizes = ["15m", "15m", "15m", "400m", "400m", "2b"]
         model_size_for_plot = {"1m": 100, "15m": 200, "400m": 400, "2b": 600}
-        subjs = [1, 2, 5, 7]
-        # subjs = np.arange(1,9)
+        # subjs = [1, 2, 5, 7]
+        subjs = np.arange(1, 9)
         # rois = [
         #     "prf-visualrois": 'all'],
         #     "floc-faces",
@@ -1100,7 +1104,7 @@ if __name__ == "__main__":
                     vd["Model"] = model
                     vd["Dataset size"] = model_sizes[i]
                     vd["Model type"] = model_type[model]
-                    vd["Mean Performance (R^2)"] = rsq_mean
+                    vd[r"Mean Performance ($R^2$)"] = rsq_mean
                     vd["Subject"] = str(subj)
                     # vd["perf_std"] = np.std(rsqs[roi_selected_vox])
                     #
@@ -1117,7 +1121,7 @@ if __name__ == "__main__":
             so.Plot(
                 df,
                 x="Regions",
-                y="Mean Performance (R^2)",
+                y=r"Mean Performance ($R^2$)",
                 # color="Subject",
                 color="Dataset size",
                 marker="Model type",
@@ -1155,16 +1159,18 @@ if __name__ == "__main__":
     #     plt.figure()
     #     plt.scatter()
 
-
     if args.roi_voxel_analysis_between_models:
         from util.model_config import *
+
         roi = "EBA"
         roi_regions = "floc-bodies"
+
+        import matplotlib
+
+        matplotlib.rcParams.update({"font.size": 15})
 
         plot_model_comparison_on_ROI(roi_regions, roi, "YFCC_slip", "YFCC_simclr")
 
         plot_model_comparison_on_ROI(roi_regions, roi, "laion2b_clip", "laion400m_clip")
 
         plot_model_comparison_on_ROI(roi_regions, roi, "clip", "laion400m_clip")
-
-        

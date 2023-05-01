@@ -54,17 +54,28 @@ def extract_last_layer_feature(model, dataset="YFCC"):
         )
 
         model.load_state_dict(state_dict, strict=True)
-    
+
     elif "IC" in dataset:
         import clip
+
         model, _ = clip.load("RN50", device=device)
+        # preprocess = transforms.Compose(
+        #     [
+        #         transforms.RandomResizedCrop(224),
+        #         transforms.ToTensor(),
+        #         transforms.Normalize(
+        #             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+        #         )
+        #     ]
+        # )
+        # adjust param according to paper
         preprocess = transforms.Compose(
             [
                 transforms.RandomResizedCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                )
+                    mean=[0.481, 0.458, 0.408], std=[0.269, 0.261, 0.276]
+                ),
             ]
         )
 
@@ -74,9 +85,8 @@ def extract_last_layer_feature(model, dataset="YFCC"):
         state_dict = OrderedDict()
         for k, v in ckpt["state_dict"].items():
             state_dict[k.replace("module.", "")] = v
-        
-        model.load_state_dict(state_dict, strict=True)
 
+        model.load_state_dict(state_dict, strict=True)
 
     elif dataset == "laion400m":
         model, _, preprocess = open_clip.create_model_and_transforms(

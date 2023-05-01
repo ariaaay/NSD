@@ -86,8 +86,8 @@ def extract_resnet_last_layer_feature(cid=None, saving=True):
 
     # print("Extracting ResNet features")
     if cid is None:
+        output = list()
         for cid in tqdm(all_coco_ids):
-            output = list()
             with torch.no_grad():
                 image_path = "%s/%s.jpg" % (stimuli_dir, cid)
                 image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)

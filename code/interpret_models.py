@@ -254,7 +254,7 @@ def plot_max_diff_images(
     plt.figure(figsize=(20, 30))
     for m, trial_id_pair in enumerate([trial_id_pair_1, trial_id_pair_2]):
         for i in range(10):
-            if trial_id_pair[i][0] == trial_id_pair[i][1]: # a pair of the same image
+            if trial_id_pair[i][0] == trial_id_pair[i][1]:  # a pair of the same image
                 continue
 
             plt.subplot(10, 2, i * 2 + 1)
@@ -386,7 +386,9 @@ def sample_level_semantic_analysis(
         print("number of pair of images selected: " + str(num_pairs / 2))
         ind = np.unravel_index(np.argsort(select_pair, axis=None), select_pair.shape)
         # b/c symmetry of RDM, every two pairs are the same
-        trial_id_pair = [[ind[0][::-1][i], ind[1][::-1][i]] for i in range(0, num_pairs, 2)]
+        trial_id_pair = [
+            [ind[0][::-1][i], ind[1][::-1][i]] for i in range(0, num_pairs, 2)
+        ]
         trial_id_pair = np.array(trial_id_pair)
 
         print(trial_id_pair.shape)
