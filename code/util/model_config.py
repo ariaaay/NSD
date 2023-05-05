@@ -36,7 +36,7 @@ model_label = {
     "YFCC_slip": "YFCC SLIP",
     "laion400m_clip": "LAION400m CLIP",
     "laion2b_clip": "LAION2b CLIP",
-    "clip": "OpenAI CLIP"
+    "clip": "OpenAI CLIP",
 }
 
 task_label = {

@@ -352,7 +352,7 @@ def show_voxel_diff_in_repr_samples(model1, model2, quad="br"):
             % (args.subj, model1, model2, quad)
         )
         vals = np.load(fname[0])
-        
+
         non_zero_mask = np.load(
             "%s/output/voxels_masks/subj%d/nonzero_voxels_subj%02d.npy"
             % (OUTPUT_ROOT, args.subj, args.subj)
@@ -1104,7 +1104,6 @@ if __name__ == "__main__":
     #     vmax2=0.05,
     # )
 
-
     # volumes["YFCC clip n-1  R^2"] = make_volume(
     #     subj=args.subj,
     #     model="YFCC_clip_layer_n-1",
@@ -1621,9 +1620,9 @@ if __name__ == "__main__":
 
         # np.save("%s/output/ci_threshold/YFCC_slip_group_t_test_p.npy" % OUTPUT_ROOT, p_val)
         np.save("%s/output/ci_threshold/YFCC_slip_group_t_test_t.npy" % OUTPUT_ROOT, t)
-        import pdb
+        # import pdb
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         p_val_to_show = p_val.copy()
         p_val_to_show[p_val > 0.05] = np.nan
