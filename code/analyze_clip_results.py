@@ -998,7 +998,7 @@ if __name__ == "__main__":
         # plot ROI averaged prediction across models
         df = pd.DataFrame()
         models = [
-            # "resnet50_bottleneck",
+            "resnet50_bottleneck",
             "YFCC_clip",
             "YFCC_simclr",
             "YFCC_slip",
@@ -1006,8 +1006,8 @@ if __name__ == "__main__":
             "clip",
             "laion2b_clip",
         ]
-        # model_sizes = ["1m", "15m", "15m", "15m", "400m", "400m", "2b"]
-        model_sizes = ["15m", "15m", "15m", "400m", "400m", "2b"]
+        model_sizes = ["1m", "15m", "15m", "15m", "400m", "400m", "2b"]
+        # model_sizes = ["15m", "15m", "15m", "400m", "400m", "2b"]
         model_size_for_plot = {"1m": 100, "15m": 200, "400m": 400, "2b": 600}
         # subjs = [1, 2, 5, 7]
         subjs = np.arange(1, 9)
@@ -1050,7 +1050,7 @@ if __name__ == "__main__":
 
         model_type = {
             "clip": "Lang (OpenAI)",
-            # "resnet50_bottleneck": "Labels",
+            "resnet50_bottleneck": "Categories",
             "laion400m_clip": "Lang (Laion)",
             "laion2b_clip": "Lang (Laion)",
             "YFCC_clip": "Lang (YFCC)",
@@ -1069,7 +1069,7 @@ if __name__ == "__main__":
 
         marker_type = {
             "Lang (OpenAI)": "^",
-            # "resnet50_bottleneck": "Labels",
+            "Categories": "X",
             "Lang (Laion)": "v",
             "Lang (YFCC)": "<",
             "SSL": "s",
@@ -1110,6 +1110,7 @@ if __name__ == "__main__":
                     #
 
                     df = df.append(vd, ignore_index=True)
+
         df.to_csv(
             "%s/output/clip/cross_model_comparison_roi_type.csv" % args.output_root
         )
@@ -1135,7 +1136,99 @@ if __name__ == "__main__":
                 # so.Jitter(.1),
                 so.Dodge(),
             )
-            # .add(so.Range(), so.Est(errorbar="se"), so.Dodge())
+            # .add(so.Line(color=".2", linewidth=1))
+            .add(so.Range(), so.Est(errorbar="se"), so.Dodge())
+            .scale(marker=marker_type, pointsize=(12, 7))
+            .theme(
+                {
+                    **axes_style("white"),
+                    **{
+                        "figure.figsize": (15, 5),
+                        "legend.frameon": False,
+                        "axes.spines.right": False,
+                        "axes.spines.top": False,
+                        "axes.labelsize" : 17,
+                        "xtick.labelsize" : 15,
+                        "ytick.labelsize" : 15,
+                        # "axes.grid": True,
+                        # "axes.grid.axis": "x",
+                    },
+                }
+            )
+            .save("figures/model_comp/roi_type_per_subj.png", bbox_inches="tight")
+        )
+    
+    # compare to basedline model:
+        baseline_model = "resnet50_bottleneck"
+        df_baseline = pd.DataFrame()
+        for i, model in enumerate(tqdm(models)):
+            if model == baseline_model:
+                continue
+            for (roi_type, roi_lab) in roa_list:
+                # rsqs = []
+                for subj in subjs:
+                    rsq_baseline = load_model_performance(
+                        baseline_model, output_root=args.output_root, subj=subj, measure="rsq"
+                    )
+                    rsq = load_model_performance(
+                        model, output_root=args.output_root, subj=subj, measure="rsq"
+                    )
+                    roi_mask = np.load(
+                        "%s/output/voxels_masks/subj%01d/roi_1d_mask_subj%02d_%s.npy"
+                        % (args.output_root, subj, subj, roi_type)
+                    )
+                    roi_dict = roi_name_dict[roi_type]
+                    roi_val = list(roi_dict.keys())[
+                        list(roi_dict.values()).index(roi_lab)
+                    ]
+                    # print(roi_lab, roi_val)
+                    roi_selected_vox = roi_mask == int(roi_val)
+                    # print(np.sum(roi_selected_vox))
+                    # import pdb; pdb.set_trace()
+                    # rsqs.append(np.mean(rsq[roi_selected_vox]))
+                    rsq_mean = np.mean(rsq[roi_selected_vox])
+                    rsq_baseline_mean = np.mean(rsq_baseline[roi_selected_vox])
+                    rsq_diff = rsq_mean - rsq_baseline_mean
+
+                    vd = {}
+                    # vd["Regions"] = roi_lab
+                    vd["Regions"] = roi_type_name_dict[roi_type]
+                    vd["Model"] = model
+                    vd["Dataset size"] = model_sizes[i]
+                    vd["Model type"] = model_type[model]
+                    vd[r"Mean Performance ($R^2$)"] = rsq_diff
+                    vd["Subject"] = str(subj)
+                    
+                    df_baseline = df_baseline.append(vd, ignore_index=True)
+
+        df_baseline.to_csv(
+            "%s/output/clip/cross_model_comparison_roi_type_%s_baseline.csv" % (args.output_root, baseline_model)
+        )
+
+        import seaborn.objects as so
+        from seaborn import axes_style
+
+
+        (
+            so.Plot(
+                df_baseline,
+                x="Regions",
+                y=r"Mean Performance ($R^2$)",
+                # color="Subject",
+                color="Dataset size",
+                marker="Model type",
+                pointsize="Dataset size",
+                # ymin=0,
+                # ymax=0.25,
+            )
+            .add(
+                so.Dot(),
+                so.Agg(),
+                # so.Jitter(.1),
+                so.Dodge(),
+            )
+            # .add(so.Line(color=".2", linewidth=1))
+            .add(so.Range(), so.Est(errorbar="se"), so.Dodge())
             .scale(marker=marker_type, pointsize=(12, 6))
             .theme(
                 {
@@ -1145,19 +1238,17 @@ if __name__ == "__main__":
                         "legend.frameon": False,
                         "axes.spines.right": False,
                         "axes.spines.top": False,
+                        "axes.labelsize" : 17,
+                        "xtick.labelsize" : 15,
+                        "ytick.labelsize" : 15,
                         # "axes.grid": True,
                         # "axes.grid.axis": "x",
                     },
                 }
             )
-            .save("figures/model_comp/roi_type.png", bbox_inches="tight")
+            .save("figures/model_comp/roi_type_per_subj_%s_baseline.png" % baseline_model, bbox_inches="tight")
         )
-    # if args.scatter_plot_3_conds:
-    #     df = pd.load_csv(
-    #         "%s/output/clip/cross_model_comparison_roi_type.csv" % args.output_root
-    #     )
-    #     plt.figure()
-    #     plt.scatter()
+
 
     if args.roi_voxel_analysis_between_models:
         from util.model_config import *

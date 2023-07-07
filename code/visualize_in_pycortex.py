@@ -1604,11 +1604,43 @@ if __name__ == "__main__":
                 mask_with_significance=args.mask_sig,
                 measure="rsq",
                 cmap="inferno",
-                # fdr_mask_name="YFCC_slip_unique_var",
+                # fdr_mask_name=["YFCC_simclr-YFCC_slip_unique_var", "YFCC_slip-YFCC_simclr_unique_var"]
             )
             mni_data = project_vols_to_mni(s, volume)
             # group_mni_data.append(mni_data.flatten())
             group_mni_data.append(mni_data[mni_mask])
+        
+            # saving MNI flatmap for individual subjects
+            volume_masked = make_volume(
+                subj=s,
+                model="YFCC_slip_YFCC_simclr",
+                model2="YFCC_simclr",
+                mask_with_significance=args.mask_sig,
+                measure="rsq",
+                cmap="inferno",
+                fdr_mask_name=["YFCC_simclr-YFCC_slip_unique_var", "YFCC_slip-YFCC_simclr_unique_var"],
+            )
+            mni_data_masked = project_vols_to_mni(s, volume_masked)
+            # mni_3d = np.zeros(mni_mask.shape)
+            # mni_3d[mni_mask] = mni_data_masked
+            subj_vol = cortex.Volume(
+                mni_data_masked,
+                "fsaverage",
+                "atlas",
+                cmap="inferno",
+                vmin=0,
+                vmax=0.05,
+            )
+            filename = "figures/flatmap/mni/subj%d_YFCC_slip_unique_var_sig_vox.png" % s
+            _ = cortex.quickflat.make_png(
+                filename,
+                subj_vol,
+                linewidth=1,
+                labelsize="17pt",
+                with_curvature=True,
+                recache=False,
+                # roi_list=roi_list,
+            )
 
         from scipy.stats import ttest_1samp
         from statsmodels.stats.multitest import fdrcorrection
