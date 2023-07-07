@@ -65,7 +65,13 @@ for subj in {1..8}; do
 
     #processing bootstrap test results
     python src/analyze_clip_results.py --process_bootstrap_results --subj $subj
+
+    # visualizing results
+    python code/visualize_in_pycortex.py --subj $subj --mask_sig --sig_method fdr --vis_method quickflat
+    python code/visualize_in_pycortex.py --subj $subj --mask_sig --sig_method fdr --vis_method 3d_views
+
 done
 
 python src/analyze_clip_results.py --performance_analysis_by_roi --group_analysis_by_roi --summary_statistics --clip_rsq_across_subject
 python src/analyze_clip_results_with_PCA.py --best_voxel_n 20000 --model clip --group pca_analysis --pc-image_visualization
+
