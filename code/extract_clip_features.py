@@ -430,10 +430,19 @@ if __name__ == "__main__":
 
         # extract_object_base_text_feature()
         # extract_top1_obejct_base_text_feature()
-        # extract_visual_resnet_feature()
         # extract_visual_transformer_feature()
         # extract_vibert_feature()
         visual_res_feat = extract_last_layer_feature(
             model_name="RN50", modality="vision"
         )
         np.save("%s/clip_visual_resnet.npy" % feature_output_dir, visual_res_feat)
+
+        text_feat = extract_last_layer_feature(modality="text")
+        np.save("%s/clip_text.npy" % feature_output_dir, text_feat)
+
+        text_feat = extract_last_layer_feature(modality="vision")
+        np.save("%s/clip.npy" % feature_output_dir, text_feat)
+
+        extract_visual_resnet_feature()
+
+
